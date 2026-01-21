@@ -1,0 +1,77 @@
+{
+  "version": "1.0",
+  "generator": "pixel_art_fallback",
+  "assets": {
+    "characters": {
+      "abu_sulaiman": {
+        "path": "assets/characters/abu_sulaiman.png",
+        "size": [
+          64,
+          64
+        ]
+      },
+      "jayzen": {
+        "path": "assets/characters/jayzen.png",
+        "size": [
+          64,
+          64
+        ]
+      },
+      "noura": {
+        "path": "assets/characters/noura.png",
+        "size": [
+          64,
+          64
+        ]
+      }
+    },
+    "enemies": {
+      "wolf": {
+        "path": "assets/enemies/wolf.png",
+        "size": [
+          48,
+          48
+        ]
+      },
+      "dhub": {
+        "path": "assets/enemies/dhub.png",
+        "size": [
+          48,
+          48
+        ]
+      },
+      "scorpion": {
+        "path": "assets/enemies/scorpion.png",
+        "size": [
+          40,
+          40
+        ]
+      }
+    },
+    "pickups": {
+      "xp_gem": {
+        "path": "assets/pickups/xp_gem.png",
+        "size": [
+          24,
+          24
+        ]
+      },
+      "gold_coin": {
+        "path": "assets/pickups/gold_coin.png",
+        "size": [
+          24,
+          24
+        ]
+      }
+    },
+    "backgrounds": {
+      "sand_tile": {
+        "path": "assets/backgrounds/sand_tile.png",
+        "size": [
+          64,
+          64
+        ]
+      }
+    }
+  }
+}
