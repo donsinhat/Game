@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rogue Survivor Prototype</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <canvas id="game" aria-label="Game canvas"></canvas>
+
+    <div id="hud">
+      <div class="bar">
+        <span class="label">HP</span>
+        <div class="track"><div id="hp-fill" class="fill"></div></div>
+      </div>
+      <div class="bar">
+        <span class="label">XP</span>
+        <div class="track"><div id="xp-fill" class="fill"></div></div>
+      </div>
+      <div class="stats">
+        <span>Level: <strong id="level">1</strong></span>
+        <span>Time: <strong id="time">00:00</strong></span>
+        <span>Kills: <strong id="kills">0</strong></span>
+      </div>
+      <div class="help">
+        Move: WASD / Arrows | Pause: P | Restart: R
+      </div>
+      <div id="info" class="info"></div>
+    </div>
+
+    <div id="overlay" class="overlay hidden">
+      <div id="upgrade-menu" class="panel hidden">
+        <h2>Level Up</h2>
+        <p>Choose one upgrade (1-3)</p>
+        <div id="upgrade-list" class="upgrade-list"></div>
+      </div>
+      <div id="gameover" class="panel hidden">
+        <h2>Game Over</h2>
+        <p>You have been overwhelmed.</p>
+        <button id="restart-btn" type="button">Restart</button>
+      </div>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
