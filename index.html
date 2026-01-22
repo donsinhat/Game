@@ -358,16 +358,18 @@ const CHARACTERS = {
 
 // ==================== WEAPONS ====================
 const WEAPONS = {
-    agal: { name: 'العقال', desc: 'حبل يدور حولك ويضرب الأعداء', type: 'orbit', dmg: 5, cd: 0.1, range: 65, icon: '⭕' },
-    rock: { name: 'الصخرة', desc: 'قذيفة تستهدف أقرب عدو', type: 'projectile', dmg: 5, cd: 0.9, range: 380, icon: '🪨' },
-    aura: { name: 'الهيبة', desc: 'هالة ضرر خفيفة حولك', type: 'aura', dmg: 4, cd: 0.5, range: 55, icon: '💫' },
-    spear: { name: 'الرمح', desc: 'يرمي رمح لأقرب عدو', type: 'projectile', dmg: 5, cd: 0.45, range: 340, icon: '🔱' },
-    sword: { name: 'السيف', desc: 'ضربة قوسية أمامك', type: 'melee', dmg: 5, cd: 0.65, range: 75, icon: '⚔️' },
-    flame: { name: 'الشعلة', desc: 'كرات نارية لأقرب عدو', type: 'projectile', dmg: 5, cd: 0.3, range: 280, icon: '🔥' },
-    arrows: { name: 'السهام', desc: 'سهام تطلق بكل الاتجاهات', type: 'radial', dmg: 4, cd: 0.85, range: 320, icon: '🏹' },
-    lightning: { name: 'البرق', desc: 'صاعقة على عدو عشوائي', type: 'lightning', dmg: 5, cd: 1.8, range: 420, icon: '⚡' },
-    tornado: { name: 'الدوامة', desc: 'إعصار يبطئ الأعداء', type: 'tornado', dmg: 4, cd: 2.2, range: 160, icon: '🌪️' },
-    meteor: { name: 'النيزك', desc: 'صخور تسقط من السماء', type: 'meteor', dmg: 5, cd: 1.6, range: 90, icon: '☄️' }
+    // iconPos: position in IconSet.png (24x24 grid) - {row, col}
+    // projectileIcon: icon for the flying projectile
+    agal: { name: 'العقال', desc: 'حبل يدور حولك ويضرب الأعداء', type: 'orbit', dmg: 5, cd: 0.1, range: 65, icon: '⭕', iconPos: {row: 5, col: 2} },
+    rock: { name: 'الصخرة', desc: 'قذيفة تستهدف أقرب عدو', type: 'projectile', dmg: 5, cd: 0.9, range: 380, icon: '🪨', iconPos: {row: 3, col: 9}, projectileIcon: {row: 3, col: 9} },
+    aura: { name: 'الهيبة', desc: 'هالة ضرر خفيفة حولك', type: 'aura', dmg: 4, cd: 0.5, range: 55, icon: '💫', iconPos: {row: 10, col: 8} },
+    spear: { name: 'الرمح', desc: 'يرمي رمح لأقرب عدو', type: 'projectile', dmg: 5, cd: 0.45, range: 340, icon: '🔱', iconPos: {row: 29, col: 4}, projectileIcon: {row: 29, col: 4} },
+    sword: { name: 'السيف', desc: 'ضربة قوسية أمامك', type: 'melee', dmg: 5, cd: 0.65, range: 75, icon: '⚔️', iconPos: {row: 27, col: 0} },
+    flame: { name: 'الشعلة', desc: 'كرات نارية لأقرب عدو', type: 'projectile', dmg: 5, cd: 0.3, range: 280, icon: '🔥', iconPos: {row: 16, col: 0}, projectileIcon: {row: 16, col: 1} },
+    arrows: { name: 'السهام', desc: 'سهام تطلق بكل الاتجاهات', type: 'radial', dmg: 4, cd: 0.85, range: 320, icon: '🏹', iconPos: {row: 30, col: 0}, projectileIcon: {row: 30, col: 6} },
+    lightning: { name: 'البرق', desc: 'صاعقة على عدو عشوائي', type: 'lightning', dmg: 5, cd: 1.8, range: 420, icon: '⚡', iconPos: {row: 17, col: 4} },
+    tornado: { name: 'الدوامة', desc: 'إعصار يبطئ الأعداء', type: 'tornado', dmg: 4, cd: 2.2, range: 160, icon: '🌪️', iconPos: {row: 18, col: 0} },
+    meteor: { name: 'النيزك', desc: 'صخور تسقط من السماء', type: 'meteor', dmg: 5, cd: 1.6, range: 90, icon: '☄️', iconPos: {row: 16, col: 6} }
 };
 
 // ==================== BOOKS ====================
@@ -958,15 +960,25 @@ class Player {
             case 'projectile':
                 if (target && Math.hypot(target.x - this.x, target.y - this.y) < range) {
                     const a = Math.atan2(target.y - this.y, target.x - this.x);
-                    const isFlame = data.icon === '🔥';
-                    const isBlueFlame = this.charId === 'layla';
+                    const isFlame = w.id === 'flame';
+                    const isBlueFlame = this.charId === 'layla' && isFlame;
+                    const isRock = w.id === 'rock';
+                    const isSpear = w.id === 'spear';
+                    
+                    let projType = 'normal';
+                    if (isBlueFlame) projType = 'blue_fire';
+                    else if (isFlame) projType = 'fire';
+                    else if (isRock) projType = 'rock';
+                    else if (isSpear) projType = 'spear';
+                    
                     game.proj.push({ 
                         x: this.x, y: this.y, 
                         vx: Math.cos(a) * 360, vy: Math.sin(a) * 360, 
-                        dmg, life: 2.2, size: isFlame ? 10 : 6, 
+                        dmg, life: 2.2, size: isFlame ? 10 : (isSpear ? 8 : 6), 
                         color: isBlueFlame ? '#00aaff' : (isFlame ? '#ff4500' : '#8b4513'), 
                         pierce: w.level > 10 ? 2 : 1,
-                        type: isBlueFlame ? 'blue_fire' : (isFlame ? 'fire' : 'normal')
+                        type: projType,
+                        iconPos: data.projectileIcon
                     });
                     game.audio.shoot();
                     // Muzzle flash effect
@@ -983,7 +995,8 @@ class Player {
                         x: this.x, y: this.y, 
                         vx: Math.cos(a) * 300, vy: Math.sin(a) * 300, 
                         dmg: dmg * 0.65, life: 1.8, size: 6, 
-                        color: '#8B4513', type: 'arrow'
+                        color: '#8B4513', type: 'arrow',
+                        iconPos: data.projectileIcon
                     }); 
                 }
                 game.audio.shoot();
@@ -2333,58 +2346,105 @@ class Game {
         // Draw player with sprite
         this.player.draw(ctx, this.cam, this.assets);
         
-        // Draw projectiles with better visuals
+        // Draw projectiles with IconSet sprites
+        const iconset = this.assets.get('iconset');
         for (const p of this.proj) { 
             const px = p.x - this.cam.x, py = p.y - this.cam.y;
+            const angle = Math.atan2(p.vy, p.vx);
             
-            if (p.type === 'fire') {
+            // Try to draw from IconSet if projectile has iconPos
+            if (p.iconPos && iconset) {
+                ctx.save();
+                ctx.translate(px, py);
+                ctx.rotate(angle);
+                ctx.imageSmoothingEnabled = false;
+                const iconSize = 24;
+                const drawSize = p.size * 3;
+                ctx.drawImage(
+                    iconset,
+                    p.iconPos.col * iconSize, p.iconPos.row * iconSize,
+                    iconSize, iconSize,
+                    -drawSize/2, -drawSize/2, drawSize, drawSize
+                );
+                ctx.restore();
+            } else if (p.type === 'fire') {
                 // Fire projectile with outer glow
                 ctx.fillStyle = 'rgba(255, 69, 0, 0.4)';
                 ctx.beginPath();
                 ctx.arc(px, py, p.size + 6, 0, Math.PI * 2);
                 ctx.fill();
-                // Outer flame
                 ctx.fillStyle = '#ff4500';
                 ctx.beginPath();
                 ctx.arc(px, py, p.size + 3, 0, Math.PI * 2);
                 ctx.fill();
-                // Middle flame
                 ctx.fillStyle = '#ff6600';
                 ctx.beginPath();
                 ctx.arc(px, py, p.size, 0, Math.PI * 2);
                 ctx.fill();
-                // Inner core
                 ctx.fillStyle = '#ffff00';
                 ctx.beginPath();
                 ctx.arc(px, py, p.size * 0.4, 0, Math.PI * 2);
                 ctx.fill();
             } else if (p.type === 'arrow') {
-                // Arrow projectile
-                const angle = Math.atan2(p.vy, p.vx);
-                ctx.save();
-                ctx.translate(px, py);
-                ctx.rotate(angle);
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(-12, -2, 20, 4);
-                ctx.fillStyle = '#C0C0C0';
-                ctx.beginPath();
-                ctx.moveTo(8, -5);
-                ctx.lineTo(14, 0);
-                ctx.lineTo(8, 5);
-                ctx.fill();
-                ctx.fillStyle = '#ff4444';
-                ctx.fillRect(-12, -3, 4, 6);
-                ctx.restore();
+                // Arrow projectile from IconSet
+                if (iconset) {
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.rotate(angle);
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(iconset, 30 * 24, 6 * 24, 24, 24, -16, -8, 32, 16);
+                    ctx.restore();
+                } else {
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.rotate(angle);
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(-12, -2, 20, 4);
+                    ctx.fillStyle = '#C0C0C0';
+                    ctx.beginPath();
+                    ctx.moveTo(8, -5);
+                    ctx.lineTo(14, 0);
+                    ctx.lineTo(8, 5);
+                    ctx.fill();
+                    ctx.restore();
+                }
             } else if (p.type === 'rock') {
-                // Rock projectile
-                ctx.fillStyle = '#5a5a5a';
-                ctx.beginPath();
-                ctx.arc(px, py, p.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#7a7a7a';
-                ctx.beginPath();
-                ctx.arc(px - 2, py - 2, p.size * 0.5, 0, Math.PI * 2);
-                ctx.fill();
+                // Rock projectile from IconSet
+                if (iconset) {
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(iconset, 9 * 24, 3 * 24, 24, 24, -12, -12, 24, 24);
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = '#5a5a5a';
+                    ctx.beginPath();
+                    ctx.arc(px, py, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (p.type === 'spear') {
+                // Spear projectile from IconSet
+                if (iconset) {
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.rotate(angle);
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(iconset, 4 * 24, 29 * 24, 24, 24, -18, -9, 36, 18);
+                    ctx.restore();
+                } else {
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.rotate(angle);
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(-15, -2, 30, 4);
+                    ctx.fillStyle = '#C0C0C0';
+                    ctx.beginPath();
+                    ctx.moveTo(15, 0);
+                    ctx.lineTo(10, -4);
+                    ctx.lineTo(10, 4);
+                    ctx.fill();
+                    ctx.restore();
+                }
             } else if (p.type === 'blue_fire') {
                 // Blue fire (for Layla)
                 ctx.fillStyle = 'rgba(0, 100, 255, 0.4)';
