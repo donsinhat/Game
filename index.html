@@ -1454,8 +1454,62 @@ class MapSystem {
     generate(worldSize) {
         this.obstacles = [];
         this.decorations = [];
+        this.walls = []; // Border walls
         
         const halfWorld = worldSize / 2;
+        const wallThickness = 40;
+        
+        // Create visible border walls around the map
+        // Top wall
+        for (let x = -halfWorld; x < halfWorld; x += 120) {
+            this.walls.push({
+                x: x + 60, y: -halfWorld + 20,
+                w: 130, h: wallThickness,
+                tile: 'fence_top'
+            });
+        }
+        // Bottom wall
+        for (let x = -halfWorld; x < halfWorld; x += 120) {
+            this.walls.push({
+                x: x + 60, y: halfWorld - 20,
+                w: 130, h: wallThickness,
+                tile: 'fence_top'
+            });
+        }
+        // Left wall
+        for (let y = -halfWorld; y < halfWorld; y += 80) {
+            this.walls.push({
+                x: -halfWorld + 20, y: y + 40,
+                w: wallThickness, h: 90,
+                tile: 'fence_top',
+                vertical: true
+            });
+        }
+        // Right wall
+        for (let y = -halfWorld; y < halfWorld; y += 80) {
+            this.walls.push({
+                x: halfWorld - 20, y: y + 40,
+                w: wallThickness, h: 90,
+                tile: 'fence_top',
+                vertical: true
+            });
+        }
+        
+        // Add corner towers
+        const corners = [
+            { x: -halfWorld + 40, y: -halfWorld + 40 },
+            { x: halfWorld - 40, y: -halfWorld + 40 },
+            { x: -halfWorld + 40, y: halfWorld - 40 },
+            { x: halfWorld - 40, y: halfWorld - 40 }
+        ];
+        for (const corner of corners) {
+            this.walls.push({
+                x: corner.x, y: corner.y,
+                w: 60, h: 80,
+                tile: 'tower'
+            });
+        }
+        
         const buildingTypes = ['gate_large', 'dome', 'tower', 'building_tall', 'house_small', 'shop1', 'shop2'];
         
         // Generate buildings in a grid pattern with some randomness
@@ -1516,11 +1570,21 @@ class MapSystem {
     }
     
     checkCollision(x, y, w, h) {
+        // Check obstacles (buildings, palms, etc.)
         for (const obs of this.obstacles) {
             if (x + w/2 > obs.x - obs.w/2 && 
                 x - w/2 < obs.x + obs.w/2 &&
                 y + h/2 > obs.y - obs.h/2 && 
                 y - h/2 < obs.y + obs.h/2) {
+                return true;
+            }
+        }
+        // Check border walls
+        for (const wall of this.walls) {
+            if (x + w/2 > wall.x - wall.w/2 && 
+                x - w/2 < wall.x + wall.w/2 &&
+                y + h/2 > wall.y - wall.h/2 && 
+                y - h/2 < wall.y + wall.h/2) {
                 return true;
             }
         }
@@ -1533,7 +1597,29 @@ class MapSystem {
         
         ctx.imageSmoothingEnabled = false;
         
-        // Draw decorations first (rocks)
+        // Draw border walls first
+        for (const wall of this.walls) {
+            const sx = wall.x - cam.x, sy = wall.y - cam.y;
+            if (sx < -150 || sx > ctx.canvas.width + 150 || sy < -150 || sy > ctx.canvas.height + 150) continue;
+            
+            const tile = ARABTOWN_TILES[wall.tile];
+            if (tile) {
+                ctx.save();
+                if (wall.vertical) {
+                    // Rotate for vertical walls
+                    ctx.translate(sx, sy);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
+                        -tile.w, -tile.h/2, tile.w * 2, tile.h * 1.5);
+                } else {
+                    ctx.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
+                        sx - tile.w, sy - tile.h/2, tile.w * 2, tile.h * 1.5);
+                }
+                ctx.restore();
+            }
+        }
+        
+        // Draw decorations (rocks)
         for (const dec of this.decorations) {
             const sx = dec.x - cam.x, sy = dec.y - cam.y;
             if (sx < -50 || sx > ctx.canvas.width + 50 || sy < -50 || sy > ctx.canvas.height + 50) continue;
