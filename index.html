@@ -275,25 +275,27 @@ const CONFIG = {
     WEAPON_BASE_DMG: 5
 };
 
-// ==================== MAP TILES (arabtown-tile.png) ====================
+// ==================== MAP TILES (arabtown-tile.png 246x135) ====================
 // Tileset is arranged with various buildings and decorations
 // Each tile definition: { x, y, w, h, collision: true/false }
 const ARABTOWN_TILES = {
     // Ground is the background color #c9a66b
-    fence_top: { x: 0, y: 0, w: 128, h: 16, collision: true },
-    gate_large: { x: 0, y: 16, w: 64, h: 48, collision: true },
-    dome: { x: 64, y: 16, w: 32, h: 40, collision: true },
-    tower: { x: 96, y: 16, w: 32, h: 56, collision: true },
-    fence_small: { x: 0, y: 64, w: 40, h: 16, collision: true },
-    palm: { x: 128, y: 40, w: 16, h: 24, collision: true },
-    rock1: { x: 144, y: 56, w: 8, h: 8, collision: false },
-    rock2: { x: 152, y: 56, w: 8, h: 8, collision: false },
-    rock3: { x: 160, y: 56, w: 8, h: 8, collision: false },
-    building_tall: { x: 200, y: 0, w: 40, h: 72, collision: true },
-    shop1: { x: 48, y: 64, w: 48, h: 24, collision: true },
-    shop2: { x: 96, y: 64, w: 48, h: 24, collision: true },
-    house_small: { x: 144, y: 0, w: 32, h: 40, collision: true },
-    person: { x: 128, y: 24, w: 16, h: 16, collision: false }
+    fence_top: { x: 0, y: 0, w: 133, h: 13, collision: true },
+    gate_large: { x: 0, y: 14, w: 63, h: 50, collision: true },
+    dome: { x: 65, y: 18, w: 30, h: 46, collision: true },
+    tower: { x: 97, y: 0, w: 34, h: 64, collision: true },
+    fence_small: { x: 0, y: 66, w: 39, h: 19, collision: true },
+    palm: { x: 133, y: 42, w: 14, h: 22, collision: true },
+    rock1: { x: 148, y: 57, w: 9, h: 7, collision: false },
+    rock2: { x: 159, y: 56, w: 11, h: 8, collision: false },
+    rock3: { x: 172, y: 57, w: 9, h: 7, collision: false },
+    building_tall: { x: 205, y: 0, w: 40, h: 70, collision: true },
+    shop1: { x: 42, y: 87, w: 50, h: 32, collision: true },
+    shop2: { x: 94, y: 87, w: 50, h: 32, collision: true },
+    house_small: { x: 147, y: 0, w: 30, h: 42, collision: true },
+    market: { x: 147, y: 87, w: 50, h: 32, collision: true },
+    well: { x: 178, y: 43, w: 24, h: 20, collision: true },
+    person: { x: 133, y: 23, w: 12, h: 18, collision: false }
 };
 
 // ==================== RARITY ====================
@@ -633,7 +635,7 @@ const CHAR_SPRITES = {
     abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
     jayzen: { sprite: 'char_006', idle: 'char_006_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
     noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
-    bedouin: { sprite: 'desert_rogue', idle: 'desert_rogue', frameWidth: 40, frameHeight: 48, frames: 8, rows: 8 },
+    bedouin: { sprite: 'desert_rogue', idle: 'desert_rogue', frameWidth: 40, frameHeight: 40, frames: 8, rows: 4 },
     hawshabi: { sprite: 'char_004', idle: 'char_004_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
     layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4 }
 };
@@ -1117,31 +1119,21 @@ class Player {
             const totalFrames = spriteInfo.frames;
             const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
             
-            // Determine direction row
+            // Determine direction row (0=down, 1=left, 2=right, 3=up)
             let row = 0;
-            if (spriteInfo.rows === 8) {
-                // 8-direction sprite sheet (like DesertRogue)
-                // 0=down, 1=down-left, 2=left, 3=up-left, 4=up, 5=up-right, 6=right, 7=down-right
-                if (isMoving) {
-                    const angle = Math.atan2(this.vy, this.vx);
-                    const dir = Math.round((angle + Math.PI) / (Math.PI / 4)) % 8;
-                    // Map angle to sprite rows: right=6, down-right=7, down=0, down-left=1, left=2, up-left=3, up=4, up-right=5
-                    const rowMap = [2, 3, 4, 5, 6, 7, 0, 1]; // angle to row mapping
-                    row = rowMap[dir];
+            if (isMoving) {
+                if (Math.abs(this.vx) > Math.abs(this.vy)) {
+                    row = this.vx > 0 ? 2 : 1; // right or left
                 } else {
-                    row = this.facing > 0 ? 6 : 2; // right or left when idle
+                    row = this.vy > 0 ? 0 : 3; // down or up
                 }
             } else {
-                // 4-direction sprite sheet (default)
-                if (isMoving) {
-                    if (Math.abs(this.vx) > Math.abs(this.vy)) {
-                        row = this.vx > 0 ? 2 : 1; // right or left
-                    } else {
-                        row = this.vy > 0 ? 0 : 3; // down or up
-                    }
-                } else {
-                    row = this.facing > 0 ? 2 : 1;
-                }
+                row = this.facing > 0 ? 2 : 1;
+            }
+            
+            // Clamp row to available rows
+            if (spriteInfo.rows) {
+                row = Math.min(row, spriteInfo.rows - 1);
             }
             
             const frameX = currentFrame * spriteInfo.frameWidth;
@@ -1632,7 +1624,7 @@ class MapSystem {
                     
                     this.obstacles.push({
                         x: x, y: y,
-                        w: tile.w * 1.5, h: tile.h * 1.5,
+                        w: tile.w * 2, h: tile.h * 2,
                         tile: type
                     });
                 }
@@ -1641,9 +1633,10 @@ class MapSystem {
                 if (Math.random() < 0.3) {
                     const px = gx + (Math.random() - 0.5) * 150;
                     const py = gy + (Math.random() - 0.5) * 150;
+                    const palmTile = ARABTOWN_TILES.palm;
                     this.obstacles.push({
                         x: px, y: py,
-                        w: 24, h: 24,
+                        w: palmTile.w * 2, h: palmTile.h * 2,
                         tile: 'palm'
                     });
                 }
@@ -1652,9 +1645,10 @@ class MapSystem {
                 if (Math.random() < 0.15) {
                     const fx = gx + (Math.random() - 0.5) * 120;
                     const fy = gy + (Math.random() - 0.5) * 120;
+                    const fenceTile = ARABTOWN_TILES.fence_small;
                     this.obstacles.push({
                         x: fx, y: fy,
-                        w: 60, h: 24,
+                        w: fenceTile.w * 2, h: fenceTile.h * 2,
                         tile: 'fence_small'
                     });
                 }
@@ -1704,20 +1698,21 @@ class MapSystem {
         // Draw border walls first
         for (const wall of this.walls) {
             const sx = wall.x - cam.x, sy = wall.y - cam.y;
-            if (sx < -150 || sx > ctx.canvas.width + 150 || sy < -150 || sy > ctx.canvas.height + 150) continue;
+            if (sx < -200 || sx > ctx.canvas.width + 200 || sy < -200 || sy > ctx.canvas.height + 200) continue;
             
             const tile = ARABTOWN_TILES[wall.tile];
             if (tile) {
+                const scale = 2;
                 ctx.save();
                 if (wall.vertical) {
                     // Rotate for vertical walls
                     ctx.translate(sx, sy);
                     ctx.rotate(Math.PI / 2);
                     ctx.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
-                        -tile.w, -tile.h/2, tile.w * 2, tile.h * 1.5);
+                        -tile.w * scale / 2, -tile.h * scale / 2, tile.w * scale, tile.h * scale);
                 } else {
                     ctx.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
-                        sx - tile.w, sy - tile.h/2, tile.w * 2, tile.h * 1.5);
+                        sx - tile.w * scale / 2, sy - tile.h * scale / 2, tile.w * scale, tile.h * scale);
                 }
                 ctx.restore();
             }
@@ -1730,22 +1725,26 @@ class MapSystem {
             
             const tile = ARABTOWN_TILES[dec.tile];
             if (tile) {
+                const scale = 2;
                 ctx.drawImage(tileset, tile.x, tile.y, tile.w, tile.h, 
-                    sx - tile.w, sy - tile.h, tile.w * 2, tile.h * 2);
+                    sx - tile.w * scale / 2, sy - tile.h * scale / 2, tile.w * scale, tile.h * scale);
             }
         }
         
         // Draw obstacles (buildings, palms, fences)
         for (const obs of this.obstacles) {
             const sx = obs.x - cam.x, sy = obs.y - cam.y;
-            if (sx < -100 || sx > ctx.canvas.width + 100 || sy < -100 || sy > ctx.canvas.height + 100) continue;
+            if (sx < -150 || sx > ctx.canvas.width + 150 || sy < -150 || sy > ctx.canvas.height + 150) continue;
             
             const tile = ARABTOWN_TILES[obs.tile];
             if (tile) {
-                const scale = 1.5;
+                const scale = 2;
+                const drawW = tile.w * scale;
+                const drawH = tile.h * scale;
+                // Draw centered on position, with bottom at y position
                 ctx.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
-                    sx - (tile.w * scale)/2, sy - (tile.h * scale)/2, 
-                    tile.w * scale, tile.h * scale);
+                    sx - drawW/2, sy - drawH + 10, 
+                    drawW, drawH);
             }
         }
     }
