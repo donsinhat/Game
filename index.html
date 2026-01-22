@@ -349,6 +349,104 @@ const ENEMIES = {
 
 const BOSS = { name: 'ابو حلزه', hp: 8000, atk: 35, spd: 55, color: '#8b0000' };
 
+// ==================== ASSET LOADER ====================
+class AssetLoader {
+    constructor() {
+        this.images = {};
+        this.loaded = false;
+    }
+    
+    loadImage(name, src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => { this.images[name] = img; resolve(img); };
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+    
+    async loadAll() {
+        const assets = [
+            // Characters
+            ['char_001', 'assets/characters/Char_001.png'],
+            ['char_001_idle', 'assets/characters/Char_001_Idle.png'],
+            ['char_002', 'assets/characters/Char_002.png'],
+            ['char_002_idle', 'assets/characters/Char_002_Idle.png'],
+            ['char_003', 'assets/characters/Char_003.png'],
+            ['char_003_idle', 'assets/characters/Char_003_Idle.png'],
+            ['char_004', 'assets/characters/Char_004.png'],
+            ['char_004_idle', 'assets/characters/Char_004_Idle.png'],
+            ['char_005', 'assets/characters/Char_005.png'],
+            ['char_005_idle', 'assets/characters/Char_005_Idle.png'],
+            ['char_006', 'assets/characters/Char_006.png'],
+            ['char_006_idle', 'assets/characters/Char_006_Idle.png'],
+            
+            // Enemies
+            ['wolf', 'assets/enemies/wolf.png'],
+            ['scorpion', 'assets/enemies/scorpion.png'],
+            ['dhub', 'assets/enemies/dhub.png'],
+            
+            // Pickups
+            ['gold_coin', 'assets/pickups/gold_coin.png'],
+            ['xp_gem', 'assets/pickups/xp_gem.png'],
+            
+            // Backgrounds
+            ['sand_tile', 'assets/backgrounds/sand_tile.png'],
+            ['tiles', 'assets/tiles-all-32x32.png'],
+            
+            // Effects
+            ['fx_spark', 'assets/01.png'],
+            ['fx_fire_small', 'assets/02.png'],
+            ['fx_explosion', 'assets/03.png'],
+            ['fx_fireball', 'assets/04.png'],
+            ['fx_flames', 'assets/05.png'],
+            ['fx_ice', 'assets/10.png'],
+            ['fx_magic', 'assets/15.png'],
+            ['fx_heal', 'assets/20.png'],
+            ['fx_dust', 'assets/25.png'],
+            ['fx_circle', 'assets/30.png'],
+            ['fx_water', 'assets/35.png']
+        ];
+        
+        try {
+            await Promise.all(assets.map(([name, src]) => this.loadImage(name, src)));
+            this.loaded = true;
+            console.log('All assets loaded!');
+        } catch (e) {
+            console.warn('Some assets failed to load, using fallback rendering');
+            this.loaded = false;
+        }
+    }
+    
+    get(name) {
+        return this.images[name];
+    }
+}
+
+// Character sprite mappings
+const CHAR_SPRITES = {
+    abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
+    jayzen: { sprite: 'char_006', idle: 'char_006_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
+    noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
+    bedouin: { sprite: 'char_002', idle: 'char_002_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
+    hawshabi: { sprite: 'char_004', idle: 'char_004_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
+    layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4 }
+};
+
+// Enemy sprite mappings
+const ENEMY_SPRITES = {
+    wolf: { sprite: 'wolf', width: 48, height: 48 },
+    scorpion: { sprite: 'scorpion', width: 40, height: 40 },
+    dhub: { sprite: 'dhub', width: 48, height: 48 },
+    snake: { sprite: 'scorpion', width: 40, height: 40 },
+    hyena: { sprite: 'wolf', width: 48, height: 48 },
+    eagle: { sprite: 'wolf', width: 48, height: 48 },
+    lion: { sprite: 'wolf', width: 48, height: 48 },
+    djinn: { sprite: 'scorpion', width: 40, height: 40 },
+    ghoul: { sprite: 'dhub', width: 48, height: 48 },
+    knight: { sprite: 'wolf', width: 48, height: 48 }
+};
+
 // ==================== AUDIO ====================
 class Audio {
     constructor() { this.ctx = null; }
@@ -395,6 +493,54 @@ class FloatText {
     constructor(x, y, text, color = '#fff', size = 14) { this.x = x; this.y = y; this.text = text; this.color = color; this.size = size; this.life = 0.7; this.vy = -45; }
     update(dt) { this.y += this.vy * dt; this.life -= dt; }
     draw(ctx, cam) { ctx.globalAlpha = this.life / 0.7; ctx.fillStyle = this.color; ctx.font = `bold ${this.size}px Cairo`; ctx.textAlign = 'center'; ctx.fillText(this.text, this.x - cam.x, this.y - cam.y); ctx.globalAlpha = 1; }
+}
+
+// ==================== SPRITE EFFECTS ====================
+class SpriteEffect {
+    constructor(x, y, spriteKey, frameWidth, frameHeight, totalFrames, duration, scale = 1) {
+        this.x = x; 
+        this.y = y;
+        this.spriteKey = spriteKey;
+        this.frameWidth = frameWidth;
+        this.frameHeight = frameHeight;
+        this.totalFrames = totalFrames;
+        this.duration = duration;
+        this.scale = scale;
+        this.time = 0;
+        this.done = false;
+    }
+    
+    update(dt) {
+        this.time += dt;
+        if (this.time >= this.duration) this.done = true;
+    }
+    
+    draw(ctx, cam, assets) {
+        if (this.done) return;
+        const sprite = assets && assets.get(this.spriteKey);
+        if (!sprite) return;
+        
+        const progress = this.time / this.duration;
+        const frame = Math.min(Math.floor(progress * this.totalFrames), this.totalFrames - 1);
+        const sx = this.x - cam.x, sy = this.y - cam.y;
+        
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 1 - progress * 0.3;
+        
+        const drawW = this.frameWidth * this.scale;
+        const drawH = this.frameHeight * this.scale;
+        
+        // Calculate frame position (assuming horizontal strip)
+        const frameX = frame * this.frameWidth;
+        
+        ctx.drawImage(
+            sprite,
+            frameX, 0, this.frameWidth, this.frameHeight,
+            sx - drawW / 2, sy - drawH / 2, drawW, drawH
+        );
+        
+        ctx.globalAlpha = 1;
+    }
 }
 
 // ==================== PLAYER ====================
@@ -478,28 +624,56 @@ class Player {
             case 'projectile':
                 if (target && Math.hypot(target.x - this.x, target.y - this.y) < range) {
                     const a = Math.atan2(target.y - this.y, target.x - this.x);
-                    game.proj.push({ x: this.x, y: this.y, vx: Math.cos(a) * 360, vy: Math.sin(a) * 360, dmg, life: 2.2, size: 6, color: data.icon === '🔥' ? '#ff4500' : '#8b4513', pierce: w.level > 10 ? 2 : 1 });
+                    const isFlame = data.icon === '🔥';
+                    game.proj.push({ 
+                        x: this.x, y: this.y, 
+                        vx: Math.cos(a) * 360, vy: Math.sin(a) * 360, 
+                        dmg, life: 2.2, size: isFlame ? 8 : 6, 
+                        color: isFlame ? '#ff4500' : '#8b4513', 
+                        pierce: w.level > 10 ? 2 : 1,
+                        type: isFlame ? 'fire' : 'normal'
+                    });
                     game.audio.shoot();
+                    // Muzzle flash effect
+                    if (isFlame) {
+                        game.spriteEffects.push(new SpriteEffect(this.x, this.y, 'fx_fire_small', 24, 24, 6, 0.2, 1.2));
+                    }
                 }
                 break;
             case 'radial': {
                 const n = 4 + Math.floor(w.level / 4);
-                for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; game.proj.push({ x: this.x, y: this.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300, dmg: dmg * 0.65, life: 1.8, size: 4, color: '#4a2800' }); }
+                for (let i = 0; i < n; i++) { 
+                    const a = (i / n) * Math.PI * 2; 
+                    game.proj.push({ x: this.x, y: this.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300, dmg: dmg * 0.65, life: 1.8, size: 5, color: '#6a4a20' }); 
+                }
                 game.audio.shoot();
                 break;
             }
             case 'lightning': {
                 const ts = game.enemies.filter(e => Math.hypot(e.x - this.x, e.y - this.y) < range);
-                if (ts.length > 0) { const t = ts[Math.floor(Math.random() * ts.length)]; game.fx.push({ type: 'lightning', x: t.x, y: t.y, life: 0.2 }); if (t.takeDmg(dmg, game)) game.killEnemy(t); game.audio.tone(650, 0.06, 'sawtooth'); }
+                if (ts.length > 0) { 
+                    const t = ts[Math.floor(Math.random() * ts.length)]; 
+                    game.fx.push({ type: 'lightning', x: t.x, y: t.y, life: 0.25 }); 
+                    // Add spark effect
+                    game.spriteEffects.push(new SpriteEffect(t.x, t.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
+                    if (t.takeDmg(dmg, game)) game.killEnemy(t); 
+                    game.audio.tone(650, 0.06, 'sawtooth'); 
+                }
                 break;
             }
             case 'meteor': {
                 const n = 1 + Math.floor(w.level / 4);
-                for (let i = 0; i < n; i++) game.fx.push({ type: 'meteor', x: this.x + (Math.random() - 0.5) * range * 2, y: this.y + (Math.random() - 0.5) * range * 2, dmg, radius: 50, life: 0.7, delay: i * 0.12, hit: false });
+                for (let i = 0; i < n; i++) {
+                    const mx = this.x + (Math.random() - 0.5) * range * 2;
+                    const my = this.y + (Math.random() - 0.5) * range * 2;
+                    game.fx.push({ type: 'meteor', x: mx, y: my, dmg, radius: 55, life: 0.75, delay: i * 0.12, hit: false });
+                }
                 break;
             }
             case 'tornado':
-                game.fx.push({ type: 'tornado', x: this.x + this.facing * 35, y: this.y, vx: this.facing * 80, vy: 0, dmg: dmg * 0.35, slow: 0.5, life: 3 + w.level * 0.12, radius: 30 });
+                game.fx.push({ type: 'tornado', x: this.x + this.facing * 35, y: this.y, vx: this.facing * 85, vy: 0, dmg: dmg * 0.35, slow: 0.5, life: 3.2 + w.level * 0.12, radius: 35 });
+                // Dust effect
+                game.spriteEffects.push(new SpriteEffect(this.x + this.facing * 35, this.y, 'fx_dust', 24, 24, 5, 0.4, 1.2));
                 break;
         }
     }
@@ -517,40 +691,73 @@ class Player {
         }
     }
     
-    draw(ctx, cam) {
+    draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y;
         if (this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0) ctx.globalAlpha = 0.35;
         
-        const c = CHARACTERS[this.charId].colors;
         ctx.save();
-        if (this.facing < 0) { ctx.translate(sx, sy); ctx.scale(-1, 1); ctx.translate(-sx, sy); }
         
-        // Body (no aura!)
-        ctx.fillStyle = c.body;
-        ctx.fillRect(sx - 10, sy - 8, 20, 26);
+        // Try to draw sprite if available
+        const spriteInfo = CHAR_SPRITES[this.charId];
+        const isMoving = Math.abs(this.vx) > 10 || Math.abs(this.vy) > 10;
+        const spriteKey = isMoving ? spriteInfo.sprite : spriteInfo.idle;
+        const sprite = assets && assets.get(spriteKey);
         
-        // Head
-        ctx.fillStyle = c.head;
-        ctx.fillRect(sx - 8, sy - 24, 16, 8);
-        
-        // Face
-        ctx.fillStyle = c.skin;
-        ctx.fillRect(sx - 7, sy - 16, 14, 10);
-        
-        // Eyes
-        ctx.fillStyle = '#000';
-        ctx.fillRect(sx - 4, sy - 13, 2, 2);
-        ctx.fillRect(sx + 2, sy - 13, 2, 2);
-        
-        // Legs
-        ctx.fillStyle = c.legs;
-        ctx.fillRect(sx - 6, sy + 18, 5, 8);
-        ctx.fillRect(sx + 1, sy + 18, 5, 8);
+        if (sprite && spriteInfo) {
+            // Calculate animation frame
+            const frameTime = 0.15;
+            const totalFrames = spriteInfo.frames;
+            const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+            
+            // Determine direction row (0=down, 1=left, 2=right, 3=up based on typical RPG sprite sheets)
+            let row = 0;
+            if (isMoving) {
+                if (Math.abs(this.vx) > Math.abs(this.vy)) {
+                    row = this.vx > 0 ? 2 : 1; // right or left
+                } else {
+                    row = this.vy > 0 ? 0 : 3; // down or up
+                }
+            } else {
+                row = this.facing > 0 ? 2 : 1;
+            }
+            
+            const frameX = currentFrame * spriteInfo.frameWidth;
+            const frameY = row * spriteInfo.frameHeight;
+            
+            // Draw sprite
+            const scale = 1.5;
+            const drawW = spriteInfo.frameWidth * scale;
+            const drawH = spriteInfo.frameHeight * scale;
+            
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(
+                sprite,
+                frameX, frameY, spriteInfo.frameWidth, spriteInfo.frameHeight,
+                sx - drawW / 2, sy - drawH / 2, drawW, drawH
+            );
+        } else {
+            // Fallback to simple rendering
+            const c = CHARACTERS[this.charId].colors;
+            if (this.facing < 0) { ctx.translate(sx, sy); ctx.scale(-1, 1); ctx.translate(-sx, sy); }
+            
+            ctx.fillStyle = c.body;
+            ctx.fillRect(sx - 10, sy - 8, 20, 26);
+            ctx.fillStyle = c.head;
+            ctx.fillRect(sx - 8, sy - 24, 16, 8);
+            ctx.fillStyle = c.skin;
+            ctx.fillRect(sx - 7, sy - 16, 14, 10);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(sx - 4, sy - 13, 2, 2);
+            ctx.fillRect(sx + 2, sy - 13, 2, 2);
+            ctx.fillStyle = c.legs;
+            ctx.fillRect(sx - 6, sy + 18, 5, 8);
+            ctx.fillRect(sx + 1, sy + 18, 5, 8);
+        }
         
         ctx.restore();
         ctx.globalAlpha = 1;
         
-        // Weapon visuals (minimal, no big auras)
+        // Weapon visuals
         this.weapons.forEach(w => {
             const data = WEAPONS[w.id], range = this.getRange(w);
             if (data.type === 'orbit') {
@@ -559,24 +766,23 @@ class Player {
                 for (let i = 0; i < n; i++) {
                     const a = this.anim * 2 + (i / n) * Math.PI * 2;
                     ctx.beginPath();
-                    ctx.arc(sx + Math.cos(a) * range, sy + Math.sin(a) * range, 2.5, 0, Math.PI * 2);
+                    ctx.arc(sx + Math.cos(a) * range, sy + Math.sin(a) * range, 4, 0, Math.PI * 2);
                     ctx.fill();
                 }
             } else if (data.type === 'melee') {
                 const timer = this.wTimers[w.id] || 0, cd = this.getCD(w);
                 if (timer > cd * 0.8) {
-                    ctx.strokeStyle = 'rgba(150, 150, 150, 0.3)';
-                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = 'rgba(150, 150, 150, 0.4)';
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.arc(sx, sy, range, -0.35 * this.facing, 0.35 * this.facing);
+                    ctx.arc(sx, sy, range, -0.5 * this.facing, 0.5 * this.facing);
                     ctx.stroke();
                 }
             }
-            // Aura type weapons: very subtle indicator only
             if (data.type === 'aura') {
-                ctx.strokeStyle = 'rgba(100, 50, 150, 0.15)';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([3, 5]);
+                ctx.strokeStyle = 'rgba(100, 50, 150, 0.2)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 6]);
                 ctx.beginPath();
                 ctx.arc(sx, sy, range, 0, Math.PI * 2);
                 ctx.stroke();
@@ -586,10 +792,10 @@ class Player {
         
         // Shield indicator
         if (this.shield > 0) {
-            ctx.strokeStyle = 'rgba(80, 160, 255, 0.4)';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(80, 160, 255, 0.5)';
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.arc(sx, sy, 25, 0, Math.PI * 2);
+            ctx.arc(sx, sy, 30, 0, Math.PI * 2);
             ctx.stroke();
         }
     }
@@ -632,15 +838,52 @@ class Enemy {
     
     takeDmg(amt, game) { this.hp -= amt; this.hitFlash = 0.06; game.texts.push(new FloatText(this.x + (Math.random() - 0.5) * 12, this.y - 12, Math.round(amt).toString(), '#ff0')); return this.hp <= 0; }
     
-    draw(ctx, cam) {
+    draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y;
         if (this.hitFlash > 0) ctx.globalAlpha = 0.55;
-        ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(sx, sy, 12, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#f00';
-        ctx.fillRect(sx - 3, sy - 2, 2, 2); ctx.fillRect(sx + 1, sy - 2, 2, 2);
+        
+        // Try to draw sprite if available
+        const spriteInfo = ENEMY_SPRITES[this.type];
+        const sprite = assets && spriteInfo && assets.get(spriteInfo.sprite);
+        
+        if (sprite) {
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            
+            const scale = 1.2;
+            const drawW = spriteInfo.width * scale;
+            const drawH = spriteInfo.height * scale;
+            
+            // Flip based on movement direction
+            if (this.vx < 0) {
+                ctx.translate(sx, sy);
+                ctx.scale(-1, 1);
+                ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
+            } else {
+                ctx.drawImage(sprite, sx - drawW / 2, sy - drawH / 2, drawW, drawH);
+            }
+            
+            ctx.restore();
+        } else {
+            // Fallback to simple circle
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); 
+            ctx.arc(sx, sy, 12, 0, Math.PI * 2); 
+            ctx.fill();
+            ctx.fillStyle = '#f00';
+            ctx.fillRect(sx - 3, sy - 2, 2, 2); 
+            ctx.fillRect(sx + 1, sy - 2, 2, 2);
+        }
+        
         ctx.globalAlpha = 1;
-        if (this.hp < this.maxHp) { ctx.fillStyle = '#333'; ctx.fillRect(sx - 12, sy - 18, 24, 3); ctx.fillStyle = '#f00'; ctx.fillRect(sx - 12, sy - 18, 24 * (this.hp / this.maxHp), 3); }
+        
+        // Health bar
+        if (this.hp < this.maxHp) { 
+            ctx.fillStyle = '#333'; 
+            ctx.fillRect(sx - 15, sy - 22, 30, 4); 
+            ctx.fillStyle = '#f00'; 
+            ctx.fillRect(sx - 15, sy - 22, 30 * (this.hp / this.maxHp), 4); 
+        }
     }
 }
 
@@ -682,10 +925,32 @@ class Boss {
 class Pickup {
     constructor(x, y, type, val) { this.x = x; this.y = y; this.type = type; this.val = val; this.bob = Math.random() * Math.PI * 2; }
     update(dt) { this.bob += dt * 3.5; }
-    draw(ctx, cam) {
-        const sx = this.x - cam.x, sy = this.y - cam.y + Math.sin(this.bob) * 2.5;
-        if (this.type === 'xp') { ctx.fillStyle = '#0f0'; ctx.beginPath(); ctx.moveTo(sx, sy - 4); ctx.lineTo(sx + 4, sy); ctx.lineTo(sx, sy + 4); ctx.lineTo(sx - 4, sy); ctx.fill(); }
-        else { ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, Math.PI * 2); ctx.fill(); }
+    draw(ctx, cam, assets) {
+        const sx = this.x - cam.x, sy = this.y - cam.y + Math.sin(this.bob) * 3;
+        
+        const sprite = this.type === 'xp' ? assets && assets.get('xp_gem') : assets && assets.get('gold_coin');
+        
+        if (sprite) {
+            ctx.imageSmoothingEnabled = false;
+            const size = this.type === 'xp' ? 18 : 16;
+            ctx.drawImage(sprite, sx - size / 2, sy - size / 2, size, size);
+        } else {
+            // Fallback
+            if (this.type === 'xp') { 
+                ctx.fillStyle = '#0f0'; 
+                ctx.beginPath(); 
+                ctx.moveTo(sx, sy - 6); 
+                ctx.lineTo(sx + 6, sy); 
+                ctx.lineTo(sx, sy + 6); 
+                ctx.lineTo(sx - 6, sy); 
+                ctx.fill(); 
+            } else { 
+                ctx.fillStyle = '#ffd700'; 
+                ctx.beginPath(); 
+                ctx.arc(sx, sy, 5, 0, Math.PI * 2); 
+                ctx.fill(); 
+            }
+        }
     }
 }
 
@@ -709,8 +974,9 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.audio = new Audio();
         this.particles = new Particles();
+        this.assets = new AssetLoader();
         
-        this.state = 'menu';
+        this.state = 'loading';
         this.charIdx = 0;
         this.charIds = Object.keys(CHARACTERS);
         this.city = 'badaya';
@@ -724,6 +990,7 @@ class Game {
         this.items = [];
         this.texts = [];
         this.fx = [];
+        this.spriteEffects = [];
         
         this.cam = { x: 0, y: 0 };
         this.shake = 0;
@@ -738,16 +1005,45 @@ class Game {
         this.highScore = parseInt(localStorage.getItem('goldBloodHighScore') || '0');
         this.baghdadUnlocked = localStorage.getItem('baghdadUnlocked') === 'true';
         
+        // Cached tile image
+        this.sandTilePattern = null;
+        
         this.lastTime = 0;
         this.init();
     }
     
-    init() {
+    async init() {
         this.resize();
         window.addEventListener('resize', () => this.resize());
         this.setupInput();
+        
+        // Show loading screen
+        this.drawLoading();
+        
+        // Load assets
+        await this.assets.loadAll();
+        
+        // Create sand tile pattern if loaded
+        if (this.assets.get('sand_tile')) {
+            this.sandTilePattern = this.ctx.createPattern(this.assets.get('sand_tile'), 'repeat');
+        }
+        
+        this.state = 'menu';
         this.setupMenu();
         requestAnimationFrame(t => this.loop(t));
+    }
+    
+    drawLoading() {
+        const ctx = this.ctx;
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold 24px Cairo';
+        ctx.textAlign = 'center';
+        ctx.fillText('جاري تحميل اللعبة...', this.canvas.width / 2, this.canvas.height / 2);
+        ctx.fillStyle = '#888';
+        ctx.font = '16px Cairo';
+        ctx.fillText('Loading game assets...', this.canvas.width / 2, this.canvas.height / 2 + 35);
     }
     
     resize() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; }
@@ -773,14 +1069,34 @@ class Game {
         let html = '';
         c.passiveText.forEach(p => { const neg = p.includes('قوة الأعداء'); html += `<div class="char-stat"><span class="char-stat-label">•</span><span class="${neg ? 'char-stat-negative' : 'char-stat-value'}">${p}</span></div>`; });
         document.getElementById('charStats').innerHTML = html;
+        
         const canvas = document.getElementById('charPreview'), ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, 120, 120);
-        const col = c.colors;
-        ctx.fillStyle = col.body; ctx.fillRect(42, 42, 36, 45);
-        ctx.fillStyle = col.head; ctx.fillRect(45, 18, 30, 14);
-        ctx.fillStyle = col.skin; ctx.fillRect(48, 32, 24, 16);
-        ctx.fillStyle = '#000'; ctx.fillRect(52, 38, 4, 4); ctx.fillRect(64, 38, 4, 4);
-        ctx.fillStyle = col.legs; ctx.fillRect(45, 87, 10, 15); ctx.fillRect(65, 87, 10, 15);
+        
+        // Try to draw sprite
+        const spriteInfo = CHAR_SPRITES[id];
+        const sprite = this.assets && this.assets.get(spriteInfo.idle);
+        
+        if (sprite) {
+            ctx.imageSmoothingEnabled = false;
+            const scale = 2;
+            const drawW = spriteInfo.frameWidth * scale;
+            const drawH = spriteInfo.frameHeight * scale;
+            // Draw idle frame (row 0, frame 0)
+            ctx.drawImage(
+                sprite,
+                0, 0, spriteInfo.frameWidth, spriteInfo.frameHeight,
+                (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH
+            );
+        } else {
+            // Fallback to simple drawing
+            const col = c.colors;
+            ctx.fillStyle = col.body; ctx.fillRect(42, 42, 36, 45);
+            ctx.fillStyle = col.head; ctx.fillRect(45, 18, 30, 14);
+            ctx.fillStyle = col.skin; ctx.fillRect(48, 32, 24, 16);
+            ctx.fillStyle = '#000'; ctx.fillRect(52, 38, 4, 4); ctx.fillRect(64, 38, 4, 4);
+            ctx.fillStyle = col.legs; ctx.fillRect(45, 87, 10, 15); ctx.fillRect(65, 87, 10, 15);
+        }
     }
     
     setupInput() {
@@ -831,7 +1147,7 @@ class Game {
         document.getElementById('equipmentSlots').style.display = 'flex';
         
         this.player = new Player(0, 0, this.charIds[this.charIdx]);
-        this.enemies = []; this.boss = null; this.proj = []; this.eProj = []; this.pickups = []; this.items = []; this.texts = []; this.fx = [];
+        this.enemies = []; this.boss = null; this.proj = []; this.eProj = []; this.pickups = []; this.items = []; this.texts = []; this.fx = []; this.spriteEffects = [];
         this.particles.list = []; this.particles.stains = [];
         this.time = 0; this.spawnT = 0; this.bossSpawned = false; this.bossWarnShown = false;
         this.setupSlots(); this.updateSlots();
@@ -854,8 +1170,12 @@ class Game {
     loop(t) {
         const dt = Math.min((t - this.lastTime) / 1000, 0.07);
         this.lastTime = t;
-        if (this.state === 'playing') this.update(dt);
-        this.draw();
+        if (this.state === 'loading') {
+            this.drawLoading();
+        } else {
+            if (this.state === 'playing') this.update(dt);
+            this.draw();
+        }
         requestAnimationFrame(t => this.loop(t));
     }
     
@@ -997,6 +1317,10 @@ class Game {
         
         this.texts = this.texts.filter(t => { t.update(dt); return t.life > 0; });
         this.particles.update(dt);
+        
+        // Update sprite effects
+        this.spriteEffects = this.spriteEffects.filter(e => { e.update(dt); return !e.done; });
+        
         this.updateHUD();
         this.updateSlots();
     }
@@ -1016,6 +1340,10 @@ class Game {
         this.player.kills++;
         this.audio.pickup();
         this.particles.blood(enemy.x, enemy.y);
+        
+        // Add death effect
+        this.spriteEffects.push(new SpriteEffect(enemy.x, enemy.y, 'fx_explosion', 32, 32, 7, 0.4, 1.5));
+        
         this.pickups.push(new Pickup(enemy.x, enemy.y, 'xp', enemy.xp));
         if (Math.random() < 0.18) this.pickups.push(new Pickup(enemy.x + (Math.random() - 0.5) * 12, enemy.y + (Math.random() - 0.5) * 12, 'gold', 1 + Math.floor(this.time / 55)));
         if (Math.random() < 0.012 * this.player.luck) this.dropItem(enemy.x, enemy.y);
@@ -1058,18 +1386,58 @@ class Game {
     collectItem(drop) {
         const item = ITEMS[drop.id];
         switch (item.effect) {
-            case 'heal': this.player.hp = Math.min(this.player.maxHp, this.player.hp + item.val); this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} HP`, '#0f0')); break;
-            case 'fullHeal': this.player.maxHp += item.val; this.player.hp = this.player.maxHp; this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'شفاء كامل!', '#0f0', 16)); break;
-            case 'gold': this.player.gold += Math.round(item.val * this.player.goldMult); break;
-            case 'tempSpeed': this.player.tempBuffs.push({ type: 'speed', val: item.val, dur: item.dur }); break;
-            case 'tempDmg': this.player.tempBuffs.push({ type: 'dmg', val: item.val, dur: item.dur }); break;
-            case 'tempAtkSpd': this.player.tempBuffs.push({ type: 'atkSpd', val: item.val, dur: item.dur }); break;
-            case 'shield': this.player.shield += item.val; break;
-            case 'slow': this.globalSlow = item.dur; break;
-            case 'revive': this.player.hasRevive = true; this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'إحياء محفوظ!', '#ffd700')); break;
-            case 'permGold': this.player.goldMult += item.val; break;
-            case 'randomEquip': this.giveRandomEquip(); break;
-            case 'moreEnemies': this.player.extraEnemySpawn += item.val; this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'أعداء أكثر!', '#f44')); break;
+            case 'heal': 
+                this.player.hp = Math.min(this.player.maxHp, this.player.hp + item.val); 
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} HP`, '#0f0')); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_heal', 24, 24, 6, 0.5, 2));
+                break;
+            case 'fullHeal': 
+                this.player.maxHp += item.val; 
+                this.player.hp = this.player.maxHp; 
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'شفاء كامل!', '#0f0', 16)); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_heal', 24, 24, 6, 0.6, 2.5));
+                break;
+            case 'gold': 
+                this.player.gold += Math.round(item.val * this.player.goldMult); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
+                break;
+            case 'tempSpeed': 
+                this.player.tempBuffs.push({ type: 'speed', val: item.val, dur: item.dur }); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.4, 1.8));
+                break;
+            case 'tempDmg': 
+                this.player.tempBuffs.push({ type: 'dmg', val: item.val, dur: item.dur }); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_fire_small', 24, 24, 6, 0.4, 1.8));
+                break;
+            case 'tempAtkSpd': 
+                this.player.tempBuffs.push({ type: 'atkSpd', val: item.val, dur: item.dur }); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.4, 1.8));
+                break;
+            case 'shield': 
+                this.player.shield += item.val; 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_circle', 24, 24, 5, 0.5, 2));
+                break;
+            case 'slow': 
+                this.globalSlow = item.dur; 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_ice', 24, 24, 5, 0.5, 2));
+                break;
+            case 'revive': 
+                this.player.hasRevive = true; 
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'إحياء محفوظ!', '#ffd700')); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.6, 2.5));
+                break;
+            case 'permGold': 
+                this.player.goldMult += item.val; 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'randomEquip': 
+                this.giveRandomEquip(); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.5, 2.5));
+                break;
+            case 'moreEnemies': 
+                this.player.extraEnemySpawn += item.val; 
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'أعداء أكثر!', '#f44')); 
+                break;
         }
     }
     
@@ -1184,55 +1552,236 @@ class Game {
         const ctx = this.ctx;
         this.drawBg();
         this.particles.draw(ctx, this.cam);
-        for (const p of this.pickups) p.draw(ctx, this.cam);
+        for (const p of this.pickups) p.draw(ctx, this.cam, this.assets);
         for (const i of this.items) i.draw(ctx, this.cam);
         
+        // Draw effects
         for (const f of this.fx) {
             const sx = f.x - this.cam.x, sy = f.y - this.cam.y;
-            if (f.type === 'lightning') { ctx.strokeStyle = `rgba(255, 255, 100, ${f.life / 0.2})`; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(sx, sy - 350); ctx.lineTo(sx, sy); ctx.stroke(); ctx.fillStyle = `rgba(255, 255, 160, ${f.life / 0.2 * 0.35})`; ctx.beginPath(); ctx.arc(sx, sy, 20, 0, Math.PI * 2); ctx.fill(); }
-            else if (f.type === 'meteor' && f.delay <= 0) { if (f.life > 0.35) { ctx.strokeStyle = 'rgba(255, 70, 0, 0.35)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(sx, sy, f.radius, 0, Math.PI * 2); ctx.stroke(); } else { ctx.fillStyle = 'rgba(255, 70, 0, 0.2)'; ctx.beginPath(); ctx.arc(sx, sy, f.radius * (1 - f.life / 0.35), 0, Math.PI * 2); ctx.fill(); } }
-            else if (f.type === 'tornado') { ctx.strokeStyle = 'rgba(160, 140, 110, 0.4)'; ctx.lineWidth = 1.5; for (let i = 0; i < 2; i++) { ctx.beginPath(); ctx.arc(sx, sy, f.radius - i * 7, 0, Math.PI * 2); ctx.stroke(); } }
+            if (f.type === 'lightning') { 
+                ctx.strokeStyle = `rgba(255, 255, 100, ${f.life / 0.2})`; 
+                ctx.lineWidth = 3; 
+                ctx.beginPath(); 
+                ctx.moveTo(sx, sy - 350); 
+                // Zigzag lightning
+                for (let i = 0; i < 10; i++) {
+                    ctx.lineTo(sx + (Math.random() - 0.5) * 30, sy - 350 + i * 35);
+                }
+                ctx.lineTo(sx, sy); 
+                ctx.stroke(); 
+                ctx.fillStyle = `rgba(255, 255, 160, ${f.life / 0.2 * 0.4})`; 
+                ctx.beginPath(); 
+                ctx.arc(sx, sy, 25, 0, Math.PI * 2); 
+                ctx.fill(); 
+            }
+            else if (f.type === 'meteor' && f.delay <= 0) { 
+                if (f.life > 0.35) { 
+                    ctx.strokeStyle = 'rgba(255, 70, 0, 0.4)'; 
+                    ctx.lineWidth = 2; 
+                    ctx.beginPath(); 
+                    ctx.arc(sx, sy, f.radius, 0, Math.PI * 2); 
+                    ctx.stroke(); 
+                    // Incoming meteor visual
+                    ctx.fillStyle = 'rgba(255, 100, 0, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(sx, sy - (f.life - 0.35) * 200, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                } else { 
+                    ctx.fillStyle = 'rgba(255, 70, 0, 0.3)'; 
+                    ctx.beginPath(); 
+                    ctx.arc(sx, sy, f.radius * (1 - f.life / 0.35), 0, Math.PI * 2); 
+                    ctx.fill(); 
+                } 
+            }
+            else if (f.type === 'tornado') { 
+                ctx.strokeStyle = 'rgba(160, 140, 110, 0.5)'; 
+                ctx.lineWidth = 2; 
+                for (let i = 0; i < 3; i++) { 
+                    ctx.beginPath(); 
+                    ctx.arc(sx, sy, f.radius - i * 8, 0, Math.PI * 2); 
+                    ctx.stroke(); 
+                } 
+            }
         }
         
-        for (const e of this.enemies) e.draw(ctx, this.cam);
-        if (this.boss) this.boss.draw(ctx, this.cam);
-        this.player.draw(ctx, this.cam);
+        // Draw enemies with sprites
+        for (const e of this.enemies) e.draw(ctx, this.cam, this.assets);
+        if (this.boss) this.boss.draw(ctx, this.cam, this.assets);
         
-        for (const p of this.proj) { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x - this.cam.x, p.y - this.cam.y, p.size, 0, Math.PI * 2); ctx.fill(); }
-        for (const p of this.eProj) { ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x - this.cam.x, p.y - this.cam.y, p.size, 0, Math.PI * 2); ctx.fill(); }
+        // Draw player with sprite
+        this.player.draw(ctx, this.cam, this.assets);
+        
+        // Draw projectiles with better visuals
+        for (const p of this.proj) { 
+            const px = p.x - this.cam.x, py = p.y - this.cam.y;
+            
+            if (p.type === 'fire') {
+                // Fire projectile with glow
+                ctx.shadowColor = '#ff4500';
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = '#ff6600';
+                ctx.beginPath();
+                ctx.arc(px, py, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffcc00';
+                ctx.beginPath();
+                ctx.arc(px, py, p.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            } else {
+                ctx.fillStyle = p.color; 
+                ctx.beginPath(); 
+                ctx.arc(px, py, p.size, 0, Math.PI * 2); 
+                ctx.fill();
+            }
+            
+            // Trail effect
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(px - p.vx * 0.015, py - p.vy * 0.015, p.size * 0.65, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 0.2;
+            ctx.beginPath();
+            ctx.arc(px - p.vx * 0.03, py - p.vy * 0.03, p.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+        for (const p of this.eProj) { 
+            ctx.fillStyle = p.color; 
+            ctx.beginPath(); 
+            ctx.arc(p.x - this.cam.x, p.y - this.cam.y, p.size, 0, Math.PI * 2); 
+            ctx.fill(); 
+        }
         for (const t of this.texts) t.draw(ctx, this.cam);
+        
+        // Draw sprite effects
+        for (const e of this.spriteEffects) e.draw(ctx, this.cam, this.assets);
         
         this.drawLighting();
         
-        if (this.input.joy) { ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.beginPath(); ctx.arc(80, this.canvas.height - 80, 50, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = 'rgba(255, 215, 0, 0.3)'; ctx.beginPath(); ctx.arc(80 + this.input.joy.x * 30, this.canvas.height - 80 + this.input.joy.y * 30, 18, 0, Math.PI * 2); ctx.fill(); }
+        // Virtual joystick for mobile
+        if (this.input.joy) { 
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.12)'; 
+            ctx.beginPath(); 
+            ctx.arc(80, this.canvas.height - 80, 55, 0, Math.PI * 2); 
+            ctx.fill(); 
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.35)'; 
+            ctx.beginPath(); 
+            ctx.arc(80 + this.input.joy.x * 35, this.canvas.height - 80 + this.input.joy.y * 35, 20, 0, Math.PI * 2); 
+            ctx.fill(); 
+        }
         
+        // Boss health bar
         if (this.boss) {
-            const bw = Math.min(320, this.canvas.width * 0.75), bx = (this.canvas.width - bw) / 2;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'; ctx.fillRect(bx - 2, 46, bw + 4, 22);
-            ctx.fillStyle = '#333'; ctx.fillRect(bx, 48, bw, 18);
-            ctx.fillStyle = this.boss.phase === 3 ? '#f00' : this.boss.phase === 2 ? '#f80' : '#ff0';
-            ctx.fillRect(bx, 48, bw * (this.boss.hp / this.boss.maxHp), 18);
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Cairo'; ctx.textAlign = 'center';
-            ctx.fillText(`${BOSS.name} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, 44);
+            const bw = Math.min(350, this.canvas.width * 0.8), bx = (this.canvas.width - bw) / 2;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
+            ctx.fillRect(bx - 3, 44, bw + 6, 26);
+            ctx.fillStyle = '#222'; 
+            ctx.fillRect(bx, 47, bw, 20);
+            const hpColor = this.boss.phase === 3 ? '#ff0000' : this.boss.phase === 2 ? '#ff6600' : '#ffcc00';
+            ctx.fillStyle = hpColor;
+            ctx.fillRect(bx, 47, bw * (this.boss.hp / this.boss.maxHp), 20);
+            ctx.fillStyle = '#fff'; 
+            ctx.font = 'bold 12px Cairo'; 
+            ctx.textAlign = 'center';
+            ctx.fillText(`👹 ${BOSS.name} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, 42);
         }
     }
     
     drawBg() {
         const ctx = this.ctx, ts = CONFIG.TILE_SIZE;
-        const sx = Math.floor(this.cam.x / ts) - 1, sy = Math.floor(this.cam.y / ts) - 1;
-        const ex = Math.ceil((this.cam.x + this.canvas.width) / ts) + 1, ey = Math.ceil((this.cam.y + this.canvas.height) / ts) + 1;
-        for (let y = sy; y <= ey; y++) {
-            for (let x = sx; x <= ex; x++) {
-                const px = x * ts - this.cam.x, py = y * ts - this.cam.y;
-                const n = Math.sin(x * 0.35) * Math.cos(y * 0.35) * 0.07;
-                let r = 210, g = 180, b = 140;
-                if (this.city === 'baghdad') { r = 130; g = 170; b = 130; }
-                ctx.fillStyle = `rgb(${Math.floor(r + n * 22)}, ${Math.floor(g + n * 18)}, ${Math.floor(b + n * 12)})`;
-                ctx.fillRect(px, py, ts + 1, ts + 1);
-                const seed = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
-                if (seed < 0.012) { ctx.fillStyle = '#555'; ctx.beginPath(); ctx.arc(px + ts / 2, py + ts / 2, 4 + seed * 5, 0, Math.PI * 2); ctx.fill(); }
-                else if (this.city === 'badaya' && seed < 0.022) { ctx.fillStyle = '#3a2518'; ctx.fillRect(px + ts / 2 - 2, py + ts / 2 - 12, 4, 16); ctx.fillStyle = '#2a4a18'; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(px + ts / 2 + Math.cos(i * 1.4) * 9, py + ts / 2 - 14 + Math.sin(i * 1.4) * 4, 7, 3, i * 0.7, 0, Math.PI * 2); ctx.fill(); } }
-                else if (this.city === 'baghdad' && seed < 0.035) { ctx.fillStyle = '#3a5a30'; for (let i = 0; i < 3; i++) ctx.fillRect(px + ts / 3 + i * 7, py + ts / 2, 1.5, 6); }
+        const sandTile = this.assets.get('sand_tile');
+        
+        // If we have the sand tile, use it as a repeating pattern
+        if (sandTile && this.city === 'badaya') {
+            ctx.save();
+            ctx.translate(-this.cam.x % ts, -this.cam.y % ts);
+            
+            if (!this.sandTilePattern) {
+                this.sandTilePattern = ctx.createPattern(sandTile, 'repeat');
+            }
+            
+            if (this.sandTilePattern) {
+                ctx.fillStyle = this.sandTilePattern;
+                ctx.fillRect(0, 0, this.canvas.width + ts * 2, this.canvas.height + ts * 2);
+            }
+            ctx.restore();
+            
+            // Add some decorations on top
+            const sx = Math.floor(this.cam.x / ts) - 1, sy = Math.floor(this.cam.y / ts) - 1;
+            const ex = Math.ceil((this.cam.x + this.canvas.width) / ts) + 1, ey = Math.ceil((this.cam.y + this.canvas.height) / ts) + 1;
+            
+            for (let y = sy; y <= ey; y++) {
+                for (let x = sx; x <= ex; x++) {
+                    const px = x * ts - this.cam.x, py = y * ts - this.cam.y;
+                    const seed = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
+                    
+                    // Rocks
+                    if (seed < 0.008) { 
+                        ctx.fillStyle = '#6a6050'; 
+                        ctx.beginPath(); 
+                        ctx.arc(px + ts / 2, py + ts / 2, 5 + seed * 8, 0, Math.PI * 2); 
+                        ctx.fill(); 
+                    }
+                    // Palm trees
+                    else if (seed < 0.018) { 
+                        // Trunk
+                        ctx.fillStyle = '#5a3520'; 
+                        ctx.fillRect(px + ts / 2 - 3, py + ts / 2 - 16, 6, 20); 
+                        // Leaves
+                        ctx.fillStyle = '#3a6a28'; 
+                        for (let i = 0; i < 5; i++) { 
+                            ctx.beginPath(); 
+                            ctx.ellipse(px + ts / 2 + Math.cos(i * 1.3) * 12, py + ts / 2 - 18 + Math.sin(i * 1.3) * 6, 10, 4, i * 0.8, 0, Math.PI * 2); 
+                            ctx.fill(); 
+                        } 
+                    }
+                    // Small bushes
+                    else if (seed < 0.028) {
+                        ctx.fillStyle = '#5a7a48';
+                        ctx.beginPath();
+                        ctx.arc(px + ts / 2, py + ts / 2, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+        } else {
+            // Fallback for no tile or Baghdad
+            const sx = Math.floor(this.cam.x / ts) - 1, sy = Math.floor(this.cam.y / ts) - 1;
+            const ex = Math.ceil((this.cam.x + this.canvas.width) / ts) + 1, ey = Math.ceil((this.cam.y + this.canvas.height) / ts) + 1;
+            
+            for (let y = sy; y <= ey; y++) {
+                for (let x = sx; x <= ex; x++) {
+                    const px = x * ts - this.cam.x, py = y * ts - this.cam.y;
+                    const n = Math.sin(x * 0.35) * Math.cos(y * 0.35) * 0.07;
+                    let r = 210, g = 180, b = 140;
+                    if (this.city === 'baghdad') { r = 130; g = 170; b = 130; }
+                    ctx.fillStyle = `rgb(${Math.floor(r + n * 22)}, ${Math.floor(g + n * 18)}, ${Math.floor(b + n * 12)})`;
+                    ctx.fillRect(px, py, ts + 1, ts + 1);
+                    
+                    const seed = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
+                    if (seed < 0.012) { 
+                        ctx.fillStyle = '#555'; 
+                        ctx.beginPath(); 
+                        ctx.arc(px + ts / 2, py + ts / 2, 4 + seed * 5, 0, Math.PI * 2); 
+                        ctx.fill(); 
+                    }
+                    else if (this.city === 'badaya' && seed < 0.022) { 
+                        ctx.fillStyle = '#3a2518'; 
+                        ctx.fillRect(px + ts / 2 - 2, py + ts / 2 - 12, 4, 16); 
+                        ctx.fillStyle = '#2a4a18'; 
+                        for (let i = 0; i < 4; i++) { 
+                            ctx.beginPath(); 
+                            ctx.ellipse(px + ts / 2 + Math.cos(i * 1.4) * 9, py + ts / 2 - 14 + Math.sin(i * 1.4) * 4, 7, 3, i * 0.7, 0, Math.PI * 2); 
+                            ctx.fill(); 
+                        } 
+                    }
+                    else if (this.city === 'baghdad' && seed < 0.035) { 
+                        ctx.fillStyle = '#3a5a30'; 
+                        for (let i = 0; i < 3; i++) ctx.fillRect(px + ts / 3 + i * 7, py + ts / 2, 1.5, 6); 
+                    }
+                }
             }
         }
     }
