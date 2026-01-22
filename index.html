@@ -6,8 +6,22 @@
     <title>ذهب أصفر أو دم أحمر - Gold or Blood</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Changa:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Custom Pixel Arabic Font */
+        @font-face {
+            font-family: 'PixelAE';
+            src: url('assets/font/PixelAE-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'PixelAE';
+            src: url('assets/font/PixelAE-Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
-        body { background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%); font-family: 'Cairo', 'Changa', sans-serif; overflow: hidden; min-height: 100vh; color: #fff; }
+        body { background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%); font-family: 'PixelAE', 'Cairo', sans-serif; overflow: hidden; min-height: 100vh; color: #fff; }
         #gameCanvas { display: block; position: absolute; top: 0; left: 0; }
         
         .rarity-common { color: #9d9d9d; }
@@ -45,7 +59,7 @@
         .city-desc { font-size: 0.7rem; color: #888; }
         .city-locked { font-size: 0.7rem; color: #f44; margin-top: 8px; }
         
-        .btn { padding: 12px 40px; font-size: 1.1rem; font-family: 'Cairo', sans-serif; font-weight: 700; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
+        .btn { padding: 12px 40px; font-size: 1.1rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
         .btn-primary { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4); }
         .btn-primary:hover { transform: scale(1.05); box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5); }
         .high-score { margin-top: 15px; font-size: 0.8rem; color: #666; }
@@ -91,7 +105,7 @@
         .item-pickup-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 8px; }
         .item-pickup-rarity { font-size: 0.85rem; margin-bottom: 12px; padding: 4px 12px; border-radius: 10px; display: inline-block; }
         .item-pickup-desc { font-size: 0.95rem; color: #ccc; margin-bottom: 20px; line-height: 1.5; }
-        .item-pickup-btn { padding: 10px 30px; font-size: 1rem; font-family: 'Cairo', sans-serif; font-weight: 700; border: none; border-radius: 25px; cursor: pointer; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
+        .item-pickup-btn { padding: 10px 30px; font-size: 1rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: none; border-radius: 25px; cursor: pointer; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
         
         #gameOverScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 300; }
         .game-over-title { font-size: 2rem; color: #ff0000; margin-bottom: 15px; text-shadow: 0 0 20px rgba(255, 0, 0, 0.8); }
@@ -120,7 +134,7 @@
         .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #ffd700; border-radius: 50%; cursor: pointer; }
         .volume-slider::-moz-range-thumb { width: 20px; height: 20px; background: #ffd700; border-radius: 50%; cursor: pointer; border: none; }
         .pause-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 25px; }
-        .pause-btn { padding: 12px 25px; font-size: 1rem; font-family: 'Cairo', sans-serif; font-weight: 700; border: none; border-radius: 25px; cursor: pointer; transition: all 0.2s; }
+        .pause-btn { padding: 12px 25px; font-size: 1rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: none; border-radius: 25px; cursor: pointer; transition: all 0.2s; }
         .pause-btn-resume { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
         .pause-btn-resume:hover { transform: scale(1.05); }
         .pause-btn-quit { background: rgba(255,0,0,0.2); border: 2px solid #f44; color: #f44; }
@@ -934,7 +948,7 @@ class Particles {
 class FloatText {
     constructor(x, y, text, color = '#fff', size = 14) { this.x = x; this.y = y; this.text = text; this.color = color; this.size = size; this.life = 0.7; this.vy = -45; }
     update(dt) { this.y += this.vy * dt; this.life -= dt; }
-    draw(ctx, cam) { ctx.globalAlpha = this.life / 0.7; ctx.fillStyle = this.color; ctx.font = `bold ${this.size}px Cairo`; ctx.textAlign = 'center'; ctx.fillText(this.text, this.x - cam.x, this.y - cam.y); ctx.globalAlpha = 1; }
+    draw(ctx, cam) { ctx.globalAlpha = this.life / 0.7; ctx.fillStyle = this.color; ctx.font = `bold ${this.size}px PixelAE, Cairo`; ctx.textAlign = 'center'; ctx.fillText(this.text, this.x - cam.x, this.y - cam.y); ctx.globalAlpha = 1; }
 }
 
 // ==================== SPRITE EFFECTS ====================
@@ -1961,14 +1975,14 @@ class Game {
         
         // Game title
         ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 32px Cairo';
+        ctx.font = 'bold 32px PixelAE, Cairo';
         ctx.textAlign = 'center';
         ctx.fillText('ذهب أصفر أو دم أحمر', cx, cy - 60);
         
         // Loading text with animation
         const dots = '.'.repeat(Math.floor(time * 2) % 4);
         ctx.fillStyle = '#ffffff';
-        ctx.font = '20px Cairo';
+        ctx.font = '20px PixelAE, Cairo';
         ctx.fillText('جاري تحميل اللعبة' + dots, cx, cy);
         
         // Loading bar
@@ -1991,7 +2005,7 @@ class Game {
         
         // Sub text
         ctx.fillStyle = '#666';
-        ctx.font = '14px Cairo';
+        ctx.font = '14px PixelAE, Cairo';
         ctx.fillText('Loading game assets...', cx, cy + 60);
     }
     
@@ -3018,7 +3032,7 @@ class Game {
             ctx.fillStyle = hpColor;
             ctx.fillRect(bx, 47, bw * (this.boss.hp / this.boss.maxHp), 20);
             ctx.fillStyle = '#fff'; 
-            ctx.font = 'bold 12px Cairo'; 
+            ctx.font = 'bold 12px PixelAE, Cairo'; 
             ctx.textAlign = 'center';
             ctx.fillText(`👹 ${BOSS.name} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, 42);
         }
