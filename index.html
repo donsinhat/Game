@@ -279,15 +279,15 @@ function getRandomRarity() {
 const CHARACTERS = {
     abuSulaiman: {
         name: 'أبو سليمان', title: 'التاجر الثري',
-        desc: 'تاجر ثري يحب الذهب أكثر من أي شيء',
+        desc: 'اولاو يحب الدراهم',
         weapon: 'agal',
         stats: { gold: 1.25, luck: 1.1, hp: 100, speed: 200, crit: 0, enemyBuff: 0 },
         passiveText: ['+25% ذهب', '+10% حظ'],
         colors: { body: '#f5f5f5', head: '#cc0000', skin: '#d4a574', legs: '#2a2a2a' }
     },
     jayzen: {
-        name: 'جيزان', title: 'المقاتل الشرس',
-        desc: 'مقاتل عنيد لا يخاف الموت',
+        name: 'جيزن', title: 'المقاتل الشرس',
+        desc: 'لحجي بس متعافي',
         weapon: 'rock',
         stats: { gold: 1, luck: 1, hp: 115, speed: 200, dmgReduce: 0.3, crit: 0, enemyBuff: 0 },
         passiveText: ['-30% ضرر مستلم', '+15% صحة'],
@@ -295,7 +295,7 @@ const CHARACTERS = {
     },
     noura: {
         name: 'نورة', title: 'المرأة القوية',
-        desc: 'امرأة قوية تجمع كل شيء حولها',
+        desc: 'سترونق اندبندت ومن',
         weapon: 'aura',
         stats: { gold: 1, luck: 1, hp: 100, speed: 200, pickup: 2.5, xpMult: 1.2, crit: 0, enemyBuff: 0 },
         passiveText: ['+150% مغناطيس', '+20% خبرة'],
@@ -358,10 +358,10 @@ const BOOKS = {
 // ==================== ITEMS ====================
 const ITEMS = {
     // Common (شائع)
-    bread: { name: 'خبز', desc: 'يستعيد 10 صحة', rarity: 'COMMON', effect: 'heal', val: 10, icon: '🍞' },
-    feather: { name: 'ريشة', desc: '+15% سرعة حركة لمدة 10 ثواني', rarity: 'COMMON', effect: 'tempSpeed', val: 0.15, dur: 10, icon: '🪶' },
-    pebble: { name: 'حصاة', desc: '+10% ضرر لمدة 12 ثانية', rarity: 'COMMON', effect: 'tempDmg', val: 0.1, dur: 12, icon: '🪨' },
-    herb: { name: 'عشبة', desc: 'يستعيد 5 صحة', rarity: 'COMMON', effect: 'heal', val: 5, icon: '🌿' },
+    mirinda: { name: 'حمضيات', desc: 'حار يلد .. ينعنش ويرجع لك 10 هيل', rarity: 'COMMON', effect: 'heal', val: 10, icon: '🍊' },
+    dalla: { name: 'دله قهوه', desc: 'المهيله تخليك نشيط واسرع 10 ثواني', rarity: 'COMMON', effect: 'tempSpeed', val: 0.15, dur: 10, icon: '☕' },
+    pebble: { name: 'حب شمسي', desc: '+10% ضرر لمدة 12 ثانية', rarity: 'COMMON', effect: 'tempDmg', val: 0.1, dur: 12, icon: '🌻' },
+    klega: { name: 'كليجه', desc: 'اولاو من حلاته تهيلك 5', rarity: 'COMMON', effect: 'heal', val: 5, icon: '🍪' },
     copper: { name: 'نحاس', desc: '+5 ذهب', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙' },
     
     // Rare (نادر)
@@ -374,7 +374,7 @@ const ITEMS = {
     // Legendary (أسطوري)
     elixir: { name: 'إكسير', desc: 'يستعيد كل الصحة ويزيد الصحة القصوى 20', rarity: 'LEGENDARY', effect: 'fullHeal', val: 20, icon: '⚗️' },
     dragonHeart: { name: 'قلب التنين', desc: '+50% ضرر لمدة 25 ثانية', rarity: 'LEGENDARY', effect: 'tempDmg', val: 0.5, dur: 25, icon: '❤️‍🔥' },
-    phoenixEye: { name: 'عين العنقاء', desc: 'إذا مت، تعود للحياة مرة واحدة', rarity: 'LEGENDARY', effect: 'revive', val: 1, icon: '👁️' },
+    arika: { name: 'عريكه', desc: 'إذا مت، تعود للحياة مرة واحدة', rarity: 'LEGENDARY', effect: 'revive', val: 1, icon: '🍚' },
     crown: { name: 'تاج ذهبي', desc: '+50% ذهب بشكل دائم', rarity: 'LEGENDARY', effect: 'permGold', val: 0.5, icon: '👑' },
     star: { name: 'نجمة الصحراء', desc: 'تحصل على سلاح أو كتاب عشوائي', rarity: 'LEGENDARY', effect: 'randomEquip', val: 1, icon: '⭐' },
     khazouq: { name: 'خازوق', desc: 'يزيد نسبة ظهور الأعداء 10%، أنت غبي ليش أخذته؟', rarity: 'LEGENDARY', effect: 'moreEnemies', val: 0.10, icon: '🍆' }
