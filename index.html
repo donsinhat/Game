@@ -464,7 +464,9 @@ class AssetLoader {
             const img = new Image();
             img.onload = () => { this.images[name] = img; resolve(img); };
             img.onerror = reject;
-            img.src = src;
+            // Add cache buster to force reload
+            const cacheBuster = '?v=' + Date.now();
+            img.src = src + cacheBuster;
         });
     }
     
