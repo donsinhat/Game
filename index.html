@@ -1616,9 +1616,11 @@ class Game {
             const px = p.x - this.cam.x, py = p.y - this.cam.y;
             
             if (p.type === 'fire') {
-                // Fire projectile with glow
-                ctx.shadowColor = '#ff4500';
-                ctx.shadowBlur = 15;
+                // Fire projectile with glow (no shadow for performance)
+                ctx.fillStyle = '#ff4500';
+                ctx.beginPath();
+                ctx.arc(px, py, p.size + 3, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.fillStyle = '#ff6600';
                 ctx.beginPath();
                 ctx.arc(px, py, p.size, 0, Math.PI * 2);
@@ -1627,7 +1629,6 @@ class Game {
                 ctx.beginPath();
                 ctx.arc(px, py, p.size * 0.5, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.shadowBlur = 0;
             } else {
                 ctx.fillStyle = p.color; 
                 ctx.beginPath(); 
@@ -1787,17 +1788,20 @@ class Game {
     }
     
     drawLighting() {
+        // Subtle vignette effect only - no heavy darkness
         const ctx = this.ctx;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        const cx = this.canvas.width / 2, cy = this.canvas.height / 2;
+        const maxDist = Math.max(this.canvas.width, this.canvas.height) * 0.7;
+        
+        // Very subtle edge darkening (vignette)
+        const vignette = ctx.createRadialGradient(cx, cy, maxDist * 0.5, cx, cy, maxDist);
+        vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vignette.addColorStop(1, 'rgba(0, 0, 0, 0.15)');
+        ctx.fillStyle = vignette;
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        const px = this.player.x - this.cam.x, py = this.player.y - this.cam.y;
-        ctx.globalCompositeOperation = 'destination-out';
-        const g = ctx.createRadialGradient(px, py, 0, px, py, CONFIG.PLAYER_LIGHT_RADIUS);
-        g.addColorStop(0, 'rgba(0, 0, 0, 1)'); g.addColorStop(0.5, 'rgba(0, 0, 0, 0.5)'); g.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, CONFIG.PLAYER_LIGHT_RADIUS, 0, Math.PI * 2); ctx.fill();
-        for (const p of this.proj) { const sx = p.x - this.cam.x, sy = p.y - this.cam.y; const pg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 28); pg.addColorStop(0, 'rgba(0, 0, 0, 0.5)'); pg.addColorStop(1, 'rgba(0, 0, 0, 0)'); ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(sx, sy, 28, 0, Math.PI * 2); ctx.fill(); }
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = 'rgba(255, 180, 80, 0.025)';
+        
+        // Warm tint overlay
+        ctx.fillStyle = 'rgba(255, 200, 100, 0.02)';
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
