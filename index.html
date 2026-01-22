@@ -527,11 +527,11 @@ class AssetLoader {
             ['char_006', 'assets/characters/Char_006.png'],
             ['char_006_idle', 'assets/characters/Char_006_Idle.png'],
             
-            // Wind Hashashin (Bedouin) sprites - 4 separate images for each direction
-            ['bedouin_down', 'assets/characters/wind_hashashin/wind_hashashin_1.png'],
-            ['bedouin_left', 'assets/characters/wind_hashashin/wind_hashashin_2.png'],
-            ['bedouin_right', 'assets/characters/wind_hashashin/wind_hashashin_3.png'],
-            ['bedouin_up', 'assets/characters/wind_hashashin/wind_hashashin_4.png'],
+            // Wind Hashashin (Bedouin) sprites - 4 frames for idle animation
+            ['bedouin_frame1', 'assets/characters/wind_hashashin/wind_hashashin_1.png'],
+            ['bedouin_frame2', 'assets/characters/wind_hashashin/wind_hashashin_2.png'],
+            ['bedouin_frame3', 'assets/characters/wind_hashashin/wind_hashashin_3.png'],
+            ['bedouin_frame4', 'assets/characters/wind_hashashin/wind_hashashin_4.png'],
             
             // Boss sprite (Abu Halza)
             ['boss_halza', 'assets/characters/1769115033155(1).png'],
@@ -649,17 +649,14 @@ const CHAR_SPRITES = {
     abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
     jayzen: { sprite: 'char_006', idle: 'char_006_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
     noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
-    // Wind Hashashin (Bedouin) - 4 separate 32x32 images for each direction
+    // Wind Hashashin (Bedouin) - 4 separate 32x32 frames for idle animation
+    // Flip horizontally for left/right direction
     bedouin: { 
-        type: 'directional', // Special type: separate images for each direction
-        sprites: {
-            down: 'bedouin_down',
-            left: 'bedouin_left', 
-            right: 'bedouin_right',
-            up: 'bedouin_up'
-        },
+        type: 'multiframe', // Separate images as animation frames
+        frames: ['bedouin_frame1', 'bedouin_frame2', 'bedouin_frame3', 'bedouin_frame4'],
         frameWidth: 32, 
-        frameHeight: 32
+        frameHeight: 32,
+        fps: 6 // 6 frames per second as recommended
     },
     hawshabi: { sprite: 'char_004', idle: 'char_004_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
     layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 }
@@ -1136,54 +1133,64 @@ class Player {
         const spriteInfo = CHAR_SPRITES[this.charId];
         const isMoving = Math.abs(this.vx) > 10 || Math.abs(this.vy) > 10;
         
-        // Determine direction
-        let direction = 'down';
-        if (isMoving) {
-            if (Math.abs(this.vx) > Math.abs(this.vy)) {
-                direction = this.vx > 0 ? 'right' : 'left';
-            } else {
-                direction = this.vy > 0 ? 'down' : 'up';
-            }
-        } else {
-            direction = this.facing > 0 ? 'right' : 'left';
+        // Determine facing direction for flip
+        let facingRight = this.facing > 0;
+        if (isMoving && Math.abs(this.vx) > 5) {
+            facingRight = this.vx > 0;
         }
         
         let sprite = null;
-        let drawAsFullImage = false;
         
-        // Check if this is a directional sprite set (separate images for each direction)
-        if (spriteInfo.type === 'directional' && spriteInfo.sprites) {
-            const spriteKey = spriteInfo.sprites[direction];
+        // Check sprite type
+        if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+            // Multi-frame animation (separate images as frames)
+            const fps = spriteInfo.fps || 6;
+            const frameTime = 1 / fps;
+            const totalFrames = spriteInfo.frames.length;
+            const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+            const spriteKey = spriteInfo.frames[currentFrame];
             sprite = assets && assets.get(spriteKey);
-            drawAsFullImage = true;
+            
+            if (sprite) {
+                ctx.imageSmoothingEnabled = false;
+                const scale = 2.5;
+                const drawW = spriteInfo.frameWidth * scale;
+                const drawH = spriteInfo.frameHeight * scale;
+                
+                // Flip horizontally based on facing direction
+                ctx.save();
+                ctx.translate(sx, sy);
+                if (!facingRight) {
+                    ctx.scale(-1, 1); // Flip horizontally
+                }
+                ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
+                ctx.restore();
+            }
         } else {
             // Standard sprite sheet
             const spriteKey = isMoving ? spriteInfo.sprite : spriteInfo.idle;
             sprite = assets && assets.get(spriteKey);
-        }
-        
-        if (sprite && spriteInfo) {
-            ctx.imageSmoothingEnabled = false;
             
-            if (drawAsFullImage) {
-                // Draw entire image (directional sprites - single 32x32 images)
-                const scale = 2.5; // Scale up 32x32 to be visible
-                const drawW = spriteInfo.frameWidth * scale;
-                const drawH = spriteInfo.frameHeight * scale;
-                ctx.drawImage(sprite, sx - drawW / 2, sy - drawH / 2, drawW, drawH);
-            } else {
+            if (sprite && spriteInfo) {
+                ctx.imageSmoothingEnabled = false;
+                
                 // Standard sprite sheet animation
                 const frameTime = 0.15;
                 const totalFrames = spriteInfo.frames || 4;
                 const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
                 const maxRows = spriteInfo.rows || 4;
                 
-                // Map direction to row
+                // Determine direction row
                 let row = 0;
-                if (direction === 'down') row = 0;
-                else if (direction === 'left') row = 1;
-                else if (direction === 'right') row = 2;
-                else if (direction === 'up') row = 3;
+                if (isMoving) {
+                    if (Math.abs(this.vx) > Math.abs(this.vy)) {
+                        row = this.vx > 0 ? 2 : 1;
+                    } else {
+                        row = this.vy > 0 ? 0 : 3;
+                    }
+                } else {
+                    row = facingRight ? 2 : 1;
+                }
                 row = Math.min(row, maxRows - 1);
                 
                 const frameX = currentFrame * spriteInfo.frameWidth;
@@ -1199,7 +1206,9 @@ class Player {
                     sx - drawW / 2, sy - drawH / 2, drawW, drawH
                 );
             }
-        } else {
+        }
+        
+        if (!sprite) {
             // Fallback to simple rendering
             const c = CHARACTERS[this.charId].colors;
             if (this.facing < 0) { ctx.translate(sx, sy); ctx.scale(-1, 1); ctx.translate(-sx, sy); }
@@ -1982,25 +1991,20 @@ class Game {
         let sprite = null;
         let drawAsFullImage = false;
         
-        // Check for directional sprite type
-        if (spriteInfo.type === 'directional' && spriteInfo.sprites) {
-            sprite = this.assets && this.assets.get(spriteInfo.sprites.down);
-            drawAsFullImage = true;
-        } else {
-            sprite = this.assets && this.assets.get(spriteInfo.idle);
-        }
-        
-        if (sprite) {
-            ctx.imageSmoothingEnabled = false;
-            
-            if (drawAsFullImage) {
-                // Draw full image for directional sprites
+        // Check for multiframe sprite type (separate images as animation frames)
+        if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+            sprite = this.assets && this.assets.get(spriteInfo.frames[0]);
+            if (sprite) {
+                ctx.imageSmoothingEnabled = false;
                 const scale = 3;
                 const drawW = spriteInfo.frameWidth * scale;
                 const drawH = spriteInfo.frameHeight * scale;
                 ctx.drawImage(sprite, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
-            } else {
-                // Draw first frame of sprite sheet
+            }
+        } else {
+            sprite = this.assets && this.assets.get(spriteInfo.idle);
+            if (sprite) {
+                ctx.imageSmoothingEnabled = false;
                 const scale = 2;
                 const drawW = spriteInfo.frameWidth * scale;
                 const drawH = spriteInfo.frameHeight * scale;
@@ -2010,7 +2014,9 @@ class Game {
                     (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH
                 );
             }
-        } else {
+        }
+        
+        if (!sprite) {
             // Fallback to simple drawing
             const col = c.colors;
             ctx.fillStyle = col.body; ctx.fillRect(42, 42, 36, 45);
