@@ -519,6 +519,9 @@ class AssetLoader {
             // Desert Rogue (Bedouin) sprite
             ['desert_rogue', 'assets/characters/DesertRogue.png'],
             
+            // Boss sprite (Abu Halza)
+            ['boss_halza', 'assets/characters/1769115033155(1).png'],
+            
             // Enemies - New monster sprites
             ['enemy_wolf', 'assets/enemies/NB_01.png'],
             ['enemy_scorpion', 'assets/enemies/NB_09.png'],
@@ -1342,30 +1345,113 @@ class Boss {
         this.maxHp = BOSS.hp * (1 + buff); this.hp = this.maxHp;
         this.atk = BOSS.atk * (1 + buff); this.spd = BOSS.spd;
         this.phase = 1; this.atkT = 0; this.specT = 0; this.hitFlash = 0;
-        this.width = 70; this.height = 70;
+        this.gasT = 0; // Gas attack timer
+        this.width = 100; this.height = 120;
+        this.facing = 1;
     }
     update(dt, player, game) {
         const pct = this.hp / this.maxHp; this.phase = pct < 0.33 ? 3 : pct < 0.66 ? 2 : 1;
         const dx = player.x - this.x, dy = player.y - this.y, dist = Math.hypot(dx, dy);
+        
+        // Update facing direction
+        if (dx !== 0) this.facing = dx > 0 ? 1 : -1;
+        
         if (dist > 0) { const s = this.spd * (1 + (3 - this.phase) * 0.12); this.x += (dx / dist) * s * dt; this.y += (dy / dist) * s * dt; }
+        
+        // Green gas attack
         this.atkT -= dt;
-        if (this.atkT <= 0) { this.atkT = 1.6 / this.phase; const a = Math.atan2(dy, dx); for (let i = -2; i <= 2; i++) game.eProj.push({ x: this.x, y: this.y, vx: Math.cos(a + i * 0.12) * 200, vy: Math.sin(a + i * 0.12) * 200, dmg: this.atk, life: 2.2, size: 7, color: '#ff4500' }); }
-        if (this.phase >= 2) { this.specT -= dt; if (this.specT <= 0) { this.specT = 3.5; const types = ['wolf', 'scorpion']; for (let i = 0; i < this.phase * 2; i++) { const a = Math.random() * Math.PI * 2; game.enemies.push(new Enemy(this.x + Math.cos(a) * 70, this.y + Math.sin(a) * 70, types[Math.floor(Math.random() * types.length)], game.time, player.enemyBuff)); } } }
+        if (this.atkT <= 0) { 
+            this.atkT = 1.8 / this.phase; 
+            const a = Math.atan2(dy, dx); 
+            // Shoot green gas projectiles
+            for (let i = -3; i <= 3; i++) {
+                game.eProj.push({ 
+                    x: this.x, y: this.y, 
+                    vx: Math.cos(a + i * 0.15) * 180, 
+                    vy: Math.sin(a + i * 0.15) * 180, 
+                    dmg: this.atk * 0.7, life: 2.5, size: 12, 
+                    color: '#44ff44', type: 'gas'
+                }); 
+            }
+            game.audio.tone(150, 0.15, 'sawtooth');
+        }
+        
+        // Poison cloud special attack
+        this.gasT -= dt;
+        if (this.gasT <= 0 && this.phase >= 2) {
+            this.gasT = 4 / this.phase;
+            // Create poison cloud around boss
+            for (let i = 0; i < 8; i++) {
+                const a = (i / 8) * Math.PI * 2;
+                game.eProj.push({
+                    x: this.x + Math.cos(a) * 50, y: this.y + Math.sin(a) * 50,
+                    vx: Math.cos(a) * 60, vy: Math.sin(a) * 60,
+                    dmg: this.atk * 0.4, life: 3, size: 18,
+                    color: '#22aa22', type: 'gas'
+                });
+            }
+        }
+        
+        // Summon minions
+        if (this.phase >= 2) { 
+            this.specT -= dt; 
+            if (this.specT <= 0) { 
+                this.specT = 4; 
+                const types = ['wolf', 'scorpion']; 
+                for (let i = 0; i < this.phase * 2; i++) { 
+                    const a = Math.random() * Math.PI * 2; 
+                    game.enemies.push(new Enemy(this.x + Math.cos(a) * 80, this.y + Math.sin(a) * 80, types[Math.floor(Math.random() * types.length)], game.time, player.enemyBuff)); 
+                } 
+            } 
+        }
         if (this.hitFlash > 0) this.hitFlash -= dt;
     }
     takeDmg(amt, game) { this.hp -= amt; this.hitFlash = 0.06; game.texts.push(new FloatText(this.x + (Math.random() - 0.5) * 25, this.y - 25, Math.round(amt).toString(), '#ff0', 16)); return this.hp <= 0; }
-    draw(ctx, cam) {
+    draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y;
+        
+        // Draw shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(sx, sy + 55, 45, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
         if (this.hitFlash > 0) ctx.globalAlpha = 0.55;
-        ctx.fillStyle = BOSS.color;
-        ctx.beginPath(); ctx.ellipse(sx, sy, 35, 30, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(sx, sy - 30, 22, 16, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ff0';
-        ctx.fillRect(sx - 12, sy - 34, 5, 5); ctx.fillRect(sx + 7, sy - 34, 5, 5);
-        ctx.fillStyle = '#5a0000';
-        ctx.beginPath(); ctx.moveTo(sx - 30, sy - 8); ctx.lineTo(sx - 48, sy - 35); ctx.lineTo(sx - 18, sy - 4); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(sx + 30, sy - 8); ctx.lineTo(sx + 48, sy - 35); ctx.lineTo(sx + 18, sy - 4); ctx.fill();
+        
+        // Try to draw boss sprite
+        const sprite = assets && assets.get('boss_halza');
+        if (sprite) {
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            
+            // Flip based on facing direction
+            if (this.facing < 0) {
+                ctx.translate(sx, sy);
+                ctx.scale(-1, 1);
+                ctx.drawImage(sprite, -60, -70, 120, 140);
+            } else {
+                ctx.drawImage(sprite, sx - 60, sy - 70, 120, 140);
+            }
+            ctx.restore();
+        } else {
+            // Fallback to simple drawing
+            ctx.fillStyle = '#6a0dad';
+            ctx.beginPath(); ctx.ellipse(sx, sy, 40, 35, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(sx, sy - 35, 25, 18, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ff0';
+            ctx.fillRect(sx - 12, sy - 40, 6, 6); ctx.fillRect(sx + 6, sy - 40, 6, 6);
+        }
+        
         ctx.globalAlpha = 1;
+        
+        // Phase indicator glow
+        if (this.phase >= 2) {
+            ctx.strokeStyle = this.phase === 3 ? 'rgba(255, 0, 0, 0.5)' : 'rgba(255, 165, 0, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 65, 0, Math.PI * 2);
+            ctx.stroke();
+        }
     }
 }
 
@@ -2746,10 +2832,28 @@ class Game {
             ctx.globalAlpha = 1;
         }
         for (const p of this.eProj) { 
-            ctx.fillStyle = p.color; 
-            ctx.beginPath(); 
-            ctx.arc(p.x - this.cam.x, p.y - this.cam.y, p.size, 0, Math.PI * 2); 
-            ctx.fill(); 
+            const px = p.x - this.cam.x, py = p.y - this.cam.y;
+            
+            if (p.type === 'gas') {
+                // Green gas effect
+                ctx.fillStyle = 'rgba(34, 170, 34, 0.3)';
+                ctx.beginPath();
+                ctx.arc(px, py, p.size * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(68, 255, 68, 0.5)';
+                ctx.beginPath();
+                ctx.arc(px, py, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(150, 255, 150, 0.7)';
+                ctx.beginPath();
+                ctx.arc(px, py, p.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = p.color; 
+                ctx.beginPath(); 
+                ctx.arc(px, py, p.size, 0, Math.PI * 2); 
+                ctx.fill(); 
+            }
         }
         for (const t of this.texts) t.draw(ctx, this.cam);
         
