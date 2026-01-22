@@ -635,12 +635,15 @@ class AssetLoader {
 
 // Character sprite mappings
 const CHAR_SPRITES = {
-    abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
-    jayzen: { sprite: 'char_006', idle: 'char_006_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
-    noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
+    // Standard 192x192 sprites: 4 columns x 4 rows = 48x48 per frame
+    // Row order: 0=down, 1=left, 2=right, 3=up
+    abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    jayzen: { sprite: 'char_006', idle: 'char_006_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    // DesertRogue 320x160: 8 columns x 4 rows = 40x40 per frame
     bedouin: { sprite: 'desert_rogue', idle: 'desert_rogue', frameWidth: 40, frameHeight: 40, frames: 8, rows: 4 },
-    hawshabi: { sprite: 'char_004', idle: 'char_004_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
-    layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4 }
+    hawshabi: { sprite: 'char_004', idle: 'char_004_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 }
 };
 
 // Enemy sprite mappings - using new monster sprites
