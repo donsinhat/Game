@@ -964,6 +964,13 @@ class Player {
     
     draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y;
+        
+        // Draw shadow under player
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.beginPath();
+        ctx.ellipse(sx, sy + 20, 18, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
         if (this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0) ctx.globalAlpha = 0.35;
         
         // Draw character sprite
@@ -1153,13 +1160,38 @@ class Enemy {
         
         ctx.globalAlpha = 1;
         
-        // Health bar
+        // Health bar with better styling
         if (this.hp < this.maxHp) { 
-            ctx.fillStyle = '#333'; 
-            ctx.fillRect(sx - 18, sy - 28, 36, 5); 
-            ctx.fillStyle = '#f00'; 
-            ctx.fillRect(sx - 18, sy - 28, 36 * (this.hp / this.maxHp), 5); 
+            const barWidth = 36;
+            const barHeight = 5;
+            const barX = sx - barWidth / 2;
+            const barY = sy - 30;
+            const hpPercent = this.hp / this.maxHp;
+            
+            // Background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
+            ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2); 
+            
+            // Health color based on percentage
+            let hpColor;
+            if (hpPercent > 0.5) hpColor = '#00ff00';
+            else if (hpPercent > 0.25) hpColor = '#ffff00';
+            else hpColor = '#ff0000';
+            
+            ctx.fillStyle = hpColor; 
+            ctx.fillRect(barX, barY, barWidth * hpPercent, barHeight);
+            
+            // Border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
         }
+        
+        // Shadow under enemy
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.ellipse(sx, sy + 18, 16, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
