@@ -533,6 +533,12 @@ class AssetLoader {
             ['bedouin_frame3', 'assets/characters/wind_hashashin/wind_hashashin_3.png'],
             ['bedouin_frame4', 'assets/characters/wind_hashashin/wind_hashashin_4.png'],
             
+            // Ground Monk (Jayzen) sprites - 4 frames for idle animation
+            ['jayzen_frame1', 'assets/characters/ground_monk/ground_monk_1.png'],
+            ['jayzen_frame2', 'assets/characters/ground_monk/ground_monk_2.png'],
+            ['jayzen_frame3', 'assets/characters/ground_monk/ground_monk_3.png'],
+            ['jayzen_frame4', 'assets/characters/ground_monk/ground_monk_4.png'],
+            
             // Boss sprite (Abu Halza)
             ['boss_halza', 'assets/characters/1769115033155(1).png'],
             
@@ -647,7 +653,14 @@ const CHAR_SPRITES = {
     // Standard 192x192 sprites: 4 columns x 4 rows = 48x48 per frame
     // Row order: 0=down, 1=left, 2=right, 3=up
     abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
-    jayzen: { sprite: 'char_006', idle: 'char_006_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    // Ground Monk (Jayzen) - 4 separate 32x32 frames for idle animation
+    jayzen: { 
+        type: 'multiframe',
+        frames: ['jayzen_frame1', 'jayzen_frame2', 'jayzen_frame3', 'jayzen_frame4'],
+        frameWidth: 32, 
+        frameHeight: 32,
+        fps: 6
+    },
     noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
     // Wind Hashashin (Bedouin) - 4 separate 32x32 frames for idle animation
     // Flip horizontally for left/right direction
