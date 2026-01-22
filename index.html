@@ -284,10 +284,23 @@ const RARITY = {
     LEGENDARY: { name: 'أسطوري', color: '#ff8000', bonus: 5, weight: 5 }
 };
 
-function getRandomRarity() {
-    const total = Object.values(RARITY).reduce((s, r) => s + r.weight, 0);
+function getRandomRarity(luck = 1) {
+    // Luck affects rarity chances - higher luck = better rarities
+    // Luck multiplies the weight of rare items and reduces common weight
+    const adjustedRarity = {
+        COMMON: { ...RARITY.COMMON, weight: RARITY.COMMON.weight / luck },
+        UNCOMMON: { ...RARITY.UNCOMMON, weight: RARITY.UNCOMMON.weight * Math.sqrt(luck) },
+        RARE: { ...RARITY.RARE, weight: RARITY.RARE.weight * luck },
+        EPIC: { ...RARITY.EPIC, weight: RARITY.EPIC.weight * luck * 1.2 },
+        LEGENDARY: { ...RARITY.LEGENDARY, weight: RARITY.LEGENDARY.weight * luck * 1.5 }
+    };
+    
+    const total = Object.values(adjustedRarity).reduce((s, r) => s + r.weight, 0);
     let r = Math.random() * total;
-    for (const rar of Object.values(RARITY)) { r -= rar.weight; if (r <= 0) return rar; }
+    for (const [key, rar] of Object.entries(adjustedRarity)) { 
+        r -= rar.weight; 
+        if (r <= 0) return RARITY[key]; 
+    }
     return RARITY.COMMON;
 }
 
@@ -398,16 +411,17 @@ const ITEMS = {
 
 // ==================== ENEMIES ====================
 const ENEMIES = {
-    wolf: { name: 'ذئب', hpM: 1, atkM: 1, spdM: 1.2, xp: 2, time: 0, color: '#6a6a6a' },
-    scorpion: { name: 'عقرب', hpM: 0.7, atkM: 0.8, spdM: 1.5, xp: 2, time: 0, color: '#ffa500' },
-    dhub: { name: 'ضب', hpM: 2, atkM: 1.2, spdM: 0.6, xp: 4, time: 60, color: '#5a8a5a', zig: true },
-    snake: { name: 'ثعبان', hpM: 1.2, atkM: 1, spdM: 1, xp: 3, time: 120, color: '#2d5a27', ranged: true },
-    hyena: { name: 'ضبع', hpM: 0.8, atkM: 0.9, spdM: 1.3, xp: 2, time: 180, color: '#8b7355', pack: true },
-    eagle: { name: 'نسر', hpM: 1, atkM: 1.3, spdM: 1.6, xp: 4, time: 240, color: '#4a3728' },
-    lion: { name: 'أسد', hpM: 3, atkM: 2, spdM: 0.8, xp: 8, time: 300, color: '#c4a35a' },
-    djinn: { name: 'جني', hpM: 1.5, atkM: 1.5, spdM: 1.4, xp: 6, time: 360, color: '#4a0080', tp: true },
-    ghoul: { name: 'غول', hpM: 5, atkM: 2.5, spdM: 0.5, xp: 12, time: 420, color: '#2a2a2a' },
-    knight: { name: 'فارس', hpM: 2.5, atkM: 1.8, spdM: 1, xp: 10, time: 480, color: '#1a1a1a' }
+    // Speed reduced by 30% (multiply by 0.7)
+    wolf: { name: 'ذئب', hpM: 1, atkM: 1, spdM: 0.84, xp: 2, time: 0, color: '#6a6a6a' },
+    scorpion: { name: 'عقرب', hpM: 0.7, atkM: 0.8, spdM: 1.05, xp: 2, time: 0, color: '#ffa500' },
+    dhub: { name: 'ضب', hpM: 2, atkM: 1.2, spdM: 0.42, xp: 4, time: 60, color: '#5a8a5a', zig: true },
+    snake: { name: 'ثعبان', hpM: 1.2, atkM: 1, spdM: 0.7, xp: 3, time: 120, color: '#2d5a27', ranged: true },
+    hyena: { name: 'ضبع', hpM: 0.8, atkM: 0.9, spdM: 0.91, xp: 2, time: 180, color: '#8b7355', pack: true },
+    eagle: { name: 'نسر', hpM: 1, atkM: 1.3, spdM: 1.12, xp: 4, time: 240, color: '#4a3728' },
+    lion: { name: 'أسد', hpM: 3, atkM: 2, spdM: 0.56, xp: 8, time: 300, color: '#c4a35a' },
+    djinn: { name: 'جني', hpM: 1.5, atkM: 1.5, spdM: 0.98, xp: 6, time: 360, color: '#4a0080', tp: true },
+    ghoul: { name: 'غول', hpM: 5, atkM: 2.5, spdM: 0.35, xp: 12, time: 420, color: '#2a2a2a' },
+    knight: { name: 'فارس', hpM: 2.5, atkM: 1.8, spdM: 0.7, xp: 10, time: 480, color: '#1a1a1a' }
 };
 
 const BOSS = { name: 'ابو حلزه', hp: 8000, atk: 35, spd: 55, color: '#8b0000' };
@@ -426,6 +440,41 @@ class AssetLoader {
             img.onerror = reject;
             img.src = src;
         });
+    }
+    
+    // Remove white background from enemy sprites
+    removeWhiteBackground(name) {
+        const img = this.images[name];
+        if (!img) return;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // Make white/near-white pixels transparent
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            // If pixel is white or near-white (threshold 240)
+            if (r > 240 && g > 240 && b > 240) {
+                data[i + 3] = 0; // Set alpha to 0 (transparent)
+            }
+            // Also handle light gray backgrounds
+            else if (r > 220 && g > 220 && b > 220 && Math.abs(r - g) < 15 && Math.abs(g - b) < 15) {
+                data[i + 3] = 0;
+            }
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+        
+        // Create new image from processed canvas
+        const newImg = new Image();
+        newImg.src = canvas.toDataURL();
+        this.images[name] = newImg;
     }
     
     async loadAll() {
@@ -512,6 +561,19 @@ class AssetLoader {
         
         try {
             await Promise.all(assets.map(([name, src]) => this.loadImage(name, src)));
+            
+            // Remove white background from enemy sprites
+            const enemySprites = ['enemy_wolf', 'enemy_scorpion', 'enemy_dhub', 'enemy_snake', 
+                                  'enemy_hyena', 'enemy_eagle', 'enemy_lion', 'enemy_djinn', 
+                                  'enemy_ghoul', 'enemy_knight', 'wolf', 'scorpion', 'dhub'];
+            
+            // Small delay to ensure images are fully loaded before processing
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            enemySprites.forEach(name => {
+                if (this.images[name]) this.removeWhiteBackground(name);
+            });
+            
             this.loaded = true;
             console.log('All assets loaded!');
         } catch (e) {
@@ -835,8 +897,9 @@ class Player {
     }
     
     getDmg(w) {
-        let d = CONFIG.WEAPON_BASE_DMG + (w.level - 1) * 0.4;
-        w.upgrades.forEach(u => d += u.rarity.bonus);
+        let d = CONFIG.WEAPON_BASE_DMG + (w.level - 1) * 0.5;
+        // Each upgrade adds damage based on rarity: Common +1, Uncommon +2, Rare +3, Epic +4, Legendary +5
+        w.upgrades.forEach(u => d += u.rarity.bonus * 1.2);
         d *= this.dmgMult;
         this.tempBuffs.filter(b => b.type === 'dmg').forEach(b => d *= (1 + b.val));
         if (this.crit > 0 && Math.random() < this.crit) d *= 2;
@@ -1640,7 +1703,13 @@ class Game {
         if (!this.bossSpawned) {
             this.spawnT -= dt;
             const spawnMult = 1 + this.player.curse * 0.35 + this.player.extraEnemySpawn;
-            const rate = 1.2 / spawnMult;
+            let rate = 1.2 / spawnMult;
+            
+            // Reduce spawn rate by 60% after the last enemy type appears (knight at 480s = 8 min)
+            if (this.time >= 480) {
+                rate *= 2.5; // 60% slower = rate * 2.5
+            }
+            
             const maxE = Math.floor((55 + this.player.curse * 12) * spawnMult);
             if (this.spawnT <= 0 && this.enemies.length < maxE) { this.spawnEnemy(); this.spawnT = rate / (1 + this.time / 100); }
         }
@@ -1771,8 +1840,34 @@ class Game {
     }
     
     spawnEnemy() {
-        const a = Math.random() * Math.PI * 2, d = 420 + Math.random() * 70;
-        const x = this.player.x + Math.cos(a) * d, y = this.player.y + Math.sin(a) * d;
+        // Spawn enemies OUTSIDE the screen, not inside
+        // Calculate screen bounds
+        const screenW = this.canvas.width / 2 + 80;
+        const screenH = this.canvas.height / 2 + 80;
+        
+        // Random position on the edge of the screen (outside view)
+        const side = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
+        let x, y;
+        
+        switch(side) {
+            case 0: // Top
+                x = this.player.x + (Math.random() - 0.5) * screenW * 2;
+                y = this.player.y - screenH - Math.random() * 50;
+                break;
+            case 1: // Right
+                x = this.player.x + screenW + Math.random() * 50;
+                y = this.player.y + (Math.random() - 0.5) * screenH * 2;
+                break;
+            case 2: // Bottom
+                x = this.player.x + (Math.random() - 0.5) * screenW * 2;
+                y = this.player.y + screenH + Math.random() * 50;
+                break;
+            case 3: // Left
+                x = this.player.x - screenW - Math.random() * 50;
+                y = this.player.y + (Math.random() - 0.5) * screenH * 2;
+                break;
+        }
+        
         const avail = Object.entries(ENEMIES).filter(([, e]) => this.time >= e.time);
         const weights = avail.map((_, i) => Math.pow(1.7, i)), total = weights.reduce((s, w) => s + w, 0);
         let r = Math.random() * total, type = avail[0][0];
@@ -1814,7 +1909,15 @@ class Game {
         const item = ITEMS[drop.id];
         const rar = RARITY[item.rarity];
         
-        document.getElementById('itemIcon').textContent = item.icon;
+        // Show sprite image if available, otherwise show emoji
+        const iconEl = document.getElementById('itemIcon');
+        const sprite = item.sprite && this.assets.get(item.sprite);
+        if (sprite) {
+            iconEl.innerHTML = `<img src="${sprite.src}" style="width: 64px; height: 64px; image-rendering: pixelated;">`;
+        } else {
+            iconEl.textContent = item.icon;
+        }
+        
         document.getElementById('itemName').textContent = item.name;
         document.getElementById('itemName').style.color = rar.color;
         document.getElementById('itemRarity').textContent = rar.name;
@@ -1925,7 +2028,7 @@ class Game {
         while (choices.length < 3 && all.length > 0) choices.push(all.splice(Math.floor(Math.random() * all.length), 1)[0]);
         opts.innerHTML = '';
         choices.forEach(c => {
-            const rar = getRandomRarity();
+            const rar = getRandomRarity(this.player.luck);
             const card = document.createElement('div');
             card.className = 'upgrade-card';
             card.style.borderColor = rar.color;
