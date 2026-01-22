@@ -516,6 +516,9 @@ class AssetLoader {
             ['char_006', 'assets/characters/Char_006.png'],
             ['char_006_idle', 'assets/characters/Char_006_Idle.png'],
             
+            // Desert Rogue (Bedouin) sprite
+            ['desert_rogue', 'assets/characters/DesertRogue.png'],
+            
             // Enemies - New monster sprites
             ['enemy_wolf', 'assets/enemies/NB_01.png'],
             ['enemy_scorpion', 'assets/enemies/NB_09.png'],
@@ -627,7 +630,7 @@ const CHAR_SPRITES = {
     abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
     jayzen: { sprite: 'char_006', idle: 'char_006_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
     noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
-    bedouin: { sprite: 'char_002', idle: 'char_002_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
+    bedouin: { sprite: 'desert_rogue', idle: 'desert_rogue', frameWidth: 40, frameHeight: 48, frames: 8, rows: 8 },
     hawshabi: { sprite: 'char_004', idle: 'char_004_idle', frameWidth: 48, frameHeight: 48, frames: 4 },
     layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4 }
 };
@@ -1111,16 +1114,31 @@ class Player {
             const totalFrames = spriteInfo.frames;
             const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
             
-            // Determine direction row (0=down, 1=left, 2=right, 3=up based on typical RPG sprite sheets)
+            // Determine direction row
             let row = 0;
-            if (isMoving) {
-                if (Math.abs(this.vx) > Math.abs(this.vy)) {
-                    row = this.vx > 0 ? 2 : 1; // right or left
+            if (spriteInfo.rows === 8) {
+                // 8-direction sprite sheet (like DesertRogue)
+                // 0=down, 1=down-left, 2=left, 3=up-left, 4=up, 5=up-right, 6=right, 7=down-right
+                if (isMoving) {
+                    const angle = Math.atan2(this.vy, this.vx);
+                    const dir = Math.round((angle + Math.PI) / (Math.PI / 4)) % 8;
+                    // Map angle to sprite rows: right=6, down-right=7, down=0, down-left=1, left=2, up-left=3, up=4, up-right=5
+                    const rowMap = [2, 3, 4, 5, 6, 7, 0, 1]; // angle to row mapping
+                    row = rowMap[dir];
                 } else {
-                    row = this.vy > 0 ? 0 : 3; // down or up
+                    row = this.facing > 0 ? 6 : 2; // right or left when idle
                 }
             } else {
-                row = this.facing > 0 ? 2 : 1;
+                // 4-direction sprite sheet (default)
+                if (isMoving) {
+                    if (Math.abs(this.vx) > Math.abs(this.vy)) {
+                        row = this.vx > 0 ? 2 : 1; // right or left
+                    } else {
+                        row = this.vy > 0 ? 0 : 3; // down or up
+                    }
+                } else {
+                    row = this.facing > 0 ? 2 : 1;
+                }
             }
             
             const frameX = currentFrame * spriteInfo.frameWidth;
