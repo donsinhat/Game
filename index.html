@@ -546,6 +546,12 @@ class AssetLoader {
             ['hawshabi_frame3', 'assets/characters/adventurer_01/adventurer_01_03.png'],
             ['hawshabi_frame4', 'assets/characters/adventurer_01/adventurer_01_04.png'],
             
+            // Water Priestess (Noura) sprites - 4 frames for idle animation
+            ['noura_frame1', 'assets/characters/water_priestess/water_priestess_1.png'],
+            ['noura_frame2', 'assets/characters/water_priestess/water_priestess_2.png'],
+            ['noura_frame3', 'assets/characters/water_priestess/water_priestess_3.png'],
+            ['noura_frame4', 'assets/characters/water_priestess/water_priestess_4.png'],
+            
             // Boss sprite (Abu Halza)
             ['boss_halza', 'assets/characters/1769115033155(1).png'],
             
@@ -668,7 +674,14 @@ const CHAR_SPRITES = {
         frameHeight: 32,
         fps: 6
     },
-    noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    // Water Priestess (Noura) - 4 separate 32x32 frames for idle animation
+    noura: { 
+        type: 'multiframe',
+        frames: ['noura_frame1', 'noura_frame2', 'noura_frame3', 'noura_frame4'],
+        frameWidth: 32, 
+        frameHeight: 32,
+        fps: 6
+    },
     // Wind Hashashin (Bedouin) - 4 separate 32x32 frames for idle animation
     // Flip horizontally for left/right direction
     bedouin: { 
