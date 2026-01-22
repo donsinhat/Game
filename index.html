@@ -358,10 +358,10 @@ const BOOKS = {
 // ==================== ITEMS ====================
 const ITEMS = {
     // Common (شائع)
-    mirinda: { name: 'حمضيات', desc: 'حار يلد .. ينعنش ويرجع لك 10 هيل', rarity: 'COMMON', effect: 'heal', val: 10, icon: '🍊' },
-    dalla: { name: 'دله قهوه', desc: 'المهيله تخليك نشيط واسرع 10 ثواني', rarity: 'COMMON', effect: 'tempSpeed', val: 0.15, dur: 10, icon: '☕' },
-    pebble: { name: 'حب شمسي', desc: '+10% ضرر لمدة 12 ثانية', rarity: 'COMMON', effect: 'tempDmg', val: 0.1, dur: 12, icon: '🌻' },
-    klega: { name: 'كليجه', desc: 'اولاو من حلاته تهيلك 5', rarity: 'COMMON', effect: 'heal', val: 5, icon: '🍪' },
+    mirinda: { name: 'حمضيات', desc: 'حار يلد .. ينعنش ويرجع لك 10 هيل', rarity: 'COMMON', effect: 'heal', val: 10, icon: '🍊', sprite: 'item_mirinda' },
+    dalla: { name: 'دله قهوه', desc: 'المهيله تخليك نشيط واسرع 10 ثواني', rarity: 'COMMON', effect: 'tempSpeed', val: 0.15, dur: 10, icon: '☕', sprite: 'item_dalla' },
+    pebble: { name: 'حب شمسي', desc: '+10% ضرر لمدة 12 ثانية', rarity: 'COMMON', effect: 'tempDmg', val: 0.1, dur: 12, icon: '🌻', sprite: 'item_pebble' },
+    klega: { name: 'كليجه', desc: 'اولاو من حلاته تهيلك 5', rarity: 'COMMON', effect: 'heal', val: 5, icon: '🍪', sprite: 'item_klega' },
     copper: { name: 'نحاس', desc: '+5 ذهب', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙' },
     
     // Rare (نادر)
@@ -374,7 +374,7 @@ const ITEMS = {
     // Legendary (أسطوري)
     elixir: { name: 'إكسير', desc: 'يستعيد كل الصحة ويزيد الصحة القصوى 20', rarity: 'LEGENDARY', effect: 'fullHeal', val: 20, icon: '⚗️' },
     dragonHeart: { name: 'قلب التنين', desc: '+50% ضرر لمدة 25 ثانية', rarity: 'LEGENDARY', effect: 'tempDmg', val: 0.5, dur: 25, icon: '❤️‍🔥' },
-    arika: { name: 'عريكه', desc: 'إذا مت، تعود للحياة مرة واحدة', rarity: 'LEGENDARY', effect: 'revive', val: 1, icon: '🍚' },
+    arika: { name: 'عريكه', desc: 'إذا مت، تعود للحياة مرة واحدة', rarity: 'LEGENDARY', effect: 'revive', val: 1, icon: '🍚', sprite: 'item_arika' },
     crown: { name: 'تاج ذهبي', desc: '+50% ذهب بشكل دائم', rarity: 'LEGENDARY', effect: 'permGold', val: 0.5, icon: '👑' },
     star: { name: 'نجمة الصحراء', desc: 'تحصل على سلاح أو كتاب عشوائي', rarity: 'LEGENDARY', effect: 'randomEquip', val: 1, icon: '⭐' },
     khazouq: { name: 'خازوق', desc: 'يزيد نسبة ظهور الأعداء 10%، أنت غبي ليش أخذته؟', rarity: 'LEGENDARY', effect: 'moreEnemies', val: 0.10, icon: '🍆' }
@@ -443,6 +443,22 @@ class AssetLoader {
             // Pickups
             ['gold_coin', 'assets/pickups/gold_coin.png'],
             ['xp_gem', 'assets/pickups/xp_gem.png'],
+            
+            // Item Icons
+            ['item_mirinda', 'assets/New Items Icon/mirinda.png'],
+            ['item_dalla', 'assets/New Items Icon/dalla.png'],
+            ['item_klega', 'assets/New Items Icon/klega.png'],
+            ['item_arika', 'assets/New Items Icon/arika.png'],
+            ['item_pebble', 'assets/New Items Icon/pebble.png'],
+            
+            // Desert Map
+            ['desert_tiles', 'assets/New Maps/DesertTileset16x16/Tileset16x16/DesertTilemap16x16.png'],
+            
+            // Forest Map (Baghdad)
+            ['forest_tiles', 'assets/New Maps/gentle sheets/gentle forest v01.png'],
+            
+            // Buildings
+            ['building_house', 'assets/Yellow Buildings/House1.png'],
             
             // Backgrounds
             ['sand_tile', 'assets/backgrounds/sand_tile.png'],
@@ -1077,37 +1093,45 @@ class Pickup {
 class ItemDrop {
     constructor(x, y, id) { this.x = x; this.y = y; this.id = id; this.bob = Math.random() * Math.PI * 2; this.glow = 0; }
     update(dt) { this.bob += dt * 3.5; this.glow += dt * 4; }
-    draw(ctx, cam) {
+    draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y + Math.sin(this.bob) * 4;
         const item = ITEMS[this.id];
         const rarityColor = RARITY[item.rarity].color;
         
         // Glowing background circle
-        const glowSize = 18 + Math.sin(this.glow) * 3;
-        ctx.fillStyle = rarityColor + '60';
+        const glowSize = 22 + Math.sin(this.glow) * 4;
+        ctx.fillStyle = rarityColor + '50';
         ctx.beginPath(); 
         ctx.arc(sx, sy, glowSize, 0, Math.PI * 2); 
         ctx.fill();
         
         // Inner circle
-        ctx.fillStyle = '#000000aa';
+        ctx.fillStyle = '#000000cc';
         ctx.beginPath(); 
-        ctx.arc(sx, sy, 14, 0, Math.PI * 2); 
+        ctx.arc(sx, sy, 18, 0, Math.PI * 2); 
         ctx.fill();
         
         // Border
         ctx.strokeStyle = rarityColor;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.beginPath(); 
-        ctx.arc(sx, sy, 14, 0, Math.PI * 2); 
+        ctx.arc(sx, sy, 18, 0, Math.PI * 2); 
         ctx.stroke();
         
-        // Icon
-        ctx.font = 'bold 18px Arial'; 
-        ctx.textAlign = 'center'; 
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#fff';
-        ctx.fillText(item.icon, sx, sy);
+        // Try to draw sprite if available
+        const sprite = item.sprite && assets && assets.get(item.sprite);
+        if (sprite) {
+            ctx.imageSmoothingEnabled = false;
+            const size = 28;
+            ctx.drawImage(sprite, sx - size/2, sy - size/2, size, size);
+        } else {
+            // Fallback to icon
+            ctx.font = 'bold 20px Arial'; 
+            ctx.textAlign = 'center'; 
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff';
+            ctx.fillText(item.icon, sx, sy);
+        }
     }
 }
 
@@ -1744,7 +1768,7 @@ class Game {
         this.drawBg();
         this.particles.draw(ctx, this.cam);
         for (const p of this.pickups) p.draw(ctx, this.cam, this.assets);
-        for (const i of this.items) i.draw(ctx, this.cam);
+        for (const i of this.items) i.draw(ctx, this.cam, this.assets);
         
         // Draw effects
         for (const f of this.fx) {
