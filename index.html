@@ -527,8 +527,11 @@ class AssetLoader {
             ['char_006', 'assets/characters/Char_006.png'],
             ['char_006_idle', 'assets/characters/Char_006_Idle.png'],
             
-            // Desert Rogue (Bedouin) sprite
-            ['desert_rogue', 'assets/characters/DesertRogue.png'],
+            // Wind Hashashin (Bedouin) sprites - 4 separate images for each direction
+            ['bedouin_down', 'assets/characters/wind_hashashin/wind_hashashin_1.png'],
+            ['bedouin_left', 'assets/characters/wind_hashashin/wind_hashashin_2.png'],
+            ['bedouin_right', 'assets/characters/wind_hashashin/wind_hashashin_3.png'],
+            ['bedouin_up', 'assets/characters/wind_hashashin/wind_hashashin_4.png'],
             
             // Boss sprite (Abu Halza)
             ['boss_halza', 'assets/characters/1769115033155(1).png'],
@@ -646,8 +649,18 @@ const CHAR_SPRITES = {
     abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
     jayzen: { sprite: 'char_006', idle: 'char_006_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
     noura: { sprite: 'char_005', idle: 'char_005_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
-    // DesertRogue 320x160: 8 columns x 4 rows = 40x40 per frame
-    bedouin: { sprite: 'desert_rogue', idle: 'desert_rogue', frameWidth: 40, frameHeight: 40, frames: 8, rows: 4 },
+    // Wind Hashashin (Bedouin) - 4 separate 32x32 images for each direction
+    bedouin: { 
+        type: 'directional', // Special type: separate images for each direction
+        sprites: {
+            down: 'bedouin_down',
+            left: 'bedouin_left', 
+            right: 'bedouin_right',
+            up: 'bedouin_up'
+        },
+        frameWidth: 32, 
+        frameHeight: 32
+    },
     hawshabi: { sprite: 'char_004', idle: 'char_004_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
     layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 }
 };
@@ -1122,52 +1135,70 @@ class Player {
         // Try to draw sprite if available
         const spriteInfo = CHAR_SPRITES[this.charId];
         const isMoving = Math.abs(this.vx) > 10 || Math.abs(this.vy) > 10;
-        const spriteKey = isMoving ? spriteInfo.sprite : spriteInfo.idle;
-        const sprite = assets && assets.get(spriteKey);
+        
+        // Determine direction
+        let direction = 'down';
+        if (isMoving) {
+            if (Math.abs(this.vx) > Math.abs(this.vy)) {
+                direction = this.vx > 0 ? 'right' : 'left';
+            } else {
+                direction = this.vy > 0 ? 'down' : 'up';
+            }
+        } else {
+            direction = this.facing > 0 ? 'right' : 'left';
+        }
+        
+        let sprite = null;
+        let drawAsFullImage = false;
+        
+        // Check if this is a directional sprite set (separate images for each direction)
+        if (spriteInfo.type === 'directional' && spriteInfo.sprites) {
+            const spriteKey = spriteInfo.sprites[direction];
+            sprite = assets && assets.get(spriteKey);
+            drawAsFullImage = true;
+        } else {
+            // Standard sprite sheet
+            const spriteKey = isMoving ? spriteInfo.sprite : spriteInfo.idle;
+            sprite = assets && assets.get(spriteKey);
+        }
         
         if (sprite && spriteInfo) {
-            // Calculate animation frame
-            const frameTime = 0.15;
-            const totalFrames = spriteInfo.frames || 8;
-            const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
-            
-            // Determine direction row based on sprite layout
-            // For DesertRogue: 0=down, 1=left, 2=right, 3=up
-            // For other chars: 0=down, 1=right, 2=left, 3=up (may vary)
-            let row = 0;
-            const maxRows = spriteInfo.rows || 4;
-            
-            if (isMoving) {
-                if (Math.abs(this.vx) > Math.abs(this.vy)) {
-                    // Moving horizontally
-                    row = this.vx > 0 ? 2 : 1; // right or left
-                } else {
-                    // Moving vertically
-                    row = this.vy > 0 ? 0 : 3; // down or up
-                }
-            } else {
-                // Idle - face based on last direction
-                row = this.facing > 0 ? 2 : 1;
-            }
-            
-            // Clamp row to available rows
-            row = Math.min(row, maxRows - 1);
-            
-            const frameX = currentFrame * spriteInfo.frameWidth;
-            const frameY = row * spriteInfo.frameHeight;
-            
-            // Draw sprite - scale based on frame size
-            // Smaller frames (40px) get larger scale, larger frames (48px) get smaller scale
-            const baseScale = spriteInfo.frameWidth <= 40 ? 2.2 : 1.8;
-            const drawW = spriteInfo.frameWidth * baseScale;
-            const drawH = spriteInfo.frameHeight * baseScale;
-            
             ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(
-                sprite,
-                frameX, frameY, spriteInfo.frameWidth, spriteInfo.frameHeight,
-                sx - drawW / 2, sy - drawH / 2, drawW, drawH
-            );
+            
+            if (drawAsFullImage) {
+                // Draw entire image (directional sprites - single 32x32 images)
+                const scale = 2.5; // Scale up 32x32 to be visible
+                const drawW = spriteInfo.frameWidth * scale;
+                const drawH = spriteInfo.frameHeight * scale;
+                ctx.drawImage(sprite, sx - drawW / 2, sy - drawH / 2, drawW, drawH);
+            } else {
+                // Standard sprite sheet animation
+                const frameTime = 0.15;
+                const totalFrames = spriteInfo.frames || 4;
+                const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+                const maxRows = spriteInfo.rows || 4;
+                
+                // Map direction to row
+                let row = 0;
+                if (direction === 'down') row = 0;
+                else if (direction === 'left') row = 1;
+                else if (direction === 'right') row = 2;
+                else if (direction === 'up') row = 3;
+                row = Math.min(row, maxRows - 1);
+                
+                const frameX = currentFrame * spriteInfo.frameWidth;
+                const frameY = row * spriteInfo.frameHeight;
+                
+                const baseScale = spriteInfo.frameWidth <= 40 ? 2.2 : 1.8;
+                const drawW = spriteInfo.frameWidth * baseScale;
+                const drawH = spriteInfo.frameHeight * baseScale;
+                
+                ctx.drawImage(
+                    sprite,
+                    frameX, frameY, spriteInfo.frameWidth, spriteInfo.frameHeight,
+                    sx - drawW / 2, sy - drawH / 2, drawW, drawH
+                );
+            }
         } else {
             // Fallback to simple rendering
             const c = CHARACTERS[this.charId].colors;
@@ -1948,19 +1979,37 @@ class Game {
         
         // Try to draw sprite
         const spriteInfo = CHAR_SPRITES[id];
-        const sprite = this.assets && this.assets.get(spriteInfo.idle);
+        let sprite = null;
+        let drawAsFullImage = false;
+        
+        // Check for directional sprite type
+        if (spriteInfo.type === 'directional' && spriteInfo.sprites) {
+            sprite = this.assets && this.assets.get(spriteInfo.sprites.down);
+            drawAsFullImage = true;
+        } else {
+            sprite = this.assets && this.assets.get(spriteInfo.idle);
+        }
         
         if (sprite) {
             ctx.imageSmoothingEnabled = false;
-            const scale = 2;
-            const drawW = spriteInfo.frameWidth * scale;
-            const drawH = spriteInfo.frameHeight * scale;
-            // Draw idle frame (row 0, frame 0)
-            ctx.drawImage(
-                sprite,
-                0, 0, spriteInfo.frameWidth, spriteInfo.frameHeight,
-                (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH
-            );
+            
+            if (drawAsFullImage) {
+                // Draw full image for directional sprites
+                const scale = 3;
+                const drawW = spriteInfo.frameWidth * scale;
+                const drawH = spriteInfo.frameHeight * scale;
+                ctx.drawImage(sprite, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
+            } else {
+                // Draw first frame of sprite sheet
+                const scale = 2;
+                const drawW = spriteInfo.frameWidth * scale;
+                const drawH = spriteInfo.frameHeight * scale;
+                ctx.drawImage(
+                    sprite,
+                    0, 0, spriteInfo.frameWidth, spriteInfo.frameHeight,
+                    (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH
+                );
+            }
         } else {
             // Fallback to simple drawing
             const col = c.colors;
