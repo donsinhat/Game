@@ -255,8 +255,8 @@
     <script>
 // ==================== GAME CONFIG ====================
 const CONFIG = {
-    WORLD_SIZE: 4000,
-    TILE_SIZE: 64,
+    WORLD_SIZE: 2000,
+    TILE_SIZE: 32,
     PLAYER_LIGHT_RADIUS: 300,
     MAX_WEAPONS: 4,
     MAX_BOOKS: 4,
@@ -273,6 +273,27 @@ const CONFIG = {
     
     // Weapon base damage
     WEAPON_BASE_DMG: 5
+};
+
+// ==================== MAP TILES (arabtown-tile.png) ====================
+// Tileset is arranged with various buildings and decorations
+// Each tile definition: { x, y, w, h, collision: true/false }
+const ARABTOWN_TILES = {
+    // Ground is the background color #c9a66b
+    fence_top: { x: 0, y: 0, w: 128, h: 16, collision: true },
+    gate_large: { x: 0, y: 16, w: 64, h: 48, collision: true },
+    dome: { x: 64, y: 16, w: 32, h: 40, collision: true },
+    tower: { x: 96, y: 16, w: 32, h: 56, collision: true },
+    fence_small: { x: 0, y: 64, w: 40, h: 16, collision: true },
+    palm: { x: 128, y: 40, w: 16, h: 24, collision: true },
+    rock1: { x: 144, y: 56, w: 8, h: 8, collision: false },
+    rock2: { x: 152, y: 56, w: 8, h: 8, collision: false },
+    rock3: { x: 160, y: 56, w: 8, h: 8, collision: false },
+    building_tall: { x: 200, y: 0, w: 40, h: 72, collision: true },
+    shop1: { x: 48, y: 64, w: 48, h: 24, collision: true },
+    shop2: { x: 96, y: 64, w: 48, h: 24, collision: true },
+    house_small: { x: 144, y: 0, w: 32, h: 40, collision: true },
+    person: { x: 128, y: 24, w: 16, h: 16, collision: false }
 };
 
 // ==================== RARITY ====================
@@ -523,6 +544,9 @@ class AssetLoader {
             
             // Desert Map
             ['desert_tiles', 'assets/New Maps/DesertTileset16x16/Tileset16x16/DesertTilemap16x16.png'],
+            
+            // Arab Town Tileset (main map)
+            ['arabtown', 'assets/New Maps/arabtown-tile.png'],
             
             // Forest Map (Baghdad)
             ['forest_tiles', 'assets/New Maps/gentle sheets/gentle forest v01.png'],
@@ -938,7 +962,20 @@ class Player {
             if (dx !== 0) this.facing = dx > 0 ? 1 : -1;
         } else { this.vx = 0; this.vy = 0; }
         
-        this.x += this.vx * dt; this.y += this.vy * dt;
+        // Try to move, check collision with map obstacles
+        const newX = this.x + this.vx * dt;
+        const newY = this.y + this.vy * dt;
+        
+        // Check X movement
+        if (!game.map.checkCollision(newX, this.y, this.width, this.height)) {
+            this.x = newX;
+        }
+        // Check Y movement
+        if (!game.map.checkCollision(this.x, newY, this.width, this.height)) {
+            this.y = newY;
+        }
+        
+        // Keep within world bounds
         this.x = Math.max(-CONFIG.WORLD_SIZE/2, Math.min(CONFIG.WORLD_SIZE/2, this.x));
         this.y = Math.max(-CONFIG.WORLD_SIZE/2, Math.min(CONFIG.WORLD_SIZE/2, this.y));
         if (this.invuln > 0) this.invuln -= dt;
@@ -1406,6 +1443,124 @@ class ItemDrop {
 }
 
 // ==================== GAME ====================
+// ==================== MAP SYSTEM ====================
+class MapSystem {
+    constructor() {
+        this.obstacles = []; // {x, y, w, h} - collision boxes
+        this.decorations = []; // {x, y, tile} - visual only
+        this.generated = false;
+    }
+    
+    generate(worldSize) {
+        this.obstacles = [];
+        this.decorations = [];
+        
+        const halfWorld = worldSize / 2;
+        const buildingTypes = ['gate_large', 'dome', 'tower', 'building_tall', 'house_small', 'shop1', 'shop2'];
+        
+        // Generate buildings in a grid pattern with some randomness
+        const gridSize = 300;
+        for (let gx = -halfWorld + 100; gx < halfWorld - 100; gx += gridSize) {
+            for (let gy = -halfWorld + 100; gy < halfWorld - 100; gy += gridSize) {
+                // Skip center area (player spawn)
+                if (Math.abs(gx) < 200 && Math.abs(gy) < 200) continue;
+                
+                // Random chance to place a building
+                if (Math.random() < 0.4) {
+                    const type = buildingTypes[Math.floor(Math.random() * buildingTypes.length)];
+                    const tile = ARABTOWN_TILES[type];
+                    const x = gx + (Math.random() - 0.5) * 100;
+                    const y = gy + (Math.random() - 0.5) * 100;
+                    
+                    this.obstacles.push({
+                        x: x, y: y,
+                        w: tile.w * 1.5, h: tile.h * 1.5,
+                        tile: type
+                    });
+                }
+                
+                // Palm trees
+                if (Math.random() < 0.3) {
+                    const px = gx + (Math.random() - 0.5) * 150;
+                    const py = gy + (Math.random() - 0.5) * 150;
+                    this.obstacles.push({
+                        x: px, y: py,
+                        w: 24, h: 24,
+                        tile: 'palm'
+                    });
+                }
+                
+                // Fence sections
+                if (Math.random() < 0.15) {
+                    const fx = gx + (Math.random() - 0.5) * 120;
+                    const fy = gy + (Math.random() - 0.5) * 120;
+                    this.obstacles.push({
+                        x: fx, y: fy,
+                        w: 60, h: 24,
+                        tile: 'fence_small'
+                    });
+                }
+            }
+        }
+        
+        // Add random rocks (decorations, no collision)
+        for (let i = 0; i < 100; i++) {
+            this.decorations.push({
+                x: (Math.random() - 0.5) * worldSize * 0.9,
+                y: (Math.random() - 0.5) * worldSize * 0.9,
+                tile: ['rock1', 'rock2', 'rock3'][Math.floor(Math.random() * 3)]
+            });
+        }
+        
+        this.generated = true;
+    }
+    
+    checkCollision(x, y, w, h) {
+        for (const obs of this.obstacles) {
+            if (x + w/2 > obs.x - obs.w/2 && 
+                x - w/2 < obs.x + obs.w/2 &&
+                y + h/2 > obs.y - obs.h/2 && 
+                y - h/2 < obs.y + obs.h/2) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    draw(ctx, cam, assets) {
+        const tileset = assets.get('arabtown');
+        if (!tileset) return;
+        
+        ctx.imageSmoothingEnabled = false;
+        
+        // Draw decorations first (rocks)
+        for (const dec of this.decorations) {
+            const sx = dec.x - cam.x, sy = dec.y - cam.y;
+            if (sx < -50 || sx > ctx.canvas.width + 50 || sy < -50 || sy > ctx.canvas.height + 50) continue;
+            
+            const tile = ARABTOWN_TILES[dec.tile];
+            if (tile) {
+                ctx.drawImage(tileset, tile.x, tile.y, tile.w, tile.h, 
+                    sx - tile.w, sy - tile.h, tile.w * 2, tile.h * 2);
+            }
+        }
+        
+        // Draw obstacles (buildings, palms, fences)
+        for (const obs of this.obstacles) {
+            const sx = obs.x - cam.x, sy = obs.y - cam.y;
+            if (sx < -100 || sx > ctx.canvas.width + 100 || sy < -100 || sy > ctx.canvas.height + 100) continue;
+            
+            const tile = ARABTOWN_TILES[obs.tile];
+            if (tile) {
+                const scale = 1.5;
+                ctx.drawImage(tileset, tile.x, tile.y, tile.w, tile.h,
+                    sx - (tile.w * scale)/2, sy - (tile.h * scale)/2, 
+                    tile.w * scale, tile.h * scale);
+            }
+        }
+    }
+}
+
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
@@ -1413,6 +1568,7 @@ class Game {
         this.audio = new Audio();
         this.particles = new Particles();
         this.assets = new AssetLoader();
+        this.map = new MapSystem();
         
         this.state = 'loading';
         this.charIdx = 0;
@@ -1651,6 +1807,9 @@ class Game {
         document.getElementById('miniMap').style.display = 'block';
         document.getElementById('pauseBtn').style.display = 'block';
         document.getElementById('pauseBtn').textContent = '⏸️';
+        
+        // Generate map with buildings and obstacles
+        this.map.generate(CONFIG.WORLD_SIZE);
         
         this.player = new Player(0, 0, this.charIds[this.charIdx]);
         this.enemies = []; this.boss = null; this.proj = []; this.eProj = []; this.pickups = []; this.items = []; this.texts = []; this.fx = []; this.spriteEffects = [];
@@ -2525,111 +2684,47 @@ class Game {
     }
     
     drawBg() {
-        const ctx = this.ctx, ts = CONFIG.TILE_SIZE;
-        const sandTile = this.assets.get('sand_tile');
-        const rock1 = this.assets.get('rock1');
-        const rock2 = this.assets.get('rock2');
-        const bush1 = this.assets.get('bush1');
-        const trees = this.assets.get('trees');
-        const house = this.assets.get('building_house');
-        const tower = this.assets.get('building_tower');
+        const ctx = this.ctx;
         
-        // Draw base terrain
-        if (sandTile && this.city === 'badaya') {
-            ctx.save();
-            ctx.translate(-this.cam.x % ts, -this.cam.y % ts);
-            if (!this.sandTilePattern) {
-                this.sandTilePattern = ctx.createPattern(sandTile, 'repeat');
-            }
-            if (this.sandTilePattern) {
-                ctx.fillStyle = this.sandTilePattern;
-                ctx.fillRect(0, 0, this.canvas.width + ts * 2, this.canvas.height + ts * 2);
-            }
-            ctx.restore();
+        // Draw sand/ground color background
+        if (this.city === 'badaya') {
+            ctx.fillStyle = '#c9a66b'; // Arab town sand color
         } else {
-            // Fallback gradient background
-            const sx = Math.floor(this.cam.x / ts) - 1, sy = Math.floor(this.cam.y / ts) - 1;
-            const ex = Math.ceil((this.cam.x + this.canvas.width) / ts) + 1, ey = Math.ceil((this.cam.y + this.canvas.height) / ts) + 1;
-            
-            for (let y = sy; y <= ey; y++) {
-                for (let x = sx; x <= ex; x++) {
-                    const px = x * ts - this.cam.x, py = y * ts - this.cam.y;
-                    const n = Math.sin(x * 0.35) * Math.cos(y * 0.35) * 0.07;
-                    let r = 210, g = 180, b = 140;
-                    if (this.city === 'baghdad') { r = 90; g = 140; b = 90; }
-                    ctx.fillStyle = `rgb(${Math.floor(r + n * 22)}, ${Math.floor(g + n * 18)}, ${Math.floor(b + n * 12)})`;
-                    ctx.fillRect(px, py, ts + 1, ts + 1);
+            ctx.fillStyle = '#5a8a5a'; // Baghdad green
+        }
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Add subtle noise/variation to ground
+        const ts = 64;
+        const sx = Math.floor(this.cam.x / ts) - 1;
+        const sy = Math.floor(this.cam.y / ts) - 1;
+        const ex = Math.ceil((this.cam.x + this.canvas.width) / ts) + 1;
+        const ey = Math.ceil((this.cam.y + this.canvas.height) / ts) + 1;
+        
+        for (let y = sy; y <= ey; y++) {
+            for (let x = sx; x <= ex; x++) {
+                const px = x * ts - this.cam.x, py = y * ts - this.cam.y;
+                const seed = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
+                
+                // Subtle ground variation
+                if (seed < 0.1) {
+                    ctx.fillStyle = this.city === 'badaya' ? 'rgba(180, 150, 100, 0.15)' : 'rgba(70, 110, 70, 0.15)';
+                    ctx.fillRect(px, py, ts, ts);
+                }
+                
+                // Small ground details
+                if (seed > 0.95) {
+                    ctx.fillStyle = this.city === 'badaya' ? '#b89a5a' : '#4a7a4a';
+                    ctx.beginPath();
+                    ctx.arc(px + ts/2, py + ts/2, 2 + seed * 3, 0, Math.PI * 2);
+                    ctx.fill();
                 }
             }
         }
         
-        // Draw decorations with sprites
-        const decorSx = Math.floor(this.cam.x / (ts * 3)) - 1;
-        const decorSy = Math.floor(this.cam.y / (ts * 3)) - 1;
-        const decorEx = Math.ceil((this.cam.x + this.canvas.width) / (ts * 3)) + 1;
-        const decorEy = Math.ceil((this.cam.y + this.canvas.height) / (ts * 3)) + 1;
-        
-        ctx.imageSmoothingEnabled = false;
-        
-        for (let y = decorSy; y <= decorEy; y++) {
-            for (let x = decorSx; x <= decorEx; x++) {
-                const worldX = x * ts * 3;
-                const worldY = y * ts * 3;
-                const px = worldX - this.cam.x;
-                const py = worldY - this.cam.y;
-                const seed = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
-                const seed2 = Math.abs(Math.cos(x * 45.164 + y * 23.456) * 12345.6789) % 1;
-                
-                if (this.city === 'badaya') {
-                    // Desert decorations
-                    if (seed < 0.02 && rock1) {
-                        ctx.drawImage(rock1, px, py, 40, 40);
-                    } else if (seed < 0.04 && rock2) {
-                        ctx.drawImage(rock2, px + 20, py + 10, 35, 35);
-                    } else if (seed < 0.08) {
-                        // Cactus (drawn)
-                        ctx.fillStyle = '#3a6a28';
-                        ctx.fillRect(px + 25, py + 10, 8, 30);
-                        ctx.fillRect(px + 15, py + 15, 10, 6);
-                        ctx.fillRect(px + 33, py + 20, 10, 6);
-                    } else if (seed < 0.095 && house) {
-                        // Houses scattered
-                        ctx.drawImage(house, px - 20, py - 30, 80, 80);
-                    } else if (seed < 0.1 && tower && seed2 > 0.5) {
-                        // Towers rare
-                        ctx.drawImage(tower, px, py - 40, 60, 100);
-                    } else if (seed < 0.15) {
-                        // Palm tree drawn
-                        ctx.fillStyle = '#5a3520';
-                        ctx.fillRect(px + 28, py + 5, 8, 35);
-                        ctx.fillStyle = '#2a5a18';
-                        for (let i = 0; i < 6; i++) {
-                            const angle = (i / 6) * Math.PI * 2;
-                            ctx.beginPath();
-                            ctx.ellipse(px + 32 + Math.cos(angle) * 18, py + Math.sin(angle) * 8, 14, 5, angle, 0, Math.PI * 2);
-                            ctx.fill();
-                        }
-                    }
-                } else {
-                    // Baghdad/Forest decorations
-                    if (seed < 0.03 && trees) {
-                        ctx.drawImage(trees, 0, 0, 80, 96, px - 20, py - 50, 80, 96);
-                    } else if (seed < 0.06 && trees) {
-                        ctx.drawImage(trees, 80, 0, 80, 96, px + 10, py - 40, 70, 84);
-                    } else if (seed < 0.12 && bush1) {
-                        // Draw one bush from the sprite strip
-                        ctx.drawImage(bush1, 0, 0, 60, 40, px + 10, py + 20, 50, 35);
-                    } else if (seed < 0.15) {
-                        // Grass tufts
-                        ctx.fillStyle = '#4a8a48';
-                        for (let i = 0; i < 5; i++) {
-                            ctx.fillRect(px + 20 + i * 8, py + 30, 2, 8 + seed2 * 6);
-                        }
-                    } else if (seed < 0.16 && house) {
-                        ctx.drawImage(house, px - 10, py - 20, 70, 70);
-                    }
-                }
-            }
+        // Draw map obstacles and decorations using MapSystem
+        if (this.map.generated) {
+            this.map.draw(ctx, this.cam, this.assets);
         }
     }
     
