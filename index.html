@@ -810,6 +810,8 @@ class Player {
         const sx = this.x - cam.x, sy = this.y - cam.y;
         if (this.invuln > 0 && Math.floor(this.invuln * 12) % 2 === 0) ctx.globalAlpha = 0.35;
         
+        // Draw character sprite
+        const c = CHARACTERS[this.charId].colors;
         ctx.save();
         
         // Try to draw sprite if available
@@ -1823,6 +1825,27 @@ class Game {
                 ctx.beginPath(); 
                 ctx.arc(px, py, p.size, 0, Math.PI * 2); 
                 ctx.fill();
+            } else if (e.type === 'meteor' && e.delay <= 0) {
+                if (e.life > 0.4) {
+                    ctx.strokeStyle = 'rgba(255, 80, 0, 0.4)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, e.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = 'rgba(255, 80, 0, 0.25)';
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, e.radius * (1 - e.life / 0.4), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (e.type === 'tornado') {
+                ctx.strokeStyle = 'rgba(180, 160, 130, 0.5)';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, e.radius - i * 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
             }
             
             // Trail effect
