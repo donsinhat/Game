@@ -100,6 +100,27 @@
         
         #pauseIndicator { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; color: #ffd700; display: none; z-index: 150; }
         
+        /* Pause Button */
+        #pauseBtn { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,215,0,0.5); border-radius: 50%; color: #ffd700; font-size: 1.3rem; cursor: pointer; z-index: 60; display: none; transition: all 0.2s; }
+        #pauseBtn:hover { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+        
+        /* Pause Menu */
+        #pauseMenu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; }
+        .pause-title { font-size: 2rem; color: #ffd700; margin-bottom: 30px; }
+        .pause-controls { background: rgba(30,30,40,0.95); padding: 25px 35px; border-radius: 15px; border: 2px solid rgba(255,215,0,0.3); min-width: 280px; }
+        .volume-control { margin: 15px 0; }
+        .volume-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem; color: #ccc; }
+        .volume-label span:last-child { color: #ffd700; font-weight: bold; }
+        .volume-slider { width: 100%; height: 8px; -webkit-appearance: none; background: #333; border-radius: 4px; outline: none; }
+        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #ffd700; border-radius: 50%; cursor: pointer; }
+        .volume-slider::-moz-range-thumb { width: 20px; height: 20px; background: #ffd700; border-radius: 50%; cursor: pointer; border: none; }
+        .pause-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 25px; }
+        .pause-btn { padding: 12px 25px; font-size: 1rem; font-family: 'Cairo', sans-serif; font-weight: 700; border: none; border-radius: 25px; cursor: pointer; transition: all 0.2s; }
+        .pause-btn-resume { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
+        .pause-btn-resume:hover { transform: scale(1.05); }
+        .pause-btn-quit { background: rgba(255,0,0,0.2); border: 2px solid #f44; color: #f44; }
+        .pause-btn-quit:hover { background: rgba(255,0,0,0.3); }
+        
         @media (max-width: 600px) {
             .character-display { width: 240px; padding: 15px; }
             .char-preview { width: 90px; height: 90px; }
@@ -188,6 +209,32 @@
     
     <div id="bossWarning">⚠️ تحذير! ⚠️<br><span style="font-size: 1.2rem;">ابو حلزه قادم!</span></div>
     <div id="pauseIndicator">⏸️ إيقاف مؤقت</div>
+    
+    <button id="pauseBtn">⏸️</button>
+    
+    <div id="pauseMenu">
+        <h1 class="pause-title">⏸️ إيقاف مؤقت</h1>
+        <div class="pause-controls">
+            <div class="volume-control">
+                <div class="volume-label">
+                    <span>🎵 صوت الموسيقى</span>
+                    <span id="musicVolText">50%</span>
+                </div>
+                <input type="range" class="volume-slider" id="musicVolume" min="0" max="100" value="50">
+            </div>
+            <div class="volume-control">
+                <div class="volume-label">
+                    <span>🔊 صوت المؤثرات</span>
+                    <span id="sfxVolText">70%</span>
+                </div>
+                <input type="range" class="volume-slider" id="sfxVolume" min="0" max="100" value="70">
+            </div>
+            <div class="pause-buttons">
+                <button class="pause-btn pause-btn-resume" id="resumeBtn">▶️ استمرار</button>
+                <button class="pause-btn pause-btn-quit" id="quitBtn">🚪 خروج للقائمة</button>
+            </div>
+        </div>
+    </div>
 
     <script>
 // ==================== GAME CONFIG ====================
@@ -452,99 +499,73 @@ const ENEMY_SPRITES = {
 class Audio {
     constructor() { 
         this.ctx = null; 
+        this.bgm = null;
         this.bgmPlaying = false;
-        this.bgmOscillators = [];
-        this.bgmGain = null;
-        this.bgmInterval = null;
+        this.musicVolume = 0.5;
+        this.sfxVolume = 0.7;
     }
+    
     init() { 
-        if (!this.ctx) try { 
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
-            this.bgmGain = this.ctx.createGain();
-            this.bgmGain.gain.value = 0.08;
-            this.bgmGain.connect(this.ctx.destination);
-        } catch(e) {} 
+        if (!this.ctx) {
+            try { 
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
+            } catch(e) {} 
+        }
+        
+        // Load background music
+        if (!this.bgm) {
+            this.bgm = new window.Audio('assets/8-bit Desert Tune [7CaoOAgagxM].mp3');
+            this.bgm.loop = true;
+            this.bgm.volume = this.musicVolume;
+        }
     }
+    
+    setMusicVolume(vol) {
+        this.musicVolume = vol;
+        if (this.bgm) this.bgm.volume = vol;
+    }
+    
+    setSfxVolume(vol) {
+        this.sfxVolume = vol;
+    }
+    
     tone(f, d, t='square', v=0.12) {
         if (!this.ctx) return;
+        const actualVol = v * this.sfxVolume;
+        if (actualVol < 0.01) return;
+        
         const o = this.ctx.createOscillator(), g = this.ctx.createGain();
         o.type = t; o.frequency.value = f; o.connect(g); g.connect(this.ctx.destination);
-        g.gain.setValueAtTime(v, this.ctx.currentTime);
+        g.gain.setValueAtTime(actualVol, this.ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d);
         o.start(); o.stop(this.ctx.currentTime + d);
     }
     
-    // Background music - Arabic/Desert style loop
     startBGM() {
-        if (this.bgmPlaying || !this.ctx) return;
+        if (this.bgmPlaying || !this.bgm) return;
+        this.bgm.currentTime = 0;
+        this.bgm.play().catch(e => console.log('BGM autoplay blocked'));
         this.bgmPlaying = true;
-        
-        // Arabic scale notes (Hijaz/desert feel)
-        const scale = [220, 247, 262, 294, 330, 349, 415, 440]; // A Hijaz scale
-        const bassNotes = [110, 147, 165, 110, 147, 165, 110, 98];
-        
-        let noteIndex = 0;
-        let beat = 0;
-        
-        this.bgmInterval = setInterval(() => {
-            if (!this.ctx || this.ctx.state === 'suspended') return;
-            
-            const time = this.ctx.currentTime;
-            
-            // Melody
-            if (beat % 2 === 0) {
-                const note = scale[noteIndex % scale.length];
-                const o = this.ctx.createOscillator();
-                const g = this.ctx.createGain();
-                o.type = 'sine';
-                o.frequency.value = note;
-                o.connect(g);
-                g.connect(this.bgmGain);
-                g.gain.setValueAtTime(0.15, time);
-                g.gain.exponentialRampToValueAtTime(0.01, time + 0.4);
-                o.start(time);
-                o.stop(time + 0.45);
-                noteIndex++;
-            }
-            
-            // Bass drum on beats 0, 4
-            if (beat % 4 === 0) {
-                const bass = this.ctx.createOscillator();
-                const bassG = this.ctx.createGain();
-                bass.type = 'sine';
-                bass.frequency.value = bassNotes[Math.floor(beat / 4) % bassNotes.length];
-                bass.connect(bassG);
-                bassG.connect(this.bgmGain);
-                bassG.gain.setValueAtTime(0.2, time);
-                bassG.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
-                bass.start(time);
-                bass.stop(time + 0.35);
-            }
-            
-            // Percussion on odd beats
-            if (beat % 2 === 1) {
-                const perc = this.ctx.createOscillator();
-                const percG = this.ctx.createGain();
-                perc.type = 'triangle';
-                perc.frequency.value = 800 + Math.random() * 200;
-                perc.connect(percG);
-                percG.connect(this.bgmGain);
-                percG.gain.setValueAtTime(0.05, time);
-                percG.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
-                perc.start(time);
-                perc.stop(time + 0.1);
-            }
-            
-            beat = (beat + 1) % 16;
-        }, 250); // 120 BPM
     }
     
     stopBGM() {
-        if (this.bgmInterval) {
-            clearInterval(this.bgmInterval);
-            this.bgmInterval = null;
+        if (this.bgm) {
+            this.bgm.pause();
+            this.bgm.currentTime = 0;
         }
         this.bgmPlaying = false;
+    }
+    
+    pauseBGM() {
+        if (this.bgm && this.bgmPlaying) {
+            this.bgm.pause();
+        }
+    }
+    
+    resumeBGM() {
+        if (this.bgm && this.bgmPlaying) {
+            this.bgm.play().catch(e => {});
+        }
     }
     
     hit() { this.tone(150, 0.1, 'sawtooth', 0.15); }
@@ -1173,6 +1194,23 @@ class Game {
         document.getElementById('startBtn').onclick = () => this.start();
         document.getElementById('restartBtn').onclick = () => this.restart();
         document.getElementById('itemContinueBtn').onclick = () => this.continueFromItem();
+        
+        // Pause button
+        document.getElementById('pauseBtn').onclick = () => this.pause();
+        document.getElementById('resumeBtn').onclick = () => this.pause();
+        document.getElementById('quitBtn').onclick = () => this.quitToMenu();
+        
+        // Volume controls
+        document.getElementById('musicVolume').oninput = (e) => {
+            const vol = e.target.value / 100;
+            this.audio.setMusicVolume(vol);
+            document.getElementById('musicVolText').textContent = e.target.value + '%';
+        };
+        document.getElementById('sfxVolume').oninput = (e) => {
+            const vol = e.target.value / 100;
+            this.audio.setSfxVolume(vol);
+            document.getElementById('sfxVolText').textContent = e.target.value + '%';
+        };
     }
     
     updateCharDisplay() {
@@ -1261,6 +1299,8 @@ class Game {
         document.getElementById('mainMenu').style.display = 'none';
         document.getElementById('hud').style.display = 'flex';
         document.getElementById('equipmentSlots').style.display = 'flex';
+        document.getElementById('pauseBtn').style.display = 'block';
+        document.getElementById('pauseBtn').textContent = '⏸️';
         
         this.player = new Player(0, 0, this.charIds[this.charIdx]);
         this.enemies = []; this.boss = null; this.proj = []; this.eProj = []; this.pickups = []; this.items = []; this.texts = []; this.fx = []; this.spriteEffects = [];
@@ -1274,13 +1314,38 @@ class Game {
         document.getElementById('mainMenu').style.display = 'flex';
         document.getElementById('hud').style.display = 'none';
         document.getElementById('equipmentSlots').style.display = 'none';
+        document.getElementById('pauseBtn').style.display = 'none';
         this.state = 'menu';
         if (this.baghdadUnlocked) { document.getElementById('cityBaghdad').classList.remove('locked'); document.getElementById('cityBaghdad').querySelector('.city-locked').style.display = 'none'; }
     }
     
     pause() {
-        if (this.state === 'playing') { this.state = 'paused'; document.getElementById('pauseIndicator').style.display = 'block'; }
-        else if (this.state === 'paused') { this.state = 'playing'; document.getElementById('pauseIndicator').style.display = 'none'; }
+        if (this.state === 'playing') { 
+            this.state = 'paused'; 
+            document.getElementById('pauseMenu').style.display = 'flex';
+            document.getElementById('pauseBtn').textContent = '▶️';
+            this.audio.pauseBGM();
+        }
+        else if (this.state === 'paused') { 
+            this.state = 'playing'; 
+            document.getElementById('pauseMenu').style.display = 'none';
+            document.getElementById('pauseBtn').textContent = '⏸️';
+            this.audio.resumeBGM();
+        }
+    }
+    
+    quitToMenu() {
+        this.state = 'menu';
+        this.audio.stopBGM();
+        document.getElementById('pauseMenu').style.display = 'none';
+        document.getElementById('pauseBtn').style.display = 'none';
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('equipmentSlots').style.display = 'none';
+        document.getElementById('mainMenu').style.display = 'flex';
+        if (this.baghdadUnlocked) { 
+            document.getElementById('cityBaghdad').classList.remove('locked'); 
+            document.getElementById('cityBaghdad').querySelector('.city-locked').style.display = 'none'; 
+        }
     }
     
     loop(t) {
@@ -1630,6 +1695,7 @@ class Game {
         this.audio.stopBGM(); // Stop background music
         document.getElementById('hud').style.display = 'none';
         document.getElementById('equipmentSlots').style.display = 'none';
+        document.getElementById('pauseBtn').style.display = 'none';
         const title = document.getElementById('gameOverTitle'), unlock = document.getElementById('unlockMessage');
         if (victory) { this.audio.victory(); title.textContent = '🎉 انتصار! 🎉'; title.className = 'game-over-title victory-title'; if (!this.baghdadUnlocked) { this.baghdadUnlocked = true; localStorage.setItem('baghdadUnlocked', 'true'); unlock.textContent = '🔓 تم فتح خريطة بغداد!'; unlock.style.display = 'block'; } else unlock.style.display = 'none'; }
         else { this.audio.death(); title.textContent = 'انتهت اللعبة'; title.className = 'game-over-title'; unlock.style.display = 'none'; }
