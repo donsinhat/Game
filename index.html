@@ -1375,15 +1375,62 @@ class Game {
     
     drawLoading() {
         const ctx = this.ctx;
-        ctx.fillStyle = '#0a0a0f';
+        const cx = this.canvas.width / 2, cy = this.canvas.height / 2;
+        const time = Date.now() / 1000;
+        
+        // Dark gradient background
+        const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(this.canvas.width, this.canvas.height));
+        gradient.addColorStop(0, '#1a1a2e');
+        gradient.addColorStop(1, '#0a0a0f');
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Animated particles in background
+        for (let i = 0; i < 20; i++) {
+            const angle = (time * 0.5 + i * 0.3) % (Math.PI * 2);
+            const dist = 80 + Math.sin(time * 2 + i) * 20;
+            const x = cx + Math.cos(angle) * dist;
+            const y = cy + Math.sin(angle) * dist;
+            ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + Math.sin(time * 3 + i) * 0.2})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Game title
         ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 24px Cairo';
+        ctx.font = 'bold 32px Cairo';
         ctx.textAlign = 'center';
-        ctx.fillText('جاري تحميل اللعبة...', this.canvas.width / 2, this.canvas.height / 2);
-        ctx.fillStyle = '#888';
-        ctx.font = '16px Cairo';
-        ctx.fillText('Loading game assets...', this.canvas.width / 2, this.canvas.height / 2 + 35);
+        ctx.fillText('ذهب أصفر أو دم أحمر', cx, cy - 60);
+        
+        // Loading text with animation
+        const dots = '.'.repeat(Math.floor(time * 2) % 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px Cairo';
+        ctx.fillText('جاري تحميل اللعبة' + dots, cx, cy);
+        
+        // Loading bar
+        const barWidth = 200, barHeight = 8;
+        const progress = (Math.sin(time * 3) + 1) / 2; // Animated progress
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(cx - barWidth / 2, cy + 30, barWidth, barHeight);
+        
+        const loadGradient = ctx.createLinearGradient(cx - barWidth / 2, 0, cx + barWidth / 2, 0);
+        loadGradient.addColorStop(0, '#ff8c00');
+        loadGradient.addColorStop(0.5, '#ffd700');
+        loadGradient.addColorStop(1, '#ff8c00');
+        ctx.fillStyle = loadGradient;
+        ctx.fillRect(cx - barWidth / 2, cy + 30, barWidth * progress, barHeight);
+        
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - barWidth / 2, cy + 30, barWidth, barHeight);
+        
+        // Sub text
+        ctx.fillStyle = '#666';
+        ctx.font = '14px Cairo';
+        ctx.fillText('Loading game assets...', cx, cy + 60);
     }
     
     resize() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; }
@@ -1968,7 +2015,52 @@ class Game {
     
     drawMenuBg() {
         const ctx = this.ctx, t = Date.now() / 1000;
-        for (let i = 0; i < 4; i++) { const y = this.canvas.height * 0.45 + i * 60; ctx.fillStyle = `rgba(${45 + i * 7}, ${35 + i * 4}, ${22 + i * 3}, 0.35)`; ctx.beginPath(); ctx.moveTo(0, y); for (let x = 0; x <= this.canvas.width; x += 35) ctx.lineTo(x, y + Math.sin(x * 0.007 + t + i) * 12); ctx.lineTo(this.canvas.width, this.canvas.height); ctx.lineTo(0, this.canvas.height); ctx.fill(); }
+        const w = this.canvas.width, h = this.canvas.height;
+        
+        // Gradient background
+        const gradient = ctx.createLinearGradient(0, 0, 0, h);
+        gradient.addColorStop(0, '#0a0a15');
+        gradient.addColorStop(0.5, '#1a1a2e');
+        gradient.addColorStop(1, '#0f0f1a');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+        
+        // Animated sand dunes
+        for (let i = 0; i < 5; i++) { 
+            const y = h * 0.4 + i * 50; 
+            const alpha = 0.15 + i * 0.05;
+            ctx.fillStyle = `rgba(${80 + i * 15}, ${60 + i * 10}, ${40 + i * 5}, ${alpha})`; 
+            ctx.beginPath(); 
+            ctx.moveTo(0, y); 
+            for (let x = 0; x <= w; x += 30) {
+                ctx.lineTo(x, y + Math.sin(x * 0.006 + t * 0.5 + i * 0.5) * 15);
+            }
+            ctx.lineTo(w, h); 
+            ctx.lineTo(0, h); 
+            ctx.fill(); 
+        }
+        
+        // Floating particles
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+        for (let i = 0; i < 15; i++) {
+            const x = (t * 20 + i * 100) % w;
+            const y = h * 0.3 + Math.sin(t * 2 + i) * 30 + i * 20;
+            const size = 1 + Math.sin(t * 3 + i * 0.5) * 0.5;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Subtle stars
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        for (let i = 0; i < 30; i++) {
+            const x = (i * 67) % w;
+            const y = (i * 43) % (h * 0.4);
+            const size = 0.5 + Math.sin(t * 2 + i) * 0.3;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
     
     drawGame() {
