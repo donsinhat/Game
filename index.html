@@ -552,6 +552,12 @@ class AssetLoader {
             ['noura_frame3', 'assets/characters/water_priestess/water_priestess_3.png'],
             ['noura_frame4', 'assets/characters/water_priestess/water_priestess_4.png'],
             
+            // Elder (Abu Sulaiman) sprites - 4 frames for idle animation
+            ['abusulaiman_frame1', 'assets/characters/elder/elder_1.png'],
+            ['abusulaiman_frame2', 'assets/characters/elder/elder_2.png'],
+            ['abusulaiman_frame3', 'assets/characters/elder/elder_3.png'],
+            ['abusulaiman_frame4', 'assets/characters/elder/elder_4.png'],
+            
             // Boss sprite (Abu Halza)
             ['boss_halza', 'assets/characters/1769115033155(1).png'],
             
@@ -665,7 +671,14 @@ class AssetLoader {
 const CHAR_SPRITES = {
     // Standard 192x192 sprites: 4 columns x 4 rows = 48x48 per frame
     // Row order: 0=down, 1=left, 2=right, 3=up
-    abuSulaiman: { sprite: 'char_003', idle: 'char_003_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    // Elder (Abu Sulaiman) - 4 separate 32x32 frames for idle animation
+    abuSulaiman: { 
+        type: 'multiframe',
+        frames: ['abusulaiman_frame1', 'abusulaiman_frame2', 'abusulaiman_frame3', 'abusulaiman_frame4'],
+        frameWidth: 32, 
+        frameHeight: 32,
+        fps: 6
+    },
     // Ground Monk (Jayzen) - 4 separate 32x32 frames for idle animation
     jayzen: { 
         type: 'multiframe',
