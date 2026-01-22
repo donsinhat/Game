@@ -386,27 +386,27 @@ const BOOKS = {
 
 // ==================== ITEMS ====================
 const ITEMS = {
-    // Common (شائع)
+    // Common (شائع) - iconPos: {row, col} in IconSet.png (24x24 grid)
     mirinda: { name: 'حمضيات', desc: 'حار يلد .. ينعنش ويرجع لك 10 هيل', rarity: 'COMMON', effect: 'heal', val: 10, icon: '🍊', sprite: 'item_mirinda' },
     dalla: { name: 'دله قهوه', desc: 'المهيله تخليك نشيط واسرع 10 ثواني', rarity: 'COMMON', effect: 'tempSpeed', val: 0.15, dur: 10, icon: '☕', sprite: 'item_dalla' },
     pebble: { name: 'حب شمسي', desc: '+10% ضرر لمدة 12 ثانية', rarity: 'COMMON', effect: 'tempDmg', val: 0.1, dur: 12, icon: '🌻', sprite: 'item_pebble' },
     klega: { name: 'كليجه', desc: 'اولاو من حلاته تهيلك 5', rarity: 'COMMON', effect: 'heal', val: 5, icon: '🍪', sprite: 'item_klega' },
-    copper: { name: 'نحاس', desc: '+5 ذهب', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙' },
+    copper: { name: 'نحاس', desc: '+5 ذهب', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙', iconPos: {row: 11, col: 0} },
     
     // Rare (نادر)
-    redPotion: { name: 'جرعة حمراء', desc: 'يستعيد 30 صحة', rarity: 'RARE', effect: 'heal', val: 30, icon: '🧪' },
-    bluePotion: { name: 'جرعة زرقاء', desc: '+30% سرعة هجوم لمدة 15 ثانية', rarity: 'RARE', effect: 'tempAtkSpd', val: 0.3, dur: 15, icon: '🧴' },
-    amulet: { name: 'تميمة', desc: 'درع يمتص 20 ضرر', rarity: 'RARE', effect: 'shield', val: 20, icon: '📿' },
-    hourglass: { name: 'ساعة رملية', desc: 'يبطئ الأعداء 50% لمدة 5 ثواني', rarity: 'RARE', effect: 'slow', val: 0.5, dur: 5, icon: '⏳' },
-    silver: { name: 'فضة', desc: '+25 ذهب', rarity: 'RARE', effect: 'gold', val: 25, icon: '🥈' },
+    redPotion: { name: 'جرعة حمراء', desc: 'يستعيد 30 صحة', rarity: 'RARE', effect: 'heal', val: 30, icon: '🧪', iconPos: {row: 0, col: 0} },
+    bluePotion: { name: 'جرعة زرقاء', desc: '+30% سرعة هجوم لمدة 15 ثانية', rarity: 'RARE', effect: 'tempAtkSpd', val: 0.3, dur: 15, icon: '🧴', iconPos: {row: 0, col: 1} },
+    amulet: { name: 'تميمة', desc: 'درع يمتص 20 ضرر', rarity: 'RARE', effect: 'shield', val: 20, icon: '📿', iconPos: {row: 12, col: 8} },
+    hourglass: { name: 'ساعة رملية', desc: 'يبطئ الأعداء 50% لمدة 5 ثواني', rarity: 'RARE', effect: 'slow', val: 0.5, dur: 5, icon: '⏳', iconPos: {row: 9, col: 7} },
+    silver: { name: 'فضة', desc: '+25 ذهب', rarity: 'RARE', effect: 'gold', val: 25, icon: '🥈', iconPos: {row: 11, col: 1} },
     
     // Legendary (أسطوري)
-    elixir: { name: 'إكسير', desc: 'يستعيد كل الصحة ويزيد الصحة القصوى 20', rarity: 'LEGENDARY', effect: 'fullHeal', val: 20, icon: '⚗️' },
-    dragonHeart: { name: 'قلب التنين', desc: '+50% ضرر لمدة 25 ثانية', rarity: 'LEGENDARY', effect: 'tempDmg', val: 0.5, dur: 25, icon: '❤️‍🔥' },
+    elixir: { name: 'إكسير', desc: 'يستعيد كل الصحة ويزيد الصحة القصوى 20', rarity: 'LEGENDARY', effect: 'fullHeal', val: 20, icon: '⚗️', iconPos: {row: 0, col: 4} },
+    dragonHeart: { name: 'قلب التنين', desc: '+50% ضرر لمدة 25 ثانية', rarity: 'LEGENDARY', effect: 'tempDmg', val: 0.5, dur: 25, icon: '❤️‍🔥', iconPos: {row: 10, col: 0} },
     arika: { name: 'عريكه', desc: 'إذا مت، تعود للحياة مرة واحدة', rarity: 'LEGENDARY', effect: 'revive', val: 1, icon: '🍚', sprite: 'item_arika' },
-    crown: { name: 'تاج ذهبي', desc: '+50% ذهب بشكل دائم', rarity: 'LEGENDARY', effect: 'permGold', val: 0.5, icon: '👑' },
-    star: { name: 'نجمة الصحراء', desc: 'تحصل على سلاح أو كتاب عشوائي', rarity: 'LEGENDARY', effect: 'randomEquip', val: 1, icon: '⭐' },
-    khazouq: { name: 'خازوق', desc: 'يزيد نسبة ظهور الأعداء 10%، أنت غبي ليش أخذته؟', rarity: 'LEGENDARY', effect: 'moreEnemies', val: 0.10, icon: '🍆' }
+    crown: { name: 'تاج ذهبي', desc: '+50% ذهب بشكل دائم', rarity: 'LEGENDARY', effect: 'permGold', val: 0.5, icon: '👑', iconPos: {row: 12, col: 0} },
+    star: { name: 'نجمة الصحراء', desc: 'تحصل على سلاح أو كتاب عشوائي', rarity: 'LEGENDARY', effect: 'randomEquip', val: 1, icon: '⭐', iconPos: {row: 10, col: 8} },
+    khazouq: { name: 'خازوق', desc: 'يزيد نسبة ظهور الأعداء 10%، أنت غبي ليش أخذته؟', rarity: 'LEGENDARY', effect: 'moreEnemies', val: 0.10, icon: '🍆', iconPos: {row: 2, col: 5} }
 };
 
 // ==================== ENEMIES ====================
@@ -516,6 +516,9 @@ class AssetLoader {
             ['item_arika', 'assets/New Items Icon/arika.png'],
             ['item_pebble', 'assets/New Items Icon/pebble.png'],
             
+            // IconSet sprite sheet (24x24 icons)
+            ['iconset', 'assets/IconSet.png'],
+            
             // Desert Map
             ['desert_tiles', 'assets/New Maps/DesertTileset16x16/Tileset16x16/DesertTilemap16x16.png'],
             
@@ -584,6 +587,12 @@ class AssetLoader {
     
     get(name) {
         return this.images[name];
+    }
+    
+    // Get icon position from IconSet (24x24 grid)
+    // Row and col are 0-indexed
+    getIconRect(row, col, size = 24) {
+        return { x: col * size, y: row * size, w: size, h: size };
     }
 }
 
@@ -1355,12 +1364,25 @@ class ItemDrop {
         
         // Try to draw sprite if available
         const sprite = item.sprite && assets && assets.get(item.sprite);
+        const iconset = assets && assets.get('iconset');
+        
         if (sprite) {
             ctx.imageSmoothingEnabled = false;
             const size = 28;
             ctx.drawImage(sprite, sx - size/2, sy - size/2, size, size);
+        } else if (item.iconPos && iconset) {
+            // Draw from IconSet sprite sheet
+            ctx.imageSmoothingEnabled = false;
+            const iconSize = 24;
+            const drawSize = 28;
+            ctx.drawImage(
+                iconset,
+                item.iconPos.col * iconSize, item.iconPos.row * iconSize,
+                iconSize, iconSize,
+                sx - drawSize/2, sy - drawSize/2, drawSize, drawSize
+            );
         } else {
-            // Fallback to icon
+            // Fallback to emoji icon
             ctx.font = 'bold 20px Arial'; 
             ctx.textAlign = 'center'; 
             ctx.textBaseline = 'middle';
@@ -1912,8 +1934,18 @@ class Game {
         // Show sprite image if available, otherwise show emoji
         const iconEl = document.getElementById('itemIcon');
         const sprite = item.sprite && this.assets.get(item.sprite);
+        const iconset = this.assets.get('iconset');
+        
         if (sprite) {
             iconEl.innerHTML = `<img src="${sprite.src}" style="width: 64px; height: 64px; image-rendering: pixelated;">`;
+        } else if (item.iconPos && iconset) {
+            // Create canvas to extract icon from sprite sheet
+            const canvas = document.createElement('canvas');
+            canvas.width = 24;
+            canvas.height = 24;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(iconset, item.iconPos.col * 24, item.iconPos.row * 24, 24, 24, 0, 0, 24, 24);
+            iconEl.innerHTML = `<img src="${canvas.toDataURL()}" style="width: 64px; height: 64px; image-rendering: pixelated;">`;
         } else {
             iconEl.textContent = item.icon;
         }
