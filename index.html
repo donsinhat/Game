@@ -1156,10 +1156,11 @@ class Player {
             const frameX = currentFrame * spriteInfo.frameWidth;
             const frameY = row * spriteInfo.frameHeight;
             
-            // Draw sprite
-            const scale = 1.5;
-            const drawW = spriteInfo.frameWidth * scale;
-            const drawH = spriteInfo.frameHeight * scale;
+            // Draw sprite - scale based on frame size
+            // Smaller frames (40px) get larger scale, larger frames (48px) get smaller scale
+            const baseScale = spriteInfo.frameWidth <= 40 ? 2.2 : 1.8;
+            const drawW = spriteInfo.frameWidth * baseScale;
+            const drawH = spriteInfo.frameHeight * baseScale;
             
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(
