@@ -280,23 +280,29 @@ const CONFIG = {
 // Each tile definition: { x, y, w, h, collision: true/false }
 const ARABTOWN_TILES = {
     // Ground is the background color #c9a66b
-    // Coordinates analyzed pixel by pixel from 246x135 image
-    fence_top: { x: 0, y: 0, w: 135, h: 14, collision: true },
-    gate_large: { x: 0, y: 13, w: 64, h: 52, collision: true },
-    dome: { x: 63, y: 13, w: 32, h: 52, collision: true },
-    tower: { x: 96, y: 0, w: 39, h: 65, collision: true },
-    fence_small: { x: 0, y: 64, w: 42, h: 21, collision: true },
-    gate_small: { x: 0, y: 84, w: 45, h: 49, collision: true },
-    palm: { x: 132, y: 40, w: 18, h: 25, collision: true },
-    rock1: { x: 148, y: 54, w: 12, h: 11, collision: false },
-    rock2: { x: 158, y: 54, w: 14, h: 11, collision: false },
-    rock3: { x: 170, y: 54, w: 15, h: 11, collision: false },
-    building_tall: { x: 203, y: 0, w: 42, h: 75, collision: true },
-    shop1: { x: 43, y: 84, w: 57, h: 49, collision: true },
-    shop2: { x: 95, y: 84, w: 53, h: 49, collision: true },
-    house_small: { x: 145, y: 0, w: 35, h: 45, collision: true },
-    well: { x: 175, y: 40, w: 30, h: 25, collision: true },
-    person: { x: 130, y: 20, w: 20, h: 25, collision: false }
+    // Pixel-perfect coordinates from 246x135 arabtown-tile.png
+    // Row 1: Long fence (y=0-15)
+    fence_top: { x: 0, y: 0, w: 133, h: 13, collision: true },
+    // Row 2: Large buildings (y=13-66)
+    gate_large: { x: 0, y: 13, w: 63, h: 51, collision: true },
+    dome: { x: 64, y: 14, w: 31, h: 50, collision: true },
+    tower: { x: 96, y: 0, w: 36, h: 64, collision: true },
+    // Small fence (y=64-85)
+    fence_small: { x: 0, y: 64, w: 40, h: 20, collision: true },
+    // Palm and rocks (middle area)
+    palm: { x: 133, y: 41, w: 14, h: 23, collision: true },
+    rock1: { x: 148, y: 56, w: 10, h: 8, collision: false },
+    rock2: { x: 159, y: 55, w: 12, h: 9, collision: false },
+    rock3: { x: 172, y: 56, w: 10, h: 8, collision: false },
+    // Right side buildings
+    house_small: { x: 147, y: 0, w: 30, h: 42, collision: true },
+    building_tall: { x: 205, y: 0, w: 40, h: 71, collision: true },
+    well: { x: 178, y: 42, w: 25, h: 22, collision: true },
+    // Bottom row - shops and gate
+    gate_small: { x: 0, y: 86, w: 40, h: 47, collision: true },
+    shop1: { x: 42, y: 86, w: 50, h: 32, collision: true },
+    shop2: { x: 94, y: 86, w: 50, h: 32, collision: true },
+    person: { x: 133, y: 22, w: 13, h: 19, collision: false }
 };
 
 // ==================== RARITY ====================
@@ -1617,7 +1623,8 @@ class MapSystem {
             });
         }
         
-        const buildingTypes = ['gate_large', 'dome', 'tower', 'building_tall', 'house_small', 'shop1', 'shop2'];
+        // Use only well-defined building tiles
+        const buildingTypes = ['gate_large', 'dome', 'house_small', 'building_tall', 'shop1', 'gate_small'];
         
         // Generate buildings in a grid pattern with some randomness
         const gridSize = 300;
