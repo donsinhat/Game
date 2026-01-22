@@ -635,18 +635,117 @@ class Audio {
 // ==================== PARTICLES ====================
 class Particles {
     constructor() { this.list = []; this.stains = []; }
+    
     emit(x, y, n, opt = {}) {
         for (let i = 0; i < n; i++) {
             const a = Math.random() * Math.PI * 2, s = (opt.minS || 35) + Math.random() * ((opt.maxS || 100) - (opt.minS || 35));
-            this.list.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, color: opt.color || '#fff', size: 2 + Math.random() * 2.5, life: 0.6, maxLife: 0.6, gravity: opt.gravity || 0 });
+            this.list.push({ 
+                x, y, 
+                vx: Math.cos(a) * s, vy: Math.sin(a) * s, 
+                color: opt.color || '#fff', 
+                size: opt.size || (2 + Math.random() * 2.5), 
+                life: opt.life || 0.6, 
+                maxLife: opt.life || 0.6, 
+                gravity: opt.gravity || 0,
+                type: opt.type || 'circle',
+                shrink: opt.shrink !== false
+            });
         }
     }
-    blood(x, y) { this.emit(x, y, 8, { color: '#8b0000', minS: 35, maxS: 130, gravity: 160 }); this.stains.push({ x, y, size: 5 + Math.random() * 8 }); if (this.stains.length > 100) this.stains.shift(); }
-    update(dt) { this.list = this.list.filter(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.gravity * dt; p.life -= dt; return p.life > 0; }); }
+    
+    blood(x, y) { 
+        this.emit(x, y, 10, { color: '#8b0000', minS: 35, maxS: 130, gravity: 160 }); 
+        this.stains.push({ x, y, size: 5 + Math.random() * 8, alpha: 0.4 }); 
+        if (this.stains.length > 100) this.stains.shift(); 
+    }
+    
+    spark(x, y, color = '#ffff00') {
+        this.emit(x, y, 5, { color, minS: 80, maxS: 180, size: 3, life: 0.25, type: 'spark' });
+    }
+    
+    dust(x, y) {
+        this.emit(x, y, 6, { color: '#a08060', minS: 20, maxS: 60, size: 4, life: 0.5, gravity: -30, shrink: true });
+    }
+    
+    heal(x, y) {
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            this.list.push({ 
+                x: x + Math.cos(angle) * 20, 
+                y: y + Math.sin(angle) * 20, 
+                vx: Math.cos(angle) * -30, vy: -50 + Math.random() * 20, 
+                color: '#44ff44', size: 4, life: 0.6, maxLife: 0.6, gravity: -50, type: 'circle', shrink: true
+            });
+        }
+    }
+    
+    gold(x, y) {
+        for (let i = 0; i < 6; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            this.list.push({ 
+                x, y, 
+                vx: Math.cos(angle) * 60, vy: -80 + Math.random() * 40, 
+                color: '#ffd700', size: 3, life: 0.5, maxLife: 0.5, gravity: 100, type: 'star', shrink: false
+            });
+        }
+    }
+    
+    update(dt) { 
+        this.list = this.list.filter(p => { 
+            p.x += p.vx * dt; 
+            p.y += p.vy * dt; 
+            p.vy += p.gravity * dt; 
+            p.life -= dt; 
+            return p.life > 0; 
+        }); 
+    }
+    
     draw(ctx, cam) {
-        ctx.fillStyle = '#4a0000';
-        for (const s of this.stains) { ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.arc(s.x - cam.x, s.y - cam.y, s.size, 0, Math.PI * 2); ctx.fill(); }
-        for (const p of this.list) { ctx.globalAlpha = p.life / p.maxLife; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x - cam.x, p.y - cam.y, p.size, 0, Math.PI * 2); ctx.fill(); }
+        // Draw stains
+        for (const s of this.stains) { 
+            ctx.globalAlpha = s.alpha || 0.3; 
+            ctx.fillStyle = '#4a0000';
+            ctx.beginPath(); 
+            ctx.arc(s.x - cam.x, s.y - cam.y, s.size, 0, Math.PI * 2); 
+            ctx.fill(); 
+        }
+        
+        // Draw particles
+        for (const p of this.list) { 
+            const alpha = p.life / p.maxLife;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = p.color;
+            
+            const sx = p.x - cam.x, sy = p.y - cam.y;
+            const size = p.shrink ? p.size * alpha : p.size;
+            
+            if (p.type === 'spark') {
+                // Draw spark as line
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(sx - p.vx * 0.02, sy - p.vy * 0.02);
+                ctx.lineTo(sx, sy);
+                ctx.stroke();
+            } else if (p.type === 'star') {
+                // Draw small star shape
+                ctx.beginPath();
+                for (let i = 0; i < 4; i++) {
+                    const angle = (i / 4) * Math.PI * 2;
+                    ctx.moveTo(sx, sy);
+                    ctx.lineTo(sx + Math.cos(angle) * size * 2, sy + Math.sin(angle) * size * 2);
+                }
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // Default circle
+                ctx.beginPath(); 
+                ctx.arc(sx, sy, size, 0, Math.PI * 2); 
+                ctx.fill();
+            }
+        }
         ctx.globalAlpha = 1;
     }
 }
@@ -823,8 +922,10 @@ class Player {
                 if (ts.length > 0) { 
                     const t = ts[Math.floor(Math.random() * ts.length)]; 
                     game.fx.push({ type: 'lightning', x: t.x, y: t.y, life: 0.25 }); 
-                    // Add spark effect
+                    // Add spark and electric effects
                     game.spriteEffects.push(new SpriteEffect(t.x, t.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
+                    game.particles.spark(t.x, t.y, '#ffff88');
+                    game.particles.spark(t.x, t.y, '#ffffff');
                     if (t.takeDmg(dmg, game)) game.killEnemy(t); 
                     game.audio.tone(650, 0.06, 'sawtooth'); 
                 }
@@ -837,6 +938,7 @@ class Player {
                     const my = this.y + (Math.random() - 0.5) * range * 2;
                     game.fx.push({ type: 'meteor', x: mx, y: my, dmg, radius: 55, life: 0.75, delay: i * 0.12, hit: false });
                 }
+                game.audio.tone(200, 0.1, 'sawtooth');
                 break;
             }
             case 'tornado':
@@ -1552,8 +1654,18 @@ class Game {
             const d = Math.hypot(p.x - this.player.x, p.y - this.player.y);
             if (d < this.player.pickupRange * 1.8) { const a = Math.atan2(this.player.y - p.y, this.player.x - p.x); const s = 200 * (1 - d / (this.player.pickupRange * 1.8)); p.x += Math.cos(a) * s * dt; p.y += Math.sin(a) * s * dt; }
             if (d < this.player.pickupRange) {
-                if (p.type === 'xp') { this.player.xp += p.val * this.player.xpMult * (1 + this.player.curse * 0.4); this.audio.pickup(); this.checkLevelUp(); }
-                else { this.player.gold += Math.round(p.val * this.player.goldMult); this.audio.pickup(); }
+                if (p.type === 'xp') { 
+                    this.player.xp += p.val * this.player.xpMult * (1 + this.player.curse * 0.4); 
+                    this.audio.pickup(); 
+                    this.checkLevelUp(); 
+                    // XP pickup effect
+                    this.particles.emit(p.x, p.y, 3, { color: '#44ff44', minS: 30, maxS: 60, size: 2, life: 0.3 });
+                } else { 
+                    this.player.gold += Math.round(p.val * this.player.goldMult); 
+                    this.audio.pickup();
+                    // Gold pickup effect
+                    this.particles.gold(p.x, p.y);
+                }
                 this.pickups.splice(i, 1);
             }
         }
@@ -1595,11 +1707,18 @@ class Game {
         this.audio.pickup();
         this.particles.blood(enemy.x, enemy.y);
         
-        // Add death effect
+        // Add death effect with sparks
         this.spriteEffects.push(new SpriteEffect(enemy.x, enemy.y, 'fx_explosion', 32, 32, 7, 0.4, 1.5));
+        this.particles.spark(enemy.x, enemy.y, '#ff6600');
+        
+        // Add floating kill text
+        this.texts.push(new FloatText(enemy.x, enemy.y - 10, '+' + enemy.xp + ' XP', '#44ff44', 12));
         
         this.pickups.push(new Pickup(enemy.x, enemy.y, 'xp', enemy.xp));
-        if (Math.random() < 0.18) this.pickups.push(new Pickup(enemy.x + (Math.random() - 0.5) * 12, enemy.y + (Math.random() - 0.5) * 12, 'gold', 1 + Math.floor(this.time / 55)));
+        if (Math.random() < 0.18) {
+            this.pickups.push(new Pickup(enemy.x + (Math.random() - 0.5) * 12, enemy.y + (Math.random() - 0.5) * 12, 'gold', 1 + Math.floor(this.time / 55)));
+            this.particles.gold(enemy.x, enemy.y);
+        }
         if (Math.random() < 0.012 * this.player.luck) this.dropItem(enemy.x, enemy.y);
     }
     
@@ -1644,16 +1763,21 @@ class Game {
                 this.player.hp = Math.min(this.player.maxHp, this.player.hp + item.val); 
                 this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} HP`, '#0f0')); 
                 this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_heal', 24, 24, 6, 0.5, 2));
+                this.particles.heal(this.player.x, this.player.y);
                 break;
             case 'fullHeal': 
                 this.player.maxHp += item.val; 
                 this.player.hp = this.player.maxHp; 
                 this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'شفاء كامل!', '#0f0', 16)); 
                 this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_heal', 24, 24, 6, 0.6, 2.5));
+                this.particles.heal(this.player.x, this.player.y);
+                this.particles.heal(this.player.x, this.player.y);
                 break;
             case 'gold': 
                 this.player.gold += Math.round(item.val * this.player.goldMult); 
                 this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
+                this.particles.gold(this.player.x, this.player.y);
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} ذهب`, '#ffd700'));
                 break;
             case 'tempSpeed': 
                 this.player.tempBuffs.push({ type: 'speed', val: item.val, dur: item.dur }); 
