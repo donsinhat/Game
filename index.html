@@ -428,11 +428,17 @@ class AssetLoader {
             ['char_006', 'assets/characters/Char_006.png'],
             ['char_006_idle', 'assets/characters/Char_006_Idle.png'],
             
-            // Enemies
-            ['wolf', 'assets/enemies/wolf.png'],
-            ['scorpion', 'assets/enemies/scorpion.png'],
-            ['dhub', 'assets/enemies/dhub.png'],
-            ['monsters_sheet', 'assets/enemies/Mons 24(v2) base spritesheet.png'],
+            // Enemies - New monster sprites
+            ['enemy_wolf', 'assets/enemies/NB_01.png'],
+            ['enemy_scorpion', 'assets/enemies/NB_09.png'],
+            ['enemy_dhub', 'assets/enemies/NB_03.png'],
+            ['enemy_snake', 'assets/enemies/NB_06.png'],
+            ['enemy_hyena', 'assets/enemies/NB_02.png'],
+            ['enemy_eagle', 'assets/enemies/NB_29.png'],
+            ['enemy_lion', 'assets/enemies/NB_26.png'],
+            ['enemy_djinn', 'assets/enemies/NB_05.png'],
+            ['enemy_ghoul', 'assets/enemies/NB_08.png'],
+            ['enemy_knight', 'assets/enemies/NB_16.png'],
             
             // Pickups
             ['gold_coin', 'assets/pickups/gold_coin.png'],
@@ -481,18 +487,18 @@ const CHAR_SPRITES = {
     layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4 }
 };
 
-// Enemy sprite mappings - using simple sprites for now
+// Enemy sprite mappings - using new monster sprites
 const ENEMY_SPRITES = {
-    wolf: { sprite: 'wolf', width: 48, height: 48 },
-    scorpion: { sprite: 'scorpion', width: 40, height: 40 },
-    dhub: { sprite: 'dhub', width: 48, height: 48 },
-    snake: { sprite: 'scorpion', width: 40, height: 40 },
-    hyena: { sprite: 'wolf', width: 48, height: 48 },
-    eagle: { sprite: 'wolf', width: 48, height: 48 },
-    lion: { sprite: 'dhub', width: 48, height: 48 },
-    djinn: { sprite: 'scorpion', width: 40, height: 40 },
-    ghoul: { sprite: 'dhub', width: 48, height: 48 },
-    knight: { sprite: 'wolf', width: 48, height: 48 }
+    wolf: { sprite: 'enemy_wolf', width: 80, height: 80 },
+    scorpion: { sprite: 'enemy_scorpion', width: 80, height: 80 },
+    dhub: { sprite: 'enemy_dhub', width: 80, height: 80 },
+    snake: { sprite: 'enemy_snake', width: 80, height: 80 },
+    hyena: { sprite: 'enemy_hyena', width: 80, height: 80 },
+    eagle: { sprite: 'enemy_eagle', width: 80, height: 80 },
+    lion: { sprite: 'enemy_lion', width: 80, height: 80 },
+    djinn: { sprite: 'enemy_djinn', width: 80, height: 80 },
+    ghoul: { sprite: 'enemy_ghoul', width: 80, height: 80 },
+    knight: { sprite: 'enemy_knight', width: 80, height: 80 }
 };
 
 // ==================== AUDIO ====================
@@ -961,7 +967,7 @@ class Enemy {
             ctx.save();
             ctx.imageSmoothingEnabled = false;
             
-            const scale = 1.4;
+            const scale = 0.6; // Scale down the large sprites
             const drawW = spriteInfo.width * scale;
             const drawH = spriteInfo.height * scale;
             
@@ -992,9 +998,9 @@ class Enemy {
         // Health bar
         if (this.hp < this.maxHp) { 
             ctx.fillStyle = '#333'; 
-            ctx.fillRect(sx - 16, sy - 24, 32, 5); 
+            ctx.fillRect(sx - 18, sy - 28, 36, 5); 
             ctx.fillStyle = '#f00'; 
-            ctx.fillRect(sx - 16, sy - 24, 32 * (this.hp / this.maxHp), 5); 
+            ctx.fillRect(sx - 18, sy - 28, 36 * (this.hp / this.maxHp), 5); 
         }
     }
 }
