@@ -539,6 +539,13 @@ class AssetLoader {
             ['jayzen_frame3', 'assets/characters/ground_monk/ground_monk_3.png'],
             ['jayzen_frame4', 'assets/characters/ground_monk/ground_monk_4.png'],
             
+            // Adventurer (Hawshabi) sprites - 5 frames for idle animation
+            ['hawshabi_frame0', 'assets/characters/adventurer_01/adventurer_01_00.png'],
+            ['hawshabi_frame1', 'assets/characters/adventurer_01/adventurer_01_01.png'],
+            ['hawshabi_frame2', 'assets/characters/adventurer_01/adventurer_01_02.png'],
+            ['hawshabi_frame3', 'assets/characters/adventurer_01/adventurer_01_03.png'],
+            ['hawshabi_frame4', 'assets/characters/adventurer_01/adventurer_01_04.png'],
+            
             // Boss sprite (Abu Halza)
             ['boss_halza', 'assets/characters/1769115033155(1).png'],
             
@@ -671,7 +678,14 @@ const CHAR_SPRITES = {
         frameHeight: 32,
         fps: 6 // 6 frames per second as recommended
     },
-    hawshabi: { sprite: 'char_004', idle: 'char_004_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    // Adventurer (Hawshabi) - 5 separate 32x32 frames for idle animation
+    hawshabi: { 
+        type: 'multiframe',
+        frames: ['hawshabi_frame0', 'hawshabi_frame1', 'hawshabi_frame2', 'hawshabi_frame3', 'hawshabi_frame4'],
+        frameWidth: 32, 
+        frameHeight: 32,
+        fps: 6
+    },
     layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 }
 };
 
