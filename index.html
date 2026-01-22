@@ -434,20 +434,18 @@ const CHAR_SPRITES = {
     layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4 }
 };
 
-// Enemy sprite mappings
-// monsters_sheet has 24 monsters, each 32x32, 4 frames animation, 4 directions
-// Layout: 8 monsters per row, 3 rows of monsters (each monster takes 4 columns for animation)
+// Enemy sprite mappings - using simple sprites for now
 const ENEMY_SPRITES = {
-    wolf: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 0, sheetY: 0, frames: 4 },
-    scorpion: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 128, sheetY: 0, frames: 4 },
-    dhub: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 256, sheetY: 0, frames: 4 },
-    snake: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 384, sheetY: 0, frames: 4 },
-    hyena: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 0, sheetY: 128, frames: 4 },
-    eagle: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 128, sheetY: 128, frames: 4 },
-    lion: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 256, sheetY: 128, frames: 4 },
-    djinn: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 384, sheetY: 128, frames: 4 },
-    ghoul: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 0, sheetY: 256, frames: 4 },
-    knight: { sprite: 'monsters_sheet', width: 32, height: 32, sheetX: 128, sheetY: 256, frames: 4 }
+    wolf: { sprite: 'wolf', width: 48, height: 48 },
+    scorpion: { sprite: 'scorpion', width: 40, height: 40 },
+    dhub: { sprite: 'dhub', width: 48, height: 48 },
+    snake: { sprite: 'scorpion', width: 40, height: 40 },
+    hyena: { sprite: 'wolf', width: 48, height: 48 },
+    eagle: { sprite: 'wolf', width: 48, height: 48 },
+    lion: { sprite: 'dhub', width: 48, height: 48 },
+    djinn: { sprite: 'scorpion', width: 40, height: 40 },
+    ghoul: { sprite: 'dhub', width: 48, height: 48 },
+    knight: { sprite: 'wolf', width: 48, height: 48 }
 };
 
 // ==================== AUDIO ====================
@@ -938,46 +936,15 @@ class Enemy {
         const spriteInfo = ENEMY_SPRITES[this.type];
         const sprite = assets && spriteInfo && assets.get(spriteInfo.sprite);
         
-        if (sprite && spriteInfo.sheetX !== undefined) {
-            // Animated sprite from sheet
+        if (sprite) {
             ctx.save();
             ctx.imageSmoothingEnabled = false;
             
-            const scale = 1.8;
+            const scale = 1.4;
             const drawW = spriteInfo.width * scale;
             const drawH = spriteInfo.height * scale;
             
-            // Calculate animation frame
-            const frameTime = 0.15;
-            const currentFrame = Math.floor((this.animTime || 0) / frameTime) % spriteInfo.frames;
-            
-            // Determine direction row based on movement
-            let dirRow = 0; // down
-            if (Math.abs(this.vx) > Math.abs(this.vy)) {
-                dirRow = this.vx > 0 ? 2 : 1; // right or left
-            } else if (this.vy < 0) {
-                dirRow = 3; // up
-            }
-            
-            const srcX = spriteInfo.sheetX + currentFrame * spriteInfo.width;
-            const srcY = spriteInfo.sheetY + dirRow * spriteInfo.height;
-            
-            ctx.drawImage(
-                sprite,
-                srcX, srcY, spriteInfo.width, spriteInfo.height,
-                sx - drawW / 2, sy - drawH / 2, drawW, drawH
-            );
-            
-            ctx.restore();
-        } else if (sprite) {
-            // Simple sprite (old style)
-            ctx.save();
-            ctx.imageSmoothingEnabled = false;
-            
-            const scale = 1.5;
-            const drawW = spriteInfo.width * scale;
-            const drawH = spriteInfo.height * scale;
-            
+            // Flip based on movement direction
             if (this.vx < 0) {
                 ctx.translate(sx, sy);
                 ctx.scale(-1, 1);
@@ -988,14 +955,15 @@ class Enemy {
             
             ctx.restore();
         } else {
-            // Fallback to simple circle
+            // Fallback to colored circle
             ctx.fillStyle = this.color;
             ctx.beginPath(); 
             ctx.arc(sx, sy, 14, 0, Math.PI * 2); 
             ctx.fill();
-            ctx.fillStyle = '#f00';
-            ctx.fillRect(sx - 3, sy - 2, 3, 3); 
-            ctx.fillRect(sx + 1, sy - 2, 3, 3);
+            // Eyes
+            ctx.fillStyle = '#ff0';
+            ctx.fillRect(sx - 4, sy - 3, 3, 3); 
+            ctx.fillRect(sx + 1, sy - 3, 3, 3);
         }
         
         ctx.globalAlpha = 1;
@@ -1003,9 +971,9 @@ class Enemy {
         // Health bar
         if (this.hp < this.maxHp) { 
             ctx.fillStyle = '#333'; 
-            ctx.fillRect(sx - 18, sy - 26, 36, 5); 
+            ctx.fillRect(sx - 16, sy - 24, 32, 5); 
             ctx.fillStyle = '#f00'; 
-            ctx.fillRect(sx - 18, sy - 26, 36 * (this.hp / this.maxHp), 5); 
+            ctx.fillRect(sx - 16, sy - 24, 32 * (this.hp / this.maxHp), 5); 
         }
     }
 }
