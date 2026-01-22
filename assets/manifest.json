@@ -1,77 +1,190 @@
 {
-  "version": "1.0",
-  "generator": "pixel_art_fallback",
+  "version": "2.0",
+  "generator": "pixel_art_assets",
   "assets": {
     "characters": {
       "abu_sulaiman": {
         "path": "assets/characters/abu_sulaiman.png",
-        "size": [
-          64,
-          64
-        ]
+        "size": [64, 64]
       },
       "jayzen": {
         "path": "assets/characters/jayzen.png",
-        "size": [
-          64,
-          64
-        ]
+        "size": [64, 64]
       },
       "noura": {
         "path": "assets/characters/noura.png",
-        "size": [
-          64,
-          64
-        ]
+        "size": [64, 64]
+      },
+      "char_001": {
+        "path": "assets/characters/Char_001.png",
+        "idle": "assets/characters/Char_001_Idle.png",
+        "size": [48, 48],
+        "frames": 4,
+        "description": "Purple/pink mage - Layla"
+      },
+      "char_002": {
+        "path": "assets/characters/Char_002.png",
+        "idle": "assets/characters/Char_002_Idle.png",
+        "size": [48, 48],
+        "frames": 4,
+        "description": "Armored knight - Bedouin"
+      },
+      "char_003": {
+        "path": "assets/characters/Char_003.png",
+        "idle": "assets/characters/Char_003_Idle.png",
+        "size": [48, 48],
+        "frames": 4,
+        "description": "Brown/gold character - Abu Sulaiman"
+      },
+      "char_004": {
+        "path": "assets/characters/Char_004.png",
+        "idle": "assets/characters/Char_004_Idle.png",
+        "size": [48, 48],
+        "frames": 4,
+        "description": "Dark character - Hawshabi"
+      },
+      "char_005": {
+        "path": "assets/characters/Char_005.png",
+        "idle": "assets/characters/Char_005_Idle.png",
+        "size": [48, 48],
+        "frames": 4,
+        "description": "Blue/green character - Noura"
+      },
+      "char_006": {
+        "path": "assets/characters/Char_006.png",
+        "idle": "assets/characters/Char_006_Idle.png",
+        "size": [48, 48],
+        "frames": 4,
+        "description": "Red character - Jayzen"
       }
     },
     "enemies": {
       "wolf": {
         "path": "assets/enemies/wolf.png",
-        "size": [
-          48,
-          48
-        ]
+        "size": [48, 48]
       },
       "dhub": {
         "path": "assets/enemies/dhub.png",
-        "size": [
-          48,
-          48
-        ]
+        "size": [48, 48]
       },
       "scorpion": {
         "path": "assets/enemies/scorpion.png",
-        "size": [
-          40,
-          40
-        ]
+        "size": [40, 40]
       }
     },
     "pickups": {
       "xp_gem": {
         "path": "assets/pickups/xp_gem.png",
-        "size": [
-          24,
-          24
-        ]
+        "size": [24, 24]
       },
       "gold_coin": {
         "path": "assets/pickups/gold_coin.png",
-        "size": [
-          24,
-          24
-        ]
+        "size": [24, 24]
       }
     },
     "backgrounds": {
       "sand_tile": {
         "path": "assets/backgrounds/sand_tile.png",
-        "size": [
-          64,
-          64
-        ]
+        "size": [64, 64]
       }
+    },
+    "tilesets": {
+      "tiles_all": {
+        "path": "assets/tiles-all-32x32.png",
+        "tileSize": 32
+      },
+      "ground_tiles": {
+        "path": "assets/ground-tiles-32x32.png",
+        "tileSize": 32
+      },
+      "dirt_tiles": {
+        "path": "assets/dirt-tiles-32x32.png",
+        "tileSize": 32
+      },
+      "wall_tiles": {
+        "path": "assets/wall-tiles-32x32.png",
+        "tileSize": 32
+      },
+      "water_tiles": {
+        "path": "assets/water-tiles-32x32.png",
+        "tileSize": 32
+      }
+    },
+    "effects": {
+      "spark": {
+        "path": "assets/01.png",
+        "description": "Sparkle/star effects"
+      },
+      "fire_small": {
+        "path": "assets/02.png",
+        "description": "Small fire effects"
+      },
+      "explosion": {
+        "path": "assets/03.png",
+        "description": "Explosion effects"
+      },
+      "fireball": {
+        "path": "assets/04.png",
+        "description": "Fireball projectile effects"
+      },
+      "flames": {
+        "path": "assets/05.png",
+        "description": "Flame wall effects"
+      },
+      "ice": {
+        "path": "assets/10.png",
+        "description": "Ice/water effects"
+      },
+      "magic": {
+        "path": "assets/15.png",
+        "description": "Purple magic effects"
+      },
+      "heal": {
+        "path": "assets/20.png",
+        "description": "Green healing effects"
+      },
+      "dust": {
+        "path": "assets/25.png",
+        "description": "Dust/smoke effects"
+      },
+      "circle": {
+        "path": "assets/30.png",
+        "description": "Circle/ring effects"
+      },
+      "water": {
+        "path": "assets/35.png",
+        "description": "Water splash effects"
+      }
+    },
+    "audio": {
+      "battle_theme_1": "assets/01. Battle Theme MIDI.mid",
+      "lively_city": "assets/02. Lively City MIDI.mid",
+      "royal_castle": "assets/03. Royal Castle MIDI.mid",
+      "peaceful_village": "assets/04. Peaceful Village MIDI.mid",
+      "long_journey": "assets/05. Long Journey MIDI.mid",
+      "hidden_cavern": "assets/06. Hidden Cavern MIDI.mid",
+      "spirit_forest": "assets/07. Spirit Forest MIDI.mid",
+      "wood_forest_town": "assets/08. Wood Forest Town MIDI.mid",
+      "battle_theme_2": "assets/09. Battle Theme II MIDI.mid",
+      "dwarven_mine": "assets/10. Dwarven Mine MIDI.mid",
+      "dangerous_cave": "assets/11. Dangerous Cave MIDI.mid",
+      "goofy_monster": "assets/12. Goofy Monster MIDI.mid",
+      "magic_temple": "assets/13. Magic Temple MIDI.mid",
+      "traveling_sky": "assets/14. Traveling The Sky MIDI.mid",
+      "volcanic_crater": "assets/15. Volcanic Crater.mid",
+      "battle_theme_3": "assets/16. Battle Theme III MIDI.mid",
+      "unknown_island": "assets/17. Unknown Island MIDI.mid",
+      "old_magician": "assets/18. The OId Magician MIDI.mid",
+      "east_town": "assets/19. East Town MIDI.mid",
+      "military_base": "assets/20. Military Base MIDI.mid",
+      "malicious_scheme": "assets/21. Malicious Scheme MIDI.mid",
+      "ancient_library": "assets/22. Ancient Library MIDI.mid",
+      "pyramid": "assets/23. Pyramid MIDI.mid",
+      "battle_theme_4": "assets/24. Battle Theme IV MIDI.mid",
+      "dark_factory": "assets/25. Dark Factory MIDI.mid",
+      "demon_king_castle": "assets/26. Demon King Castle MIDI.mid",
+      "the_evil_one": "assets/27. The Evil One MIDI.mid",
+      "holy_sanctuary": "assets/28. Holy Sanctuary MIDI.mid"
     }
   }
 }
