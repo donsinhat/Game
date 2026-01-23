@@ -471,7 +471,7 @@ const CHARACTERS = {
 const WEAPONS = {
     // Weapon sprite info: effectSprite (spritesheet), frameW, frameH, frames, iconSprite
     agal: { 
-        name: 'العقال', desc: 'حبل يدور حولك ويضرب الأعداء', 
+        name: 'العقال', desc: 'مقذوف واحد يدور حولك ويضرب الأعداء', 
         type: 'orbit', dmg: 5, cd: 0.1, range: 65, icon: '⭕',
         effectSprite: 'weapon_agal_effect', frameW: 64, frameH: 64, frames: 10,
         iconSprite: 'weapon_agal_icon'
@@ -479,13 +479,13 @@ const WEAPONS = {
     vape: { 
         name: 'الفيب', desc: 'هجوم قريب بالدخان', 
         type: 'melee', dmg: 6, cd: 0.55, range: 80, icon: '💨',
-        effectSprite: 'weapon_vape_effect', frameW: 59, frameH: 59, frames: 13,
+        effectSprite: 'weapon_vape_effect', frameW: 64, frameH: 59, frames: 12,
         iconSprite: 'weapon_vape_icon'
     },
     aura: { 
         name: 'الهيبة', desc: 'هالة ضرر حولك كل 0.5 ثانية', 
         type: 'aura', dmg: 4, cd: 0.5, range: 60, icon: '💫',
-        effectSprite: 'weapon_aura_effect', frameW: 70, frameH: 69, frames: 10,
+        effectSprite: 'weapon_aura_effect', frameW: 64, frameH: 69, frames: 11,
         iconSprite: 'weapon_aura_icon'
     },
     sword: { 
@@ -498,6 +498,7 @@ const WEAPONS = {
         name: 'المقمع', desc: 'طلقة شوتجن متوسطة المدى', 
         type: 'projectile', dmg: 5, cd: 1.0, range: 200, icon: '🔫',
         effectSprite: 'weapon_mgma_effect', frameW: 64, frameH: 68, frames: 8,
+        projectileSprite: 'weapon_mgma_fire', projFrameW: 64, projFrameH: 64, projFrames: 12, projFps: 12,
         iconSprite: 'weapon_mgma_icon'
     },
     meteor: { 
@@ -516,7 +517,7 @@ const WEAPONS = {
         name: 'البصل', desc: 'قذيفة طويلة المدى تسبب ضرر مستمر', 
         type: 'dot', dmg: 3, cd: 1.5, range: 450, icon: '🧅',
         effectSprite: 'weapon_onion_effect', frameW: 64, frameH: 65, frames: 15,
-        projectileSprite: 'weapon_onion_projectile', projFrameW: 64, projFrames: 14,
+        projectileSprite: 'weapon_onion_projectile', projFrameW: 64, projFrameH: 65, projFrames: 14, projFps: 12,
         iconSprite: 'weapon_onion_icon'
     },
     arrows: { name: 'السهام', desc: 'سهام تطلق بكل الاتجاهات', type: 'radial', dmg: 4, cd: 0.85, range: 320, icon: '🏹', iconPos: {row: 30, col: 0}, projectileIcon: {row: 30, col: 6} },
@@ -1261,6 +1262,15 @@ class Player {
                     else if (isSpear) projType = 'spear';
                     
                     // Fire multiple projectiles if count > 1
+                    const projectileSprite = data.projectileSprite ? {
+                        spriteKey: data.projectileSprite,
+                        frameW: data.projFrameW,
+                        frameH: data.projFrameH || data.projFrameW,
+                        frames: data.projFrames || 1,
+                        fps: data.projFps || 12,
+                        spriteScale: data.projectileScale,
+                        anim: 0
+                    } : null;
                     const spreadAngle = Math.PI / 8; // 22.5 degrees spread
                     for (let i = 0; i < projCount; i++) {
                         const angleOffset = projCount > 1 
@@ -1274,7 +1284,9 @@ class Player {
                             color: isBlueFlame ? '#00aaff' : (isFlame ? '#ff4500' : '#8b4513'), 
                             pierce: w.level > 10 ? 2 : 1,
                             type: projType,
-                            iconPos: data.projectileIcon
+                            iconPos: data.projectileIcon,
+                            weaponId: w.id,
+                            ...(projectileSprite || {})
                         });
                     }
                     game.audio.shoot();
@@ -1363,6 +1375,15 @@ class Player {
                 // Onion weapon - long range DOT
                 if (target && Math.hypot(target.x - this.x, target.y - this.y) < range) {
                     const a = Math.atan2(target.y - this.y, target.x - this.x);
+                    const projectileSprite = data.projectileSprite ? {
+                        spriteKey: data.projectileSprite,
+                        frameW: data.projFrameW,
+                        frameH: data.projFrameH || data.projFrameW,
+                        frames: data.projFrames || 1,
+                        fps: data.projFps || 12,
+                        spriteScale: data.projectileScale,
+                        anim: 0
+                    } : null;
                     for (let i = 0; i < projCount; i++) {
                         const spread = projCount > 1 ? (i - (projCount - 1) / 2) * 0.15 : 0;
                         game.proj.push({
@@ -1371,7 +1392,8 @@ class Player {
                             dmg, life: 3.5, size: 8,
                             color: '#9f9', type: 'dot',
                             dotDmg: dmg * 0.3, dotDur: 2.5, // DOT effect
-                            weaponId: w.id
+                            weaponId: w.id,
+                            ...(projectileSprite || {})
                         });
                     }
                     game.audio.shoot();
@@ -1533,7 +1555,7 @@ class Player {
             const effectSprite = data.effectSprite && assets && assets.get(data.effectSprite);
             
             if (data.type === 'orbit') {
-                const n = 4 + Math.floor(w.level / 5);
+                const n = 1 + Math.floor(w.level / 5);
                 const fps = 10;
                 const frameTime = 1 / fps;
                 const totalFrames = data.frames || 10;
@@ -2691,11 +2713,24 @@ class Game {
         for (let i = this.proj.length - 1; i >= 0; i--) {
             const p = this.proj[i];
             p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+            if (p.spriteKey) p.anim = (p.anim || 0) + dt;
             if (p.life <= 0) { this.proj.splice(i, 1); continue; }
             for (const e of this.enemies) {
                 if (Math.hypot(p.x - e.x, p.y - e.y) < p.size + e.width / 2) {
                     const hit = this.player.applyCrit(p.dmg);
                     if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                    const wData = p.weaponId ? WEAPONS[p.weaponId] : null;
+                    if (wData && (wData.type === 'projectile' || wData.type === 'dot') && wData.effectSprite && wData.frameW) {
+                        this.spriteEffects.push(new SpriteEffect(
+                            e.x, e.y,
+                            wData.effectSprite,
+                            wData.frameW,
+                            wData.frameH || wData.frameW,
+                            wData.frames || 1,
+                            0.35,
+                            1.3
+                        ));
+                    }
                     // Apply DOT if projectile has it
                     if (p.dotDmg && p.dotDur && !e.dots) e.dots = [];
                     if (p.dotDmg && p.dotDur && e.dots) {
@@ -3386,8 +3421,29 @@ class Game {
             const px = p.x - this.cam.x, py = p.y - this.cam.y;
             const angle = Math.atan2(p.vy, p.vx);
             
-            // Try to draw from IconSet if projectile has iconPos
-            if (p.iconPos && iconset) {
+            const projectileSprite = p.spriteKey ? this.assets.get(p.spriteKey) : null;
+            if (projectileSprite) {
+                const frameW = p.frameW || projectileSprite.width;
+                const frameH = p.frameH || projectileSprite.height;
+                const frames = p.frames || 1;
+                const fps = p.fps || 12;
+                const frame = frames > 1 ? Math.floor((p.anim || 0) * fps) % frames : 0;
+                const frameX = frame * frameW;
+                const scale = p.spriteScale || (p.size * 3 / frameW);
+                const drawW = frameW * scale;
+                const drawH = frameH * scale;
+                ctx.save();
+                ctx.translate(px, py);
+                ctx.rotate(angle);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(
+                    projectileSprite,
+                    frameX, 0, frameW, frameH,
+                    -drawW / 2, -drawH / 2, drawW, drawH
+                );
+                ctx.restore();
+            } else if (p.iconPos && iconset) {
+                // Try to draw from IconSet if projectile has iconPos
                 ctx.save();
                 ctx.translate(px, py);
                 ctx.rotate(angle);
