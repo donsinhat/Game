@@ -337,7 +337,7 @@
     <script>
 // ==================== GAME CONFIG ====================
 const CONFIG = {
-    WORLD_SIZE: 2000,
+    WORLD_SIZE: 4000, // Match map.png size
     TILE_SIZE: 32,
     PLAYER_LIGHT_RADIUS: 300,
     MAX_WEAPONS: 4,
@@ -728,6 +728,8 @@ class AssetLoader {
             
             // Arab Town Tileset (main map)
             ['arabtown', 'assets/New Maps/arabtown-tile.png'],
+            // Full map image
+            ['map_bg', 'assets/map.png'],
             
             // Forest Map (Baghdad)
             ['forest_tiles', 'assets/New Maps/gentle sheets/gentle forest v01.png'],
@@ -2133,12 +2135,12 @@ class Boss {
             }
         }
         
-        // Summon minions
+        // Summon minions - use new enemy types
         if (this.phase >= 2) { 
             this.specT -= dt; 
             if (this.specT <= 0) { 
                 this.specT = 4; 
-                const types = ['wolf', 'scorpion']; 
+                const types = ['flyingEye', 'goblin', 'skeleton']; 
                 for (let i = 0; i < this.phase * 2; i++) { 
                     const a = Math.random() * Math.PI * 2; 
                     game.enemies.push(new Enemy(this.x + Math.cos(a) * 80, this.y + Math.sin(a) * 80, types[Math.floor(Math.random() * types.length)], game.time, player.enemyBuff)); 
@@ -2342,18 +2344,50 @@ class MapSystem {
     }
     
     generate(worldSize) {
-        // Simple empty map - no buildings, no walls, just decorations
         this.obstacles = [];
         this.decorations = [];
         this.walls = [];
         
-        // Only add visual decorations (no collision)
-        for (let i = 0; i < 80; i++) {
-            this.decorations.push({
-                x: (Math.random() - 0.5) * worldSize * 0.9,
-                y: (Math.random() - 0.5) * worldSize * 0.9,
-                tile: 'rock' + (Math.floor(Math.random() * 2) + 1)
-            });
+        // Building collision boxes based on map.png (4000x4000, centered at 0,0)
+        // Scale factor: worldSize / 4000
+        const scale = worldSize / 4000;
+        
+        // Building locations from map image (approximate pixel positions -> world coords)
+        // Format: [centerX, centerY, width, height] in map pixels
+        const buildings = [
+            // Top left building
+            [400, 180, 120, 160],
+            // Top center structure
+            [1700, 450, 180, 80],
+            // Upper middle large building
+            [1100, 850, 180, 200],
+            // Right side mosque
+            [3000, 680, 140, 180],
+            // Middle left building
+            [350, 1450, 140, 180],
+            // Right side structure
+            [3300, 1400, 180, 80],
+            // Lower left building complex
+            [420, 1900, 200, 180],
+            // Lower middle building
+            [1500, 1950, 160, 180],
+            // Lower right building
+            [2900, 1950, 180, 200],
+            // Bottom center building
+            [1900, 2700, 160, 180],
+            // Bottom structure
+            [1850, 3200, 180, 80],
+        ];
+        
+        // Convert to world coordinates and add as obstacles
+        for (const [px, py, pw, ph] of buildings) {
+            // Convert from image coords (0-4000) to world coords (-half to +half)
+            const wx = (px - 2000) * scale;
+            const wy = (py - 2000) * scale;
+            const ww = pw * scale;
+            const wh = ph * scale;
+            
+            this.obstacles.push({ x: wx, y: wy, w: ww, h: wh });
         }
         
         this.generated = true;
@@ -4128,46 +4162,27 @@ class Game {
     drawBg() {
         const ctx = this.ctx;
         
-        // Draw sand/ground color background
-        if (this.city === 'badaya') {
-            ctx.fillStyle = '#c9a66b'; // Arab town sand color
+        // Try to draw the new map image
+        const mapImg = this.assets.get('map_bg');
+        if (mapImg && this.city === 'badaya') {
+            ctx.imageSmoothingEnabled = false;
+            // Map is 4000x4000, world is CONFIG.WORLD_SIZE
+            const mapSize = CONFIG.WORLD_SIZE;
+            const halfMap = mapSize / 2;
+            
+            // Calculate visible area
+            const drawX = -halfMap - this.cam.x;
+            const drawY = -halfMap - this.cam.y;
+            
+            ctx.drawImage(mapImg, drawX, drawY, mapSize, mapSize);
         } else {
-            ctx.fillStyle = '#5a8a5a'; // Baghdad green
-        }
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Add subtle noise/variation to ground
-        const ts = 64;
-        const sx = Math.floor(this.cam.x / ts) - 1;
-        const sy = Math.floor(this.cam.y / ts) - 1;
-        const ex = Math.ceil((this.cam.x + this.canvas.width) / ts) + 1;
-        const ey = Math.ceil((this.cam.y + this.canvas.height) / ts) + 1;
-        
-        for (let y = sy; y <= ey; y++) {
-            for (let x = sx; x <= ex; x++) {
-                const px = x * ts - this.cam.x, py = y * ts - this.cam.y;
-                const seed = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1;
-                
-                // Subtle ground variation
-                if (seed < 0.1) {
-                    ctx.fillStyle = this.city === 'badaya' ? 'rgba(180, 150, 100, 0.15)' : 'rgba(70, 110, 70, 0.15)';
-                    ctx.fillRect(px, py, ts, ts);
-                }
-                
-                // Small ground details
-                if (seed > 0.95) {
-                    ctx.fillStyle = this.city === 'badaya' ? '#b89a5a' : '#4a7a4a';
-                    ctx.beginPath();
-                    ctx.arc(px + ts/2, py + ts/2, 2 + seed * 3, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
+            // Fallback to solid color
+            ctx.fillStyle = this.city === 'badaya' ? '#c9a66b' : '#5a8a5a';
+            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
         
-        // Draw map obstacles and decorations using MapSystem
+        // Draw map borders
         if (this.map.generated) {
-            this.map.draw(ctx, this.cam, this.assets);
-            // Draw map borders
             this.map.drawBorders(ctx, this.cam, CONFIG.WORLD_SIZE);
         }
     }
