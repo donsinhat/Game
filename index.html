@@ -67,9 +67,9 @@
         /* Pixel-style HUD */
         #hud { position: fixed; top: 0; left: 0; width: 100%; padding: 8px 12px; display: none; justify-content: space-between; align-items: flex-start; z-index: 50; pointer-events: none; image-rendering: pixelated; }
         .hud-left, .hud-right { display: flex; flex-direction: column; gap: 5px; }
-        .hud-bar { width: 160px; height: 20px; background: #2a2530; border: 3px solid #5a5060; overflow: hidden; position: relative; }
+        .hud-bar { width: 180px; height: 22px; background: #2a2530; border: 3px solid #5a5060; overflow: visible; position: relative; }
         .hud-bar-fill { height: 100%; transition: width 0.2s ease; position: relative; }
-        .hud-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.65rem; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+        .hud-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7rem; font-weight: bold; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; white-space: nowrap; z-index: 10; }
         .health-fill { background: #e74c3c; }
         .xp-fill { background: #2ecc71; }
         .hud-stat { font-size: 0.8rem; font-weight: 700; text-shadow: 1px 1px 0 #000; display: flex; align-items: center; gap: 5px; padding: 4px 8px; background: #3d3846; border: 2px solid #5a5060; }
@@ -3209,14 +3209,12 @@ class Game {
             if (d < this.player.pickupRange) {
                 if (p.type === 'xp') { 
                     this.player.xp += p.val * this.player.xpMult * (1 + this.player.curse * 0.4); 
-                    this.audio.pickup(); 
                     this.checkLevelUp(); 
-                    // XP pickup effect
+                    // XP pickup effect - no sound for XP/coins
                     this.particles.emit(p.x, p.y, 3, { color: '#44ff44', minS: 30, maxS: 60, size: 2, life: 0.3 });
                 } else { 
                     this.player.gold += Math.round(p.val * this.player.goldMult); 
-                    this.audio.pickup();
-                    // Gold pickup effect
+                    // Gold pickup effect - no sound for XP/coins
                     this.particles.gold(p.x, p.y);
                 }
                 this.pickups.splice(i, 1);
@@ -3283,7 +3281,6 @@ class Game {
     
     killEnemy(enemy) {
         this.player.kills++;
-        this.audio.pickup();
         this.particles.blood(enemy.x, enemy.y);
         
         // Add death effect with sparks
