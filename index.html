@@ -518,9 +518,8 @@ const WEAPONS = {
         effectSprite: 'weapon_onion_effect', frameW: 64, frameH: 65, frames: 15, fps: 8,
         projectileSprite: 'weapon_onion_projectile', projFrameW: 64, projFrameH: 65, projFrames: 14, projFps: 8,
         iconSprite: 'weapon_onion_icon', offset: 0 // effect at target
-    },
-    arrows: { name: 'السهام', desc: 'سهام تطلق بكل الاتجاهات', type: 'radial', dmg: 4, cd: 0.85, range: 320, icon: '🏹', iconPos: {row: 30, col: 0}, projectileIcon: {row: 30, col: 6}, offset: 0 },
-    tornado: { name: 'الدوامة', desc: 'إعصار يبطئ الأعداء', type: 'tornado', dmg: 4, cd: 2.2, range: 160, icon: '🌪️', iconPos: {row: 18, col: 0}, offset: 0 }
+    }
+    // Old weapons removed: arrows, tornado
 };
 
 // ==================== BOOKS ====================
@@ -1287,8 +1286,8 @@ class Player {
                     else if (isRock) projType = 'rock';
                     else if (isSpear) projType = 'spear';
                     
-                    // Mgma fires like shotgun (multiple pellets)
-                    const baseCount = isMgma ? 3 + Math.floor(w.level / 3) : projCount;
+                    // Mgma fires like shotgun (starts with 1, +1 every 2 levels)
+                    const baseCount = isMgma ? 1 + Math.floor(w.level / 2) : projCount;
                     const spreadAngle = isMgma ? Math.PI / 5 : Math.PI / 8;
                     
                     const muzzleOffset = data.offset || 20;
@@ -1652,7 +1651,7 @@ class Player {
             } else if (data.type === 'melee') {
                 const timer = this.wTimers[w.id] || 0, cd = this.getCD(w);
                 if (timer > cd * 0.75) {
-                    // Show melee effect animation with offset
+                    // Show melee effect animation with offset - FLIPS with player direction
                     if (effectSprite && data.frameW) {
                         const progress = (cd - timer) / (cd * 0.25);
                         const frame = Math.min(Math.floor(progress * data.frames), data.frames - 1);
@@ -1662,44 +1661,68 @@ class Player {
                         
                         ctx.save();
                         ctx.imageSmoothingEnabled = false;
+                        // Translate to player position
+                        ctx.translate(sx, sy);
+                        // Flip horizontally based on facing direction
                         if (this.facing < 0) {
-                            ctx.translate(sx, sy);
                             ctx.scale(-1, 1);
-                            ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
-                                -offset - data.frameW * scale / 2, -data.frameH * scale / 2,
-                                data.frameW * scale, data.frameH * scale);
-                        } else {
-                            ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
-                                sx + offset - data.frameW * scale / 2, sy - data.frameH * scale / 2,
-                                data.frameW * scale, data.frameH * scale);
                         }
+                        // Draw at offset from center
+                        ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
+                            offset - data.frameW * scale / 2, -data.frameH * scale / 2,
+                            data.frameW * scale, data.frameH * scale);
                         ctx.restore();
                     } else {
                         ctx.strokeStyle = 'rgba(150, 150, 150, 0.4)';
                         ctx.lineWidth = 2;
                         ctx.beginPath();
-                        ctx.arc(sx, sy, range, -0.5 * this.facing, 0.5 * this.facing);
+                        const startAngle = this.facing > 0 ? -Math.PI / 2 : Math.PI / 2;
+                        const endAngle = this.facing > 0 ? Math.PI / 2 : -Math.PI / 2;
+                        ctx.arc(sx, sy, range, startAngle, endAngle);
                         ctx.stroke();
                     }
                 }
             }
+            // Aura is drawn separately (under player) via drawAuraUnder()
             if (data.type === 'aura') {
-                // Aura effect centered on player - damage on specific frames
+                // Just update aura state for damage timing
                 const frameTime = 1 / weaponFps;
                 const totalFrames = data.frames || 10;
                 const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
                 
-                // Store aura state for damage timing (damage on frame 0 = start of cycle)
                 if (!this.auraState) this.auraState = {};
                 const prevFrame = this.auraState[w.id] || 0;
                 this.auraState[w.id] = currentFrame;
-                // Mark damage frame when animation cycles back to 0
                 this.auraDamageFrame = this.auraDamageFrame || {};
                 this.auraDamageFrame[w.id] = (currentFrame === 0 && prevFrame !== 0);
+            }
+        });
+    }
+    
+    // Draw aura effect UNDER the player sprite
+    drawAuraUnder(ctx, cam, assets) {
+        const sx = this.x - cam.x, sy = this.y - cam.y;
+        
+        // Attack speed affects animation speed
+        let atkSpdMult = this.atkSpd;
+        this.tempBuffs.filter(b => b.type === 'atkSpd').forEach(b => atkSpdMult *= (1 + b.val));
+        
+        this.weapons.forEach(w => {
+            const data = WEAPONS[w.id];
+            if (data.type === 'aura') {
+                const range = this.getRange(w);
+                const effectSprite = data.effectSprite && assets && assets.get(data.effectSprite);
+                const baseFps = data.fps || 8;
+                const weaponFps = baseFps * atkSpdMult;
+                
+                const frameTime = 1 / weaponFps;
+                const totalFrames = data.frames || 10;
+                const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
                 
                 if (effectSprite && data.frameW) {
                     const frameX = currentFrame * data.frameW;
-                    const scale = range / 35;
+                    // 50% bigger scale
+                    const scale = (range / 35) * 1.5;
                     
                     ctx.imageSmoothingEnabled = false;
                     ctx.globalAlpha = 0.7;
@@ -1708,11 +1731,11 @@ class Player {
                         data.frameW * scale, data.frameH * scale);
                     ctx.globalAlpha = 1;
                 } else {
-                    ctx.strokeStyle = 'rgba(100, 50, 150, 0.2)';
+                    ctx.strokeStyle = 'rgba(100, 50, 150, 0.3)';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([4, 6]);
                     ctx.beginPath();
-                    ctx.arc(sx, sy, range, 0, Math.PI * 2);
+                    ctx.arc(sx, sy, range * 1.5, 0, Math.PI * 2);
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }
@@ -3534,6 +3557,9 @@ class Game {
         // Draw enemies with sprites
         for (const e of this.enemies) e.draw(ctx, this.cam, this.assets);
         if (this.boss) this.boss.draw(ctx, this.cam, this.assets);
+        
+        // Draw aura effect UNDER the player
+        this.player.drawAuraUnder(ctx, this.cam, this.assets);
         
         // Draw player with sprite
         this.player.draw(ctx, this.cam, this.assets);
