@@ -891,16 +891,18 @@ const CHAR_SPRITES = {
         fps: 6
     },
     layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
-    // Mr Bassla - idle + walk sprites (190 height)
+    // Mr Bassla - idle + walk sprites (from JSON: 231x190 per frame)
     mrBassla: { 
         type: 'walk_idle',
         idleSprite: 'mrbassla_idle',
         walkSprites: ['mrbassla_walk'],
-        frameWidth: 154,
+        frameWidth: 231,
         frameHeight: 190,
-        idleFrames: 9, // 1386 / 154 = 9
-        walkFrames: 12, // 1848 / 154 = 12
-        fps: 8
+        idleFrames: 6, // 1386 / 231 = 6
+        walkFrames: 8, // 1848 / 231 = 8
+        idleFps: 8,
+        walkFps: 5,
+        scale: 0.35 // Scale to match other characters
     }
 };
 
@@ -1614,34 +1616,68 @@ class Player {
         
         // Check sprite type
         if (spriteInfo.type === 'walk_idle') {
-            // Walk/Idle sprite system - idle when still, alternate 1/2 when walking
+            // Walk/Idle sprite system - idle when still, walk when moving
             let spriteKey;
-            if (isMoving) {
-                // Alternate between walk sprites
-                const fps = spriteInfo.fps || 6;
-                const frameTime = 1 / fps;
-                const walkFrame = Math.floor(this.anim / frameTime) % 2;
-                spriteKey = spriteInfo.walkSprites[walkFrame];
+            let frameW = spriteInfo.frameWidth;
+            let frameH = spriteInfo.frameHeight;
+            let currentFrame = 0;
+            let totalFrames = 1;
+            let fps = spriteInfo.fps || 6;
+            
+            if (isMoving && spriteInfo.walkSprites) {
+                // Check if it's a spritesheet (frameWidth defined) or separate images
+                if (frameW && spriteInfo.walkFrames) {
+                    // Spritesheet animation
+                    spriteKey = spriteInfo.walkSprites[0];
+                    totalFrames = spriteInfo.walkFrames;
+                    fps = spriteInfo.walkFps || fps;
+                    currentFrame = Math.floor(this.anim * fps) % totalFrames;
+                } else {
+                    // Separate image files
+                    const frameTime = 1 / fps;
+                    const walkFrame = Math.floor(this.anim / frameTime) % spriteInfo.walkSprites.length;
+                    spriteKey = spriteInfo.walkSprites[walkFrame];
+                }
             } else {
                 // Use idle sprite
                 spriteKey = spriteInfo.idleSprite;
+                if (frameW && spriteInfo.idleFrames) {
+                    totalFrames = spriteInfo.idleFrames;
+                    fps = spriteInfo.idleFps || fps;
+                    currentFrame = Math.floor(this.anim * fps) % totalFrames;
+                }
             }
             sprite = assets && assets.get(spriteKey);
             
             if (sprite) {
                 ctx.imageSmoothingEnabled = false;
-                const targetHeight = 70;
-                const scale = targetHeight / sprite.height;
-                const drawW = sprite.width * scale;
-                const drawH = sprite.height * scale;
                 
-                ctx.save();
-                ctx.translate(sx, sy);
-                // Flip based on facing direction - sprite faces RIGHT by default
-                // If facing left, flip it
-                if (facingRight) ctx.scale(-1, 1);
-                ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
-                ctx.restore();
+                // Check if using spritesheet or full image
+                if (frameW && (spriteInfo.idleFrames || spriteInfo.walkFrames)) {
+                    // Spritesheet - calculate frame position
+                    const frameX = currentFrame * frameW;
+                    const customScale = spriteInfo.scale || 0.4;
+                    const drawW = frameW * customScale;
+                    const drawH = frameH * customScale;
+                    
+                    ctx.save();
+                    ctx.translate(sx, sy);
+                    if (facingRight) ctx.scale(-1, 1);
+                    ctx.drawImage(sprite, frameX, 0, frameW, frameH, -drawW / 2, -drawH / 2, drawW, drawH);
+                    ctx.restore();
+                } else {
+                    // Full image per frame
+                    const targetHeight = 70;
+                    const scale = targetHeight / sprite.height;
+                    const drawW = sprite.width * scale;
+                    const drawH = sprite.height * scale;
+                    
+                    ctx.save();
+                    ctx.translate(sx, sy);
+                    if (facingRight) ctx.scale(-1, 1);
+                    ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
+                    ctx.restore();
+                }
             }
         } else if (spriteInfo.type === 'single' && spriteInfo.sprite) {
             // Single large image sprite
@@ -2197,13 +2233,13 @@ class Pickup {
             const currentFrame = Math.floor(this.anim * fps) % totalFrames;
             const frameX = currentFrame * frameW;
             
-            const size = isXP ? 20 : 18;
+            const size = isXP ? 10 : 9; // 50% smaller
             ctx.drawImage(sprite, frameX, 0, frameW, frameH, sx - size / 2, sy - size / 2, size, size);
         } else {
             // Fallback to old sprites
             const oldSprite = isXP ? assets && assets.get('xp_gem') : assets && assets.get('gold_coin');
             if (oldSprite) {
-                const size = isXP ? 18 : 16;
+                const size = isXP ? 9 : 8; // 50% smaller
                 ctx.drawImage(oldSprite, sx - size / 2, sy - size / 2, size, size);
             } else {
                 // Shape fallback
@@ -2706,11 +2742,23 @@ class Game {
             sprite = this.assets && this.assets.get(spriteInfo.idleSprite);
             if (sprite) {
                 ctx.imageSmoothingEnabled = false;
-                const targetH = 100;
-                const scale = targetH / sprite.height;
-                const drawW = sprite.width * scale;
-                const drawH = sprite.height * scale;
-                ctx.drawImage(sprite, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
+                // Check if spritesheet
+                if (spriteInfo.frameWidth && spriteInfo.idleFrames) {
+                    const frameW = spriteInfo.frameWidth;
+                    const frameH = spriteInfo.frameHeight;
+                    const targetH = 100;
+                    const scale = targetH / frameH;
+                    const drawW = frameW * scale;
+                    const drawH = frameH * scale;
+                    // Draw first frame
+                    ctx.drawImage(sprite, 0, 0, frameW, frameH, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
+                } else {
+                    const targetH = 100;
+                    const scale = targetH / sprite.height;
+                    const drawW = sprite.width * scale;
+                    const drawH = sprite.height * scale;
+                    ctx.drawImage(sprite, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
+                }
             }
         } else if (spriteInfo.type === 'single' && spriteInfo.sprite) {
             sprite = this.assets && this.assets.get(spriteInfo.sprite);
