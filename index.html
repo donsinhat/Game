@@ -1308,7 +1308,12 @@ class Player {
                     const shuffled = ts.sort(() => Math.random() - 0.5).slice(0, targetsToHit);
                     for (const t of shuffled) {
                         game.fx.push({ type: 'lightning', x: t.x, y: t.y, life: 0.25 }); 
-                        game.spriteEffects.push(new SpriteEffect(t.x, t.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
+                        // Use weapon effect sprite if available
+                        if (data.effectSprite && data.frameW) {
+                            game.spriteEffects.push(new SpriteEffect(t.x, t.y, data.effectSprite, data.frameW, data.frameH, data.frames, 0.4, 1.8));
+                        } else {
+                            game.spriteEffects.push(new SpriteEffect(t.x, t.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
+                        }
                         game.particles.spark(t.x, t.y, '#ffff88');
                         game.particles.spark(t.x, t.y, '#ffffff');
                         const hit = this.applyCrit(dmg);
@@ -1522,36 +1527,96 @@ class Player {
         ctx.restore();
         ctx.globalAlpha = 1;
         
-        // Weapon visuals
+        // Weapon visuals with sprite animations
         this.weapons.forEach(w => {
             const data = WEAPONS[w.id], range = this.getRange(w);
+            const effectSprite = data.effectSprite && assets && assets.get(data.effectSprite);
+            
             if (data.type === 'orbit') {
                 const n = 4 + Math.floor(w.level / 5);
-                ctx.fillStyle = '#333';
+                const fps = 10;
+                const frameTime = 1 / fps;
+                const totalFrames = data.frames || 10;
+                const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+                
                 for (let i = 0; i < n; i++) {
                     const a = this.anim * 2 + (i / n) * Math.PI * 2;
-                    ctx.beginPath();
-                    ctx.arc(sx + Math.cos(a) * range, sy + Math.sin(a) * range, 4, 0, Math.PI * 2);
-                    ctx.fill();
+                    const ox = sx + Math.cos(a) * range;
+                    const oy = sy + Math.sin(a) * range;
+                    
+                    if (effectSprite && data.frameW) {
+                        ctx.imageSmoothingEnabled = false;
+                        const frameX = currentFrame * data.frameW;
+                        const scale = 0.8;
+                        ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
+                            ox - data.frameW * scale / 2, oy - data.frameH * scale / 2,
+                            data.frameW * scale, data.frameH * scale);
+                    } else {
+                        ctx.fillStyle = '#333';
+                        ctx.beginPath();
+                        ctx.arc(ox, oy, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                 }
             } else if (data.type === 'melee') {
                 const timer = this.wTimers[w.id] || 0, cd = this.getCD(w);
-                if (timer > cd * 0.8) {
-                    ctx.strokeStyle = 'rgba(150, 150, 150, 0.4)';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(sx, sy, range, -0.5 * this.facing, 0.5 * this.facing);
-                    ctx.stroke();
+                if (timer > cd * 0.75) {
+                    // Show melee effect animation
+                    if (effectSprite && data.frameW) {
+                        const progress = (cd - timer) / (cd * 0.25);
+                        const frame = Math.min(Math.floor(progress * data.frames), data.frames - 1);
+                        const frameX = frame * data.frameW;
+                        const scale = 1.5;
+                        const offsetX = this.facing > 0 ? 30 : -30 - data.frameW * scale;
+                        
+                        ctx.save();
+                        ctx.imageSmoothingEnabled = false;
+                        if (this.facing < 0) {
+                            ctx.translate(sx, sy);
+                            ctx.scale(-1, 1);
+                            ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
+                                -30 - data.frameW * scale / 2, -data.frameH * scale / 2,
+                                data.frameW * scale, data.frameH * scale);
+                        } else {
+                            ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
+                                sx + 30 - data.frameW * scale / 2, sy - data.frameH * scale / 2,
+                                data.frameW * scale, data.frameH * scale);
+                        }
+                        ctx.restore();
+                    } else {
+                        ctx.strokeStyle = 'rgba(150, 150, 150, 0.4)';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, range, -0.5 * this.facing, 0.5 * this.facing);
+                        ctx.stroke();
+                    }
                 }
             }
             if (data.type === 'aura') {
-                ctx.strokeStyle = 'rgba(100, 50, 150, 0.2)';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([4, 6]);
-                ctx.beginPath();
-                ctx.arc(sx, sy, range, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
+                // Aura effect with sprite animation
+                if (effectSprite && data.frameW) {
+                    const fps = 8;
+                    const frameTime = 1 / fps;
+                    const totalFrames = data.frames || 10;
+                    const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+                    const frameX = currentFrame * data.frameW;
+                    const scale = range / 35; // Scale based on range
+                    
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.globalAlpha = 0.7;
+                    ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
+                        sx - data.frameW * scale / 2, sy - data.frameH * scale / 2,
+                        data.frameW * scale, data.frameH * scale);
+                    ctx.globalAlpha = 1;
+                } else {
+                    ctx.strokeStyle = 'rgba(100, 50, 150, 0.2)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([4, 6]);
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, range, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
             }
         });
         
@@ -2390,7 +2455,20 @@ class Game {
     updateSlots() {
         for (let i = 0; i < CONFIG.MAX_WEAPONS; i++) {
             const slot = document.getElementById(`ws${i}`);
-            if (this.player.weapons[i]) { const w = this.player.weapons[i]; slot.innerHTML = `<span style="font-size:1.1rem">${WEAPONS[w.id].icon}</span><span class="slot-level">${w.level}</span>`; slot.style.borderColor = w.upgrades.length > 0 ? w.upgrades[w.upgrades.length - 1].rarity.color : '#444'; }
+            if (this.player.weapons[i]) { 
+                const w = this.player.weapons[i];
+                const data = WEAPONS[w.id];
+                let iconHtml = `<span style="font-size:1.1rem">${data.icon}</span>`;
+                // Use icon sprite if available
+                if (data.iconSprite) {
+                    const iconImg = this.assets.get(data.iconSprite);
+                    if (iconImg) {
+                        iconHtml = `<img src="${iconImg.src}" style="width:24px;height:24px;object-fit:contain;image-rendering:pixelated;">`;
+                    }
+                }
+                slot.innerHTML = `${iconHtml}<span class="slot-level">${w.level}</span>`; 
+                slot.style.borderColor = w.upgrades.length > 0 ? w.upgrades[w.upgrades.length - 1].rarity.color : '#444'; 
+            }
             else slot.innerHTML = '';
         }
         for (let i = 0; i < CONFIG.MAX_BOOKS; i++) {
@@ -3019,7 +3097,15 @@ class Game {
                     <div style="font-size:0.5rem;color:#ff0">${currentVal.toFixed(1)}${unit} → ${newVal.toFixed(1)}${unit}</div>`;
             }
             
-            card.innerHTML = `<div class="upgrade-icon">${data.icon}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? 'جديد!' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
+            // Create icon - use sprite if available, otherwise emoji
+            let iconHtml = data.icon;
+            if (c.type === 'weapon' && data.iconSprite) {
+                const iconImg = this.assets.get(data.iconSprite);
+                if (iconImg) {
+                    iconHtml = `<img src="${iconImg.src}" style="width:36px;height:36px;object-fit:contain;image-rendering:pixelated;">`;
+                }
+            }
+            card.innerHTML = `<div class="upgrade-icon">${iconHtml}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? 'جديد!' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
             card.onclick = () => { this.selectUpgrade(c, rar, c.upgradeType); modal.style.display = 'none'; this.state = 'playing'; };
             opts.appendChild(card);
         });
