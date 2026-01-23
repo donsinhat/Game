@@ -541,9 +541,9 @@ const BOOKS = {
 const ITEMS = {
     // Common (شائع) - iconPos: {row, col} in IconSet.png (24x24 grid)
     mirinda: { name: 'حمضيات', desc: 'حار يلد .. ينعنش ويرجع لك 10 هيل', rarity: 'COMMON', effect: 'heal', val: 10, icon: '🍊', sprite: 'item_mirinda' },
-    dalla: { name: 'دله قهوه', desc: 'المهيله تخليك نشيط واسرع 10 ثواني', rarity: 'COMMON', effect: 'tempSpeed', val: 0.15, dur: 10, icon: '☕', sprite: 'item_dalla' },
-    pebble: { name: 'حب شمسي', desc: '+10% ضرر لمدة 12 ثانية', rarity: 'COMMON', effect: 'tempDmg', val: 0.1, dur: 12, icon: '🌻', sprite: 'item_pebble' },
-    klega: { name: 'كليجه', desc: 'اولاو من حلاته تهيلك 5', rarity: 'COMMON', effect: 'heal', val: 5, icon: '🍪', sprite: 'item_klega' },
+    dalla: { name: 'دله قهوه', desc: 'المهيله تزيد دفاعك 1 بشكل دايم', rarity: 'COMMON', effect: 'permArmor', val: 1, icon: '☕', sprite: 'item_dalla' },
+    sandal: { name: 'نعال شرقية', desc: 'تخليك تفك سبرنت', rarity: 'COMMON', effect: 'permSpeed', val: 0.05, icon: '👟', sprite: 'item_sandal' },
+    klega: { name: 'كليجه', desc: 'اولاو من حلاته تزيد صحتك', rarity: 'COMMON', effect: 'permHP', val: 2, icon: '🍪', sprite: 'item_klega' },
     copper: { name: 'نحاس', desc: '+5 ذهب', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙', iconPos: {row: 11, col: 0} },
     
     // Rare (نادر)
@@ -703,7 +703,7 @@ class AssetLoader {
             ['item_dalla', 'assets/New Items Icon/arrainged/icons/dalla.png'],
             ['item_klega', 'assets/New Items Icon/arrainged/icons/klega.png'],
             ['item_arika', 'assets/New Items Icon/arrainged/icons/arika.png'],
-            ['item_pebble', 'assets/New Items Icon/arrainged/icons/9.png'],
+            ['item_sandal', 'assets/New Items Icon/arrainged/icons/9.png'],
             
             // IconSet sprite sheet (24x24 icons)
             ['iconset', 'assets/IconSet.png'],
@@ -1250,7 +1250,10 @@ class Player {
         this.weapons.forEach(w => {
             const data = WEAPONS[w.id];
             if (data.type === 'orbit') {
-                const n = 2 + Math.floor(w.level / 3);
+                // Base count + level bonus + count upgrades
+                const baseCount = 2 + Math.floor(w.level / 3);
+                const countBonus = this.getProjectileCount(w) - 1;
+                const n = baseCount + countBonus;
                 const range = this.getRange(w);
                 const rotationSpeed = 2 * atkSpdMult;
                 
@@ -1404,6 +1407,7 @@ class Player {
             }
             case 'dot': {
                 // Onion weapon - long range DOT with animated projectile
+                // DOT: 2 damage per second for duration
                 if (target && Math.hypot(target.x - this.x, target.y - this.y) < range) {
                     const a = Math.atan2(target.y - this.y, target.x - this.x);
                     for (let i = 0; i < projCount; i++) {
@@ -1413,7 +1417,7 @@ class Player {
                             vx: Math.cos(a + spread) * 280, vy: Math.sin(a + spread) * 280,
                             dmg, life: 3.5, size: 8,
                             color: '#9f9', type: 'dot',
-                            dotDmg: dmg * 0.3, dotDur: 2.5,
+                            dotDmg: 2, dotDur: 3 + w.level * 0.5, // 2 damage per second
                             weaponId: w.id,
                             // Store effect info for hit animation
                             hitEffect: data.effectSprite,
@@ -1618,13 +1622,19 @@ class Player {
             const weaponOffset = data.offset || 0;
             
             if (data.type === 'orbit') {
-                // Start with 2, +1 every 3 levels
-                const n = 2 + Math.floor(w.level / 3);
+                // Base count + level bonus + count upgrades
+                const baseCount = 2 + Math.floor(w.level / 3);
+                const countBonus = this.getProjectileCount(w) - 1; // Extra from upgrades
+                const n = baseCount + countBonus;
                 const frameTime = 1 / weaponFps;
                 const totalFrames = data.frames || 10;
                 const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
                 // Rotation speed also scales with attack speed
                 const rotationSpeed = 2 * atkSpdMultiplier;
+                
+                // Clear and rebuild orbit positions
+                if (!this.orbitPositions) this.orbitPositions = {};
+                this.orbitPositions[w.id] = [];
                 
                 for (let i = 0; i < n; i++) {
                     const a = this.anim * rotationSpeed + (i / n) * Math.PI * 2;
@@ -1632,8 +1642,6 @@ class Player {
                     const oy = sy + Math.sin(a) * range;
                     
                     // Store orbit positions for hitbox detection
-                    if (!this.orbitPositions) this.orbitPositions = {};
-                    if (!this.orbitPositions[w.id]) this.orbitPositions[w.id] = [];
                     this.orbitPositions[w.id][i] = { x: this.x + Math.cos(a) * range, y: this.y + Math.sin(a) * range };
                     
                     if (effectSprite && data.frameW) {
@@ -1796,7 +1804,7 @@ class Enemy {
         this.hp -= amt; 
         this.hitFlash = 0.06; 
         const color = isCrit ? '#ff4444' : '#ff0';
-        const size = isCrit ? 18 : 14;
+        const size = isCrit ? 22 : 18; // Bigger damage numbers
         const text = isCrit ? '💥' + Math.round(amt) : Math.round(amt).toString();
         game.texts.push(new FloatText(this.x + (Math.random() - 0.5) * 12, this.y - 12, text, color, size)); 
         return this.hp <= 0; 
@@ -1949,7 +1957,7 @@ class Boss {
         this.hp -= amt; 
         this.hitFlash = 0.06; 
         const color = isCrit ? '#ff4444' : '#ff0';
-        const size = isCrit ? 22 : 16;
+        const size = isCrit ? 26 : 20; // Bigger damage numbers for boss
         const text = isCrit ? '💥' + Math.round(amt) : Math.round(amt).toString();
         game.texts.push(new FloatText(this.x + (Math.random() - 0.5) * 25, this.y - 25, text, color, size)); 
         return this.hp <= 0; 
@@ -2043,6 +2051,11 @@ class ItemDrop {
         const item = ITEMS[this.id];
         const rarityColor = RARITY[item.rarity].color;
         
+        // Glow intensity based on rarity
+        const rarityGlow = { 'COMMON': 8, 'UNCOMMON': 12, 'RARE': 16, 'EPIC': 22, 'LEGENDARY': 30 };
+        const baseGlow = rarityGlow[item.rarity] || 10;
+        const glowIntensity = baseGlow + Math.sin(this.glow) * (baseGlow * 0.4);
+        
         // Try to draw sprite if available
         const sprite = item.sprite && assets && assets.get(item.sprite);
         const iconset = assets && assets.get('iconset');
@@ -2058,9 +2071,9 @@ class ItemDrop {
             const drawW = origW * scale;
             const drawH = origH * scale;
             
-            // Subtle glow effect (matches item shape, not circle)
+            // Glow effect based on rarity
             ctx.shadowColor = rarityColor;
-            ctx.shadowBlur = 10 + Math.sin(this.glow) * 4;
+            ctx.shadowBlur = glowIntensity;
             
             ctx.drawImage(sprite, sx - drawW/2, sy - drawH/2, drawW, drawH);
             
@@ -2070,9 +2083,9 @@ class ItemDrop {
             const iconSize = 24;
             const drawSize = 28;
             
-            // Glow effect
+            // Glow effect based on rarity
             ctx.shadowColor = rarityColor;
-            ctx.shadowBlur = 10 + Math.sin(this.glow) * 4;
+            ctx.shadowBlur = glowIntensity;
             
             ctx.drawImage(
                 iconset,
@@ -2085,7 +2098,7 @@ class ItemDrop {
         } else {
             // Fallback to emoji icon with glow
             ctx.shadowColor = rarityColor;
-            ctx.shadowBlur = 10 + Math.sin(this.glow) * 4;
+            ctx.shadowBlur = glowIntensity;
             
             ctx.font = 'bold 24px Arial'; 
             ctx.textAlign = 'center'; 
@@ -2096,10 +2109,11 @@ class ItemDrop {
             ctx.shadowBlur = 0;
         }
         
-        // Small rarity indicator dot below item
+        // Small rarity indicator dot below item (larger for higher rarity)
+        const dotSize = item.rarity === 'LEGENDARY' ? 4 : (item.rarity === 'EPIC' ? 3.5 : (item.rarity === 'RARE' ? 3 : 2.5));
         ctx.fillStyle = rarityColor;
         ctx.beginPath();
-        ctx.arc(sx, sy + 20, 3, 0, Math.PI * 2);
+        ctx.arc(sx, sy + 20, dotSize, 0, Math.PI * 2);
         ctx.fill();
     }
 }
@@ -2878,9 +2892,9 @@ class Game {
                     if (p.dotDmg && p.dotDur && !e.dots) e.dots = [];
                     if (p.dotDmg && p.dotDur && e.dots) {
                         e.dots.push({ dmg: p.dotDmg, dur: p.dotDur });
-                        // Show hit effect animation
+                        // Show hit effect animation (50% smaller for onion)
                         if (p.hitEffect && p.hitFrameW) {
-                            this.spriteEffects.push(new SpriteEffect(e.x, e.y, p.hitEffect, p.hitFrameW, p.hitFrameH, p.hitFrames, 0.5, 1.5));
+                            this.spriteEffects.push(new SpriteEffect(e.x, e.y, p.hitEffect, p.hitFrameW, p.hitFrameH, p.hitFrames, 0.4, 0.75));
                         } else {
                             this.particles.emit(e.x, e.y, 3, { color: '#9f9', minS: 20, maxS: 40 });
                         }
@@ -3054,10 +3068,15 @@ class Game {
     }
     
     dropItem(x, y) {
+        // Clamp position to within world bounds (prevent items outside map)
+        const halfWorld = CONFIG.WORLD_SIZE / 2 - 50; // 50px margin from edge
+        const clampedX = Math.max(-halfWorld, Math.min(halfWorld, x));
+        const clampedY = Math.max(-halfWorld, Math.min(halfWorld, y));
+        
         const r = Math.random() * 100 / this.player.luck;
         let rarity = r < 5 ? 'LEGENDARY' : r < 16 ? 'RARE' : 'COMMON';
         const pool = Object.entries(ITEMS).filter(([, i]) => i.rarity === rarity);
-        if (pool.length > 0) { const [id] = pool[Math.floor(Math.random() * pool.length)]; this.items.push(new ItemDrop(x, y, id)); }
+        if (pool.length > 0) { const [id] = pool[Math.floor(Math.random() * pool.length)]; this.items.push(new ItemDrop(clampedX, clampedY, id)); }
     }
     
     showItemPickup(drop) {
@@ -3156,6 +3175,22 @@ class Game {
             case 'permGold': 
                 this.player.goldMult += item.val; 
                 this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permArmor': 
+                this.player.armor += item.val; 
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} دفاع`, '#88f')); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_circle', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permSpeed': 
+                this.player.speed += this.player.speed * item.val; 
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${Math.round(item.val * 100)}% سرعة`, '#8f8')); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permHP': 
+                this.player.maxHp += item.val; 
+                this.player.hp = Math.min(this.player.hp + item.val, this.player.maxHp);
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} صحة`, '#f88')); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_heal', 24, 24, 6, 0.4, 2));
                 break;
             case 'randomEquip': 
                 this.giveRandomEquip(); 
