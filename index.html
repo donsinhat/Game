@@ -3544,8 +3544,7 @@ class Game {
     }
     
     selectUpgrade(c, rar, upgradeType) {
-        // Reset reroll count after selecting upgrade
-        this.rerollCount = 0;
+        // Keep reroll count - doesn't reset after selecting upgrade
         
         if (c.type === 'weapon') {
             // Use provided upgrade type or random if new weapon
