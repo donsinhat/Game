@@ -1,0 +1,3 @@
+Nora main weapon 
+
+area of effect surround character dealing damage every 0.5 sec
