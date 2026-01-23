@@ -428,7 +428,7 @@ const CHARACTERS = {
     jayzen: {
         name: 'جيزن', title: 'المقاتل الشرس',
         desc: 'لحجي بس متعافي',
-        weapon: 'rock',
+        weapon: 'vape',
         stats: { gold: 1, luck: 1, hp: 115, speed: 200, dmgReduce: 0.3, crit: 0, enemyBuff: 0 },
         passiveText: ['-30% ضرر مستلم', '+15% صحة'],
         colors: { body: '#6a1b9a', head: '#cc3333', skin: '#d4a574', legs: '#333' }
@@ -444,7 +444,7 @@ const CHARACTERS = {
     bedouin: {
         name: 'الاعرابي', title: 'بدوي غدار',
         desc: 'بدوي وغدار، الله يرحم من طلعهم من خيامهم',
-        weapon: 'spear',
+        weapon: 'sword',
         stats: { gold: 1, luck: 1, hp: 90, speed: 220, crit: 0.20, enemyBuff: 0 },
         passiveText: ['+20% ضربة حرجة', '+10% سرعة'],
         colors: { body: '#8b4513', head: '#d2691e', skin: '#c4956a', legs: '#2f1810' }
@@ -452,7 +452,7 @@ const CHARACTERS = {
     hawshabi: {
         name: 'الحوشبي', title: 'صعوبة متقدمة',
         desc: 'اذا تبي تصعب الوضع عليك العب فيه واحتسب الاجر',
-        weapon: 'sword',
+        weapon: 'mgma',
         stats: { gold: 1.5, luck: 1.2, hp: 80, speed: 180, crit: 0, enemyBuff: 0.20 },
         passiveText: ['+20% قوة الأعداء', '+50% ذهب', '+20% حظ'],
         colors: { body: '#4a0000', head: '#1a1a1a', skin: '#d4a574', legs: '#222' }
@@ -460,7 +460,7 @@ const CHARACTERS = {
     layla: {
         name: 'ليلى', title: 'الساحرة',
         desc: 'ساحرة غامضة تتحكم بالنار الزرقاء',
-        weapon: 'flame',
+        weapon: 'meteor',
         stats: { gold: 1, luck: 1, hp: 85, speed: 210, cooldown: 0.8, range: 1.3, crit: 0, enemyBuff: 0 },
         passiveText: ['-20% كولداون', '+30% مدى'],
         colors: { body: '#1a1a2e', head: '#4a0080', skin: '#e8d5c4', legs: '#0a0a15' }
@@ -469,18 +469,58 @@ const CHARACTERS = {
 
 // ==================== WEAPONS ====================
 const WEAPONS = {
-    // iconPos: position in IconSet.png (24x24 grid) - {row, col}
-    // projectileIcon: icon for the flying projectile
-    agal: { name: 'العقال', desc: 'حبل يدور حولك ويضرب الأعداء', type: 'orbit', dmg: 5, cd: 0.1, range: 65, icon: '⭕', iconPos: {row: 5, col: 2} },
-    rock: { name: 'الصخرة', desc: 'قذيفة تستهدف أقرب عدو', type: 'projectile', dmg: 5, cd: 0.9, range: 380, icon: '🪨', iconPos: {row: 3, col: 9}, projectileIcon: {row: 3, col: 9} },
-    aura: { name: 'الهيبة', desc: 'هالة ضرر خفيفة حولك', type: 'aura', dmg: 4, cd: 0.5, range: 55, icon: '💫', iconPos: {row: 10, col: 8} },
-    spear: { name: 'الرمح', desc: 'يرمي رمح لأقرب عدو', type: 'projectile', dmg: 5, cd: 0.45, range: 340, icon: '🔱', iconPos: {row: 29, col: 4}, projectileIcon: {row: 29, col: 4} },
-    sword: { name: 'السيف', desc: 'ضربة قوسية أمامك', type: 'melee', dmg: 5, cd: 0.65, range: 75, icon: '⚔️', iconPos: {row: 27, col: 0} },
-    flame: { name: 'الشعلة', desc: 'كرات نارية لأقرب عدو', type: 'projectile', dmg: 5, cd: 0.3, range: 280, icon: '🔥', iconPos: {row: 16, col: 0}, projectileIcon: {row: 16, col: 1} },
+    // Weapon sprite info: effectSprite (spritesheet), frameW, frameH, frames, iconSprite
+    agal: { 
+        name: 'العقال', desc: 'حبل يدور حولك ويضرب الأعداء', 
+        type: 'orbit', dmg: 5, cd: 0.1, range: 65, icon: '⭕',
+        effectSprite: 'weapon_agal_effect', frameW: 64, frameH: 64, frames: 10,
+        iconSprite: 'weapon_agal_icon'
+    },
+    vape: { 
+        name: 'الفيب', desc: 'هجوم قريب بالدخان', 
+        type: 'melee', dmg: 6, cd: 0.55, range: 80, icon: '💨',
+        effectSprite: 'weapon_vape_effect', frameW: 59, frameH: 59, frames: 13,
+        iconSprite: 'weapon_vape_icon'
+    },
+    aura: { 
+        name: 'الهيبة', desc: 'هالة ضرر حولك كل 0.5 ثانية', 
+        type: 'aura', dmg: 4, cd: 0.5, range: 60, icon: '💫',
+        effectSprite: 'weapon_aura_effect', frameW: 70, frameH: 69, frames: 10,
+        iconSprite: 'weapon_aura_icon'
+    },
+    sword: { 
+        name: 'السيف', desc: 'ضربة قوسية أمامك', 
+        type: 'melee', dmg: 6, cd: 0.65, range: 75, icon: '⚔️',
+        effectSprite: 'weapon_sword_effect', frameW: 64, frameH: 67, frames: 8,
+        iconSprite: 'weapon_sword_icon'
+    },
+    mgma: { 
+        name: 'المقمع', desc: 'طلقة شوتجن متوسطة المدى', 
+        type: 'projectile', dmg: 5, cd: 1.0, range: 200, icon: '🔫',
+        effectSprite: 'weapon_mgma_effect', frameW: 64, frameH: 68, frames: 8,
+        iconSprite: 'weapon_mgma_icon'
+    },
+    meteor: { 
+        name: 'النيزك', desc: 'قذيفة لعدو عشوائي', 
+        type: 'lightning', dmg: 6, cd: 1.4, range: 400, icon: '☄️',
+        effectSprite: 'weapon_meteor_effect', frameW: 64, frameH: 66, frames: 14,
+        iconSprite: 'weapon_meteor_icon'
+    },
+    brain: { 
+        name: 'العقل', desc: 'قذيفة تقفز بين الأعداء', 
+        type: 'chain', dmg: 4, cd: 1.2, range: 300, icon: '🧠',
+        effectSprite: 'weapon_brain_effect', frameW: 64, frameH: 69, frames: 7,
+        iconSprite: 'weapon_brain_icon'
+    },
+    onion: { 
+        name: 'البصل', desc: 'قذيفة طويلة المدى تسبب ضرر مستمر', 
+        type: 'dot', dmg: 3, cd: 1.5, range: 450, icon: '🧅',
+        effectSprite: 'weapon_onion_effect', frameW: 64, frameH: 65, frames: 15,
+        projectileSprite: 'weapon_onion_projectile', projFrameW: 64, projFrames: 14,
+        iconSprite: 'weapon_onion_icon'
+    },
     arrows: { name: 'السهام', desc: 'سهام تطلق بكل الاتجاهات', type: 'radial', dmg: 4, cd: 0.85, range: 320, icon: '🏹', iconPos: {row: 30, col: 0}, projectileIcon: {row: 30, col: 6} },
-    lightning: { name: 'البرق', desc: 'صاعقة على عدو عشوائي', type: 'lightning', dmg: 5, cd: 1.8, range: 420, icon: '⚡', iconPos: {row: 17, col: 4} },
-    tornado: { name: 'الدوامة', desc: 'إعصار يبطئ الأعداء', type: 'tornado', dmg: 4, cd: 2.2, range: 160, icon: '🌪️', iconPos: {row: 18, col: 0} },
-    meteor: { name: 'النيزك', desc: 'صخور تسقط من السماء', type: 'meteor', dmg: 5, cd: 1.6, range: 90, icon: '☄️', iconPos: {row: 16, col: 6} }
+    tornado: { name: 'الدوامة', desc: 'إعصار يبطئ الأعداء', type: 'tornado', dmg: 4, cd: 2.2, range: 160, icon: '🌪️', iconPos: {row: 18, col: 0} }
 };
 
 // ==================== BOOKS ====================
@@ -716,7 +756,32 @@ class AssetLoader {
             ['fx_heal', 'assets/20.png'],
             ['fx_dust', 'assets/25.png'],
             ['fx_circle', 'assets/30.png'],
-            ['fx_water', 'assets/35.png']
+            ['fx_water', 'assets/35.png'],
+            
+            // New Weapon Effects & Icons
+            ['weapon_agal_effect', 'assets/New Weapons/agal/effect.png'],
+            ['weapon_agal_icon', 'assets/New Weapons/agal/icon.jpg'],
+            ['weapon_aura_effect', 'assets/New Weapons/aura/effect.png'],
+            ['weapon_aura_icon', 'assets/New Weapons/aura/icon.png'],
+            ['weapon_sword_effect', 'assets/New Weapons/sword/effect.png'],
+            ['weapon_sword_icon', 'assets/New Weapons/sword/iconpng.png'],
+            ['weapon_vape_effect', 'assets/New Weapons/vape/effect.png'],
+            ['weapon_vape_icon', 'assets/New Weapons/vape/icon.png'],
+            ['weapon_meteor_effect', 'assets/New Weapons/meteor/effect.png'],
+            ['weapon_meteor_icon', 'assets/New Weapons/meteor/icon.png'],
+            ['weapon_mgma_effect', 'assets/New Weapons/Mgma/effect.png'],
+            ['weapon_mgma_icon', 'assets/New Weapons/Mgma/1769105156821.png'],
+            ['weapon_mgma_fire', 'assets/New Weapons/Mgma/Fire_03.png'],
+            ['weapon_brain_effect', 'assets/New Weapons/brain/effect.png'],
+            ['weapon_brain_icon', 'assets/New Weapons/brain/icon.png'],
+            ['weapon_onion_effect', 'assets/New Weapons/Onion/hit effect.png'],
+            ['weapon_onion_projectile', 'assets/New Weapons/Onion/projectile on the way.png'],
+            ['weapon_onion_icon', 'assets/New Weapons/Onion/icon.jpg'],
+            
+            // Jayzan new sprites
+            ['jayzan_idle', 'assets/characters/Jayzan/idle.png'],
+            ['jayzan_1', 'assets/characters/Jayzan/1.png'],
+            ['jayzan_2', 'assets/characters/Jayzan/2.png']
         ];
         
         try {
@@ -765,13 +830,12 @@ const CHAR_SPRITES = {
         frameHeight: 32,
         fps: 6
     },
-    // Ground Monk (Jayzen) - 4 separate 32x32 frames for idle animation
+    // Jayzen - new large sprite
     jayzen: { 
-        type: 'multiframe',
-        frames: ['jayzen_frame1', 'jayzen_frame2', 'jayzen_frame3', 'jayzen_frame4'],
-        frameWidth: 32, 
-        frameHeight: 32,
-        fps: 6
+        type: 'single',
+        sprite: 'jayzan_idle',
+        frameWidth: 516, 
+        frameHeight: 1723
     },
     // Water Priestess (Noura) - 4 separate 32x32 frames for idle animation
     noura: { 
@@ -1267,9 +1331,48 @@ class Player {
             }
             case 'tornado':
                 game.fx.push({ type: 'tornado', x: this.x + this.facing * 35, y: this.y, vx: this.facing * 85, vy: 0, dmg: dmg * 0.35, slow: 0.5, life: 3.2 + w.level * 0.12, radius: 35 });
-                // Dust effect
                 game.spriteEffects.push(new SpriteEffect(this.x + this.facing * 35, this.y, 'fx_dust', 24, 24, 5, 0.4, 1.2));
                 break;
+            case 'chain': {
+                // Brain weapon - bounces between enemies
+                const ts = game.enemies.filter(e => Math.hypot(e.x - this.x, e.y - this.y) < range);
+                if (ts.length > 0) {
+                    const bounces = 2 + Math.floor(w.level / 3) + (projCount - 1);
+                    let current = ts[Math.floor(Math.random() * ts.length)];
+                    let hit = new Set();
+                    for (let i = 0; i < bounces && current; i++) {
+                        game.fx.push({ type: 'chain', x: current.x, y: current.y, life: 0.2 });
+                        game.spriteEffects.push(new SpriteEffect(current.x, current.y, data.effectSprite || 'fx_magic', data.frameW || 24, data.frameH || 24, data.frames || 5, 0.25, 1.2));
+                        const crit = this.applyCrit(dmg * (1 - i * 0.15));
+                        if (current.takeDmg(crit.dmg, game, crit.isCrit)) game.killEnemy(current);
+                        hit.add(current);
+                        // Find next target
+                        const next = game.enemies.filter(e => !hit.has(e) && Math.hypot(e.x - current.x, e.y - current.y) < 150);
+                        current = next.length > 0 ? next[Math.floor(Math.random() * next.length)] : null;
+                    }
+                    game.audio.tone(500, 0.08, 'sine');
+                }
+                break;
+            }
+            case 'dot': {
+                // Onion weapon - long range DOT
+                if (target && Math.hypot(target.x - this.x, target.y - this.y) < range) {
+                    const a = Math.atan2(target.y - this.y, target.x - this.x);
+                    for (let i = 0; i < projCount; i++) {
+                        const spread = projCount > 1 ? (i - (projCount - 1) / 2) * 0.15 : 0;
+                        game.proj.push({
+                            x: this.x, y: this.y,
+                            vx: Math.cos(a + spread) * 280, vy: Math.sin(a + spread) * 280,
+                            dmg, life: 3.5, size: 8,
+                            color: '#9f9', type: 'dot',
+                            dotDmg: dmg * 0.3, dotDur: 2.5, // DOT effect
+                            weaponId: w.id
+                        });
+                    }
+                    game.audio.shoot();
+                }
+                break;
+            }
         }
     }
     
@@ -1314,7 +1417,24 @@ class Player {
         let sprite = null;
         
         // Check sprite type
-        if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+        if (spriteInfo.type === 'single' && spriteInfo.sprite) {
+            // Single large image sprite
+            sprite = assets && assets.get(spriteInfo.sprite);
+            if (sprite) {
+                ctx.imageSmoothingEnabled = false;
+                // Scale down large sprites to fit
+                const targetHeight = 70;
+                const scale = targetHeight / sprite.height;
+                const drawW = sprite.width * scale;
+                const drawH = sprite.height * scale;
+                
+                ctx.save();
+                ctx.translate(sx, sy);
+                if (!facingRight) ctx.scale(-1, 1);
+                ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
+                ctx.restore();
+            }
+        } else if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
             // Multi-frame animation (separate images as frames)
             const fps = spriteInfo.fps || 6;
             const frameTime = 1 / fps;
@@ -2194,8 +2314,18 @@ class Game {
         let sprite = null;
         let drawAsFullImage = false;
         
-        // Check for multiframe sprite type (separate images as animation frames)
-        if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+        // Check for sprite type
+        if (spriteInfo.type === 'single' && spriteInfo.sprite) {
+            sprite = this.assets && this.assets.get(spriteInfo.sprite);
+            if (sprite) {
+                ctx.imageSmoothingEnabled = false;
+                const targetH = 100;
+                const scale = targetH / sprite.height;
+                const drawW = sprite.width * scale;
+                const drawH = sprite.height * scale;
+                ctx.drawImage(sprite, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
+            }
+        } else if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
             sprite = this.assets && this.assets.get(spriteInfo.frames[0]);
             if (sprite) {
                 ctx.imageSmoothingEnabled = false;
@@ -2344,7 +2474,15 @@ class Game {
             ctx.imageSmoothingEnabled = false;
             
             const spriteInfo = CHAR_SPRITES[p.charId];
-            if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+            if (spriteInfo.type === 'single' && spriteInfo.sprite) {
+                const sprite = this.assets.get(spriteInfo.sprite);
+                if (sprite) {
+                    const targetH = 40;
+                    const scale = targetH / sprite.height;
+                    const drawW = sprite.width * scale;
+                    ctx.drawImage(sprite, 4, 4, drawW, 40);
+                }
+            } else if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
                 const sprite = this.assets.get(spriteInfo.frames[0]);
                 if (sprite) {
                     ctx.drawImage(sprite, 0, 0, 32, 32, 4, 4, 40, 40);
@@ -2480,6 +2618,12 @@ class Game {
                 if (Math.hypot(p.x - e.x, p.y - e.y) < p.size + e.width / 2) {
                     const hit = this.player.applyCrit(p.dmg);
                     if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                    // Apply DOT if projectile has it
+                    if (p.dotDmg && p.dotDur && !e.dots) e.dots = [];
+                    if (p.dotDmg && p.dotDur && e.dots) {
+                        e.dots.push({ dmg: p.dotDmg, dur: p.dotDur });
+                        this.particles.emit(e.x, e.y, 3, { color: '#9f9', minS: 20, maxS: 40 });
+                    }
                     p.pierce = (p.pierce || 1) - 1;
                     if (p.pierce <= 0) this.proj.splice(i, 1);
                     break;
@@ -2489,6 +2633,18 @@ class Game {
                 const hit = this.player.applyCrit(p.dmg);
                 this.boss.takeDmg(hit.dmg, this, hit.isCrit); 
                 this.proj.splice(i, 1); 
+            }
+        }
+        
+        // Process DOT effects on enemies
+        for (const e of this.enemies) {
+            if (e.dots && e.dots.length > 0) {
+                for (let i = e.dots.length - 1; i >= 0; i--) {
+                    const dot = e.dots[i];
+                    if (e.takeDmg(dot.dmg * dt, this, false)) this.killEnemy(e);
+                    dot.dur -= dt;
+                    if (dot.dur <= 0) e.dots.splice(i, 1);
+                }
             }
         }
         
@@ -2503,7 +2659,7 @@ class Game {
         // Effects
         for (let i = this.fx.length - 1; i >= 0; i--) {
             const f = this.fx[i];
-            if (f.type === 'lightning') { f.life -= dt; if (f.life <= 0) this.fx.splice(i, 1); }
+            if (f.type === 'lightning' || f.type === 'chain') { f.life -= dt; if (f.life <= 0) this.fx.splice(i, 1); }
             else if (f.type === 'meteor') {
                 if (f.delay > 0) { f.delay -= dt; continue; }
                 f.life -= dt;
