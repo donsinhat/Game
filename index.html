@@ -469,7 +469,7 @@ const CHARACTERS = {
 
 // ==================== WEAPONS ====================
 const WEAPONS = {
-    // Weapon sprite info: effectSprite (spritesheet), frameW, frameH, frames, iconSprite
+    // Weapon sprite info: effectSprite (horizontal spritesheet), frameW=frameH (square frames), frames count
     agal: { 
         name: 'العقال', desc: 'حبل يدور حولك ويضرب الأعداء', 
         type: 'orbit', dmg: 5, cd: 0.1, range: 65, icon: '⭕',
@@ -485,38 +485,38 @@ const WEAPONS = {
     aura: { 
         name: 'الهيبة', desc: 'هالة ضرر حولك كل 0.5 ثانية', 
         type: 'aura', dmg: 4, cd: 0.5, range: 60, icon: '💫',
-        effectSprite: 'weapon_aura_effect', frameW: 70, frameH: 69, frames: 10,
+        effectSprite: 'weapon_aura_effect', frameW: 69, frameH: 69, frames: 10,
         iconSprite: 'weapon_aura_icon'
     },
     sword: { 
         name: 'السيف', desc: 'ضربة قوسية أمامك', 
         type: 'melee', dmg: 6, cd: 0.65, range: 75, icon: '⚔️',
-        effectSprite: 'weapon_sword_effect', frameW: 64, frameH: 67, frames: 8,
+        effectSprite: 'weapon_sword_effect', frameW: 67, frameH: 67, frames: 7,
         iconSprite: 'weapon_sword_icon'
     },
     mgma: { 
         name: 'المقمع', desc: 'طلقة شوتجن متوسطة المدى', 
         type: 'projectile', dmg: 5, cd: 1.0, range: 200, icon: '🔫',
-        effectSprite: 'weapon_mgma_effect', frameW: 64, frameH: 68, frames: 8,
+        effectSprite: 'weapon_mgma_effect', frameW: 68, frameH: 68, frames: 7,
         iconSprite: 'weapon_mgma_icon'
     },
     meteor: { 
         name: 'النيزك', desc: 'قذيفة لعدو عشوائي', 
         type: 'lightning', dmg: 6, cd: 1.4, range: 400, icon: '☄️',
-        effectSprite: 'weapon_meteor_effect', frameW: 64, frameH: 66, frames: 14,
+        effectSprite: 'weapon_meteor_effect', frameW: 66, frameH: 66, frames: 13,
         iconSprite: 'weapon_meteor_icon'
     },
     brain: { 
         name: 'العقل', desc: 'قذيفة تقفز بين الأعداء', 
         type: 'chain', dmg: 4, cd: 1.2, range: 300, icon: '🧠',
-        effectSprite: 'weapon_brain_effect', frameW: 64, frameH: 69, frames: 7,
+        effectSprite: 'weapon_brain_effect', frameW: 69, frameH: 69, frames: 6,
         iconSprite: 'weapon_brain_icon'
     },
     onion: { 
         name: 'البصل', desc: 'قذيفة طويلة المدى تسبب ضرر مستمر', 
         type: 'dot', dmg: 3, cd: 1.5, range: 450, icon: '🧅',
-        effectSprite: 'weapon_onion_effect', frameW: 64, frameH: 65, frames: 15,
-        projectileSprite: 'weapon_onion_projectile', projFrameW: 64, projFrames: 14,
+        effectSprite: 'weapon_onion_effect', frameW: 65, frameH: 65, frames: 14,
+        projectileSprite: 'weapon_onion_projectile', projFrameW: 65, projFrames: 13,
         iconSprite: 'weapon_onion_icon'
     },
     arrows: { name: 'السهام', desc: 'سهام تطلق بكل الاتجاهات', type: 'radial', dmg: 4, cd: 0.85, range: 320, icon: '🏹', iconPos: {row: 30, col: 0}, projectileIcon: {row: 30, col: 6} },
@@ -1249,37 +1249,47 @@ class Player {
             case 'projectile':
                 if (target && Math.hypot(target.x - this.x, target.y - this.y) < range) {
                     const baseAngle = Math.atan2(target.y - this.y, target.x - this.x);
+                    const isMgma = w.id === 'mgma';
                     const isFlame = w.id === 'flame';
                     const isBlueFlame = this.charId === 'layla' && isFlame;
                     const isRock = w.id === 'rock';
                     const isSpear = w.id === 'spear';
                     
                     let projType = 'normal';
-                    if (isBlueFlame) projType = 'blue_fire';
+                    if (isMgma) projType = 'mgma';
+                    else if (isBlueFlame) projType = 'blue_fire';
                     else if (isFlame) projType = 'fire';
                     else if (isRock) projType = 'rock';
                     else if (isSpear) projType = 'spear';
                     
-                    // Fire multiple projectiles if count > 1
-                    const spreadAngle = Math.PI / 8; // 22.5 degrees spread
-                    for (let i = 0; i < projCount; i++) {
-                        const angleOffset = projCount > 1 
-                            ? (i - (projCount - 1) / 2) * (spreadAngle / Math.max(projCount - 1, 1))
+                    // Mgma fires like shotgun (multiple pellets)
+                    const baseCount = isMgma ? 3 + Math.floor(w.level / 3) : projCount;
+                    const spreadAngle = isMgma ? Math.PI / 5 : Math.PI / 8;
+                    
+                    for (let i = 0; i < baseCount; i++) {
+                        const angleOffset = baseCount > 1 
+                            ? (i - (baseCount - 1) / 2) * (spreadAngle / Math.max(baseCount - 1, 1))
                             : 0;
-                        const a = baseAngle + angleOffset;
+                        const a = baseAngle + angleOffset + (isMgma ? (Math.random() - 0.5) * 0.1 : 0);
+                        const speed = isMgma ? 280 + Math.random() * 60 : 360;
                         game.proj.push({ 
                             x: this.x, y: this.y, 
-                            vx: Math.cos(a) * 360, vy: Math.sin(a) * 360, 
-                            dmg, life: 2.2, size: isFlame ? 10 : (isSpear ? 8 : 6), 
-                            color: isBlueFlame ? '#00aaff' : (isFlame ? '#ff4500' : '#8b4513'), 
+                            vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, 
+                            dmg: isMgma ? dmg * 0.6 : dmg, 
+                            life: isMgma ? 1.0 : 2.2, 
+                            size: isMgma ? 5 : (isFlame ? 10 : (isSpear ? 8 : 6)), 
+                            color: isMgma ? '#f80' : (isBlueFlame ? '#00aaff' : (isFlame ? '#ff4500' : '#8b4513')), 
                             pierce: w.level > 10 ? 2 : 1,
                             type: projType,
-                            iconPos: data.projectileIcon
+                            iconPos: data.projectileIcon,
+                            weaponId: w.id
                         });
                     }
                     game.audio.shoot();
-                    // Muzzle flash effect
-                    if (isFlame) {
+                    // Muzzle flash effect with weapon sprite
+                    if (data.effectSprite && data.frameW) {
+                        game.spriteEffects.push(new SpriteEffect(this.x + this.facing * 20, this.y, data.effectSprite, data.frameW, data.frameH, data.frames, 0.3, 1.0));
+                    } else if (isFlame) {
                         game.spriteEffects.push(new SpriteEffect(this.x, this.y, 'fx_fire_small', 24, 24, 6, 0.2, 1.2));
                     }
                 }
@@ -1360,7 +1370,7 @@ class Player {
                 break;
             }
             case 'dot': {
-                // Onion weapon - long range DOT
+                // Onion weapon - long range DOT with animated projectile
                 if (target && Math.hypot(target.x - this.x, target.y - this.y) < range) {
                     const a = Math.atan2(target.y - this.y, target.x - this.x);
                     for (let i = 0; i < projCount; i++) {
@@ -1370,8 +1380,13 @@ class Player {
                             vx: Math.cos(a + spread) * 280, vy: Math.sin(a + spread) * 280,
                             dmg, life: 3.5, size: 8,
                             color: '#9f9', type: 'dot',
-                            dotDmg: dmg * 0.3, dotDur: 2.5, // DOT effect
-                            weaponId: w.id
+                            dotDmg: dmg * 0.3, dotDur: 2.5,
+                            weaponId: w.id,
+                            // Store effect info for hit animation
+                            hitEffect: data.effectSprite,
+                            hitFrameW: data.frameW,
+                            hitFrameH: data.frameH,
+                            hitFrames: data.frames
                         });
                     }
                     game.audio.shoot();
@@ -2700,7 +2715,12 @@ class Game {
                     if (p.dotDmg && p.dotDur && !e.dots) e.dots = [];
                     if (p.dotDmg && p.dotDur && e.dots) {
                         e.dots.push({ dmg: p.dotDmg, dur: p.dotDur });
-                        this.particles.emit(e.x, e.y, 3, { color: '#9f9', minS: 20, maxS: 40 });
+                        // Show hit effect animation
+                        if (p.hitEffect && p.hitFrameW) {
+                            this.spriteEffects.push(new SpriteEffect(e.x, e.y, p.hitEffect, p.hitFrameW, p.hitFrameH, p.hitFrames, 0.5, 1.5));
+                        } else {
+                            this.particles.emit(e.x, e.y, 3, { color: '#9f9', minS: 20, maxS: 40 });
+                        }
                     }
                     p.pierce = (p.pierce || 1) - 1;
                     if (p.pierce <= 0) this.proj.splice(i, 1);
@@ -3497,6 +3517,46 @@ class Game {
                 ctx.beginPath();
                 ctx.arc(px, py, p.size * 0.4, 0, Math.PI * 2);
                 ctx.fill();
+            } else if (p.type === 'dot' && p.weaponId) {
+                // DOT projectile with animated sprite (onion)
+                const wData = WEAPONS[p.weaponId];
+                const projSprite = wData.projectileSprite && this.assets.get(wData.projectileSprite);
+                if (projSprite && wData.projFrameW) {
+                    const fps = 12;
+                    const frame = Math.floor((this.time * fps) % wData.projFrames);
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.rotate(angle);
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(projSprite, frame * wData.projFrameW, 0, wData.projFrameW, wData.projFrameW,
+                        -wData.projFrameW * 0.6, -wData.projFrameW * 0.6, wData.projFrameW * 1.2, wData.projFrameW * 1.2);
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = '#9f9';
+                    ctx.beginPath();
+                    ctx.arc(px, py, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (p.type === 'mgma') {
+                // Mgma shotgun projectile with animated sprite
+                const wData = WEAPONS.mgma;
+                const effectSprite = wData.effectSprite && this.assets.get(wData.effectSprite);
+                if (effectSprite && wData.frameW) {
+                    const fps = 15;
+                    const frame = Math.floor((this.time * fps) % wData.frames);
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.rotate(angle);
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(effectSprite, frame * wData.frameW, 0, wData.frameW, wData.frameH,
+                        -wData.frameW * 0.5, -wData.frameH * 0.5, wData.frameW, wData.frameH);
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = '#f80';
+                    ctx.beginPath();
+                    ctx.arc(px, py, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             } else {
                 ctx.fillStyle = p.color; 
                 ctx.beginPath(); 
