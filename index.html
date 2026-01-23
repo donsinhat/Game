@@ -469,58 +469,58 @@ const CHARACTERS = {
 
 // ==================== WEAPONS ====================
 const WEAPONS = {
-    // Weapon sprite info: effectSprite (horizontal spritesheet), frameW=frameH (square frames), frames count
+    // Weapon sprite info from JSON: frameW (width per frame), frameH (height), frames (total), fps
     agal: { 
         name: 'العقال', desc: 'حبل يدور حولك ويضرب الأعداء', 
         type: 'orbit', dmg: 5, cd: 0.1, range: 65, icon: '⭕',
-        effectSprite: 'weapon_agal_effect', frameW: 64, frameH: 64, frames: 10,
-        iconSprite: 'weapon_agal_icon'
+        effectSprite: 'weapon_agal_effect', frameW: 64, frameH: 64, frames: 10, fps: 8,
+        iconSprite: 'weapon_agal_icon', offset: 0 // centered on player
     },
     vape: { 
         name: 'الفيب', desc: 'هجوم قريب بالدخان', 
         type: 'melee', dmg: 6, cd: 0.55, range: 80, icon: '💨',
-        effectSprite: 'weapon_vape_effect', frameW: 59, frameH: 59, frames: 13,
-        iconSprite: 'weapon_vape_icon'
+        effectSprite: 'weapon_vape_effect', frameW: 64, frameH: 59, frames: 12, fps: 8,
+        iconSprite: 'weapon_vape_icon', offset: 30 // small offset in front
     },
     aura: { 
         name: 'الهيبة', desc: 'هالة ضرر حولك كل 0.5 ثانية', 
         type: 'aura', dmg: 4, cd: 0.5, range: 60, icon: '💫',
-        effectSprite: 'weapon_aura_effect', frameW: 69, frameH: 69, frames: 10,
-        iconSprite: 'weapon_aura_icon'
+        effectSprite: 'weapon_aura_effect', frameW: 64, frameH: 69, frames: 11, fps: 8,
+        iconSprite: 'weapon_aura_icon', offset: 0 // centered on player
     },
     sword: { 
         name: 'السيف', desc: 'ضربة قوسية أمامك', 
         type: 'melee', dmg: 6, cd: 0.65, range: 75, icon: '⚔️',
-        effectSprite: 'weapon_sword_effect', frameW: 67, frameH: 67, frames: 7,
-        iconSprite: 'weapon_sword_icon'
+        effectSprite: 'weapon_sword_effect', frameW: 64, frameH: 67, frames: 8, fps: 8,
+        iconSprite: 'weapon_sword_icon', offset: 35 // in front of player
     },
     mgma: { 
         name: 'المقمع', desc: 'طلقة شوتجن متوسطة المدى', 
         type: 'projectile', dmg: 5, cd: 1.0, range: 200, icon: '🔫',
-        effectSprite: 'weapon_mgma_effect', frameW: 68, frameH: 68, frames: 7,
-        iconSprite: 'weapon_mgma_icon'
+        effectSprite: 'weapon_mgma_effect', frameW: 64, frameH: 68, frames: 8, fps: 8,
+        iconSprite: 'weapon_mgma_icon', offset: 25 // muzzle flash offset
     },
     meteor: { 
         name: 'النيزك', desc: 'قذيفة لعدو عشوائي', 
         type: 'lightning', dmg: 6, cd: 1.4, range: 400, icon: '☄️',
-        effectSprite: 'weapon_meteor_effect', frameW: 66, frameH: 66, frames: 13,
-        iconSprite: 'weapon_meteor_icon'
+        effectSprite: 'weapon_meteor_effect', frameW: 64, frameH: 66, frames: 14, fps: 16,
+        iconSprite: 'weapon_meteor_icon', offset: 0 // effect at target
     },
     brain: { 
         name: 'العقل', desc: 'قذيفة تقفز بين الأعداء', 
         type: 'chain', dmg: 4, cd: 1.2, range: 300, icon: '🧠',
-        effectSprite: 'weapon_brain_effect', frameW: 69, frameH: 69, frames: 6,
-        iconSprite: 'weapon_brain_icon'
+        effectSprite: 'weapon_brain_effect', frameW: 64, frameH: 69, frames: 7, fps: 8,
+        iconSprite: 'weapon_brain_icon', offset: 0 // effect at target
     },
     onion: { 
         name: 'البصل', desc: 'قذيفة طويلة المدى تسبب ضرر مستمر', 
         type: 'dot', dmg: 3, cd: 1.5, range: 450, icon: '🧅',
-        effectSprite: 'weapon_onion_effect', frameW: 65, frameH: 65, frames: 14,
-        projectileSprite: 'weapon_onion_projectile', projFrameW: 65, projFrames: 13,
-        iconSprite: 'weapon_onion_icon'
+        effectSprite: 'weapon_onion_effect', frameW: 64, frameH: 65, frames: 15, fps: 8,
+        projectileSprite: 'weapon_onion_projectile', projFrameW: 64, projFrameH: 65, projFrames: 14, projFps: 8,
+        iconSprite: 'weapon_onion_icon', offset: 0 // effect at target
     },
-    arrows: { name: 'السهام', desc: 'سهام تطلق بكل الاتجاهات', type: 'radial', dmg: 4, cd: 0.85, range: 320, icon: '🏹', iconPos: {row: 30, col: 0}, projectileIcon: {row: 30, col: 6} },
-    tornado: { name: 'الدوامة', desc: 'إعصار يبطئ الأعداء', type: 'tornado', dmg: 4, cd: 2.2, range: 160, icon: '🌪️', iconPos: {row: 18, col: 0} }
+    arrows: { name: 'السهام', desc: 'سهام تطلق بكل الاتجاهات', type: 'radial', dmg: 4, cd: 0.85, range: 320, icon: '🏹', iconPos: {row: 30, col: 0}, projectileIcon: {row: 30, col: 6}, offset: 0 },
+    tornado: { name: 'الدوامة', desc: 'إعصار يبطئ الأعداء', type: 'tornado', dmg: 4, cd: 2.2, range: 160, icon: '🌪️', iconPos: {row: 18, col: 0}, offset: 0 }
 };
 
 // ==================== BOOKS ====================
@@ -1286,9 +1286,10 @@ class Player {
                         });
                     }
                     game.audio.shoot();
-                    // Muzzle flash effect with weapon sprite
+                    // Muzzle flash effect with weapon sprite using offset
+                    const muzzleOffset = data.offset || 20;
                     if (data.effectSprite && data.frameW) {
-                        game.spriteEffects.push(new SpriteEffect(this.x + this.facing * 20, this.y, data.effectSprite, data.frameW, data.frameH, data.frames, 0.3, 1.0));
+                        game.spriteEffects.push(new SpriteEffect(this.x + this.facing * muzzleOffset, this.y, data.effectSprite, data.frameW, data.frameH, data.frames, 0.3, 1.0));
                     } else if (isFlame) {
                         game.spriteEffects.push(new SpriteEffect(this.x, this.y, 'fx_fire_small', 24, 24, 6, 0.2, 1.2));
                     }
@@ -1576,11 +1577,12 @@ class Player {
         this.weapons.forEach(w => {
             const data = WEAPONS[w.id], range = this.getRange(w);
             const effectSprite = data.effectSprite && assets && assets.get(data.effectSprite);
+            const weaponFps = data.fps || 8; // Use weapon-specific fps
+            const weaponOffset = data.offset || 0; // Distance from player
             
             if (data.type === 'orbit') {
                 const n = 4 + Math.floor(w.level / 5);
-                const fps = 10;
-                const frameTime = 1 / fps;
+                const frameTime = 1 / weaponFps;
                 const totalFrames = data.frames || 10;
                 const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
                 
@@ -1606,13 +1608,13 @@ class Player {
             } else if (data.type === 'melee') {
                 const timer = this.wTimers[w.id] || 0, cd = this.getCD(w);
                 if (timer > cd * 0.75) {
-                    // Show melee effect animation
+                    // Show melee effect animation with offset
                     if (effectSprite && data.frameW) {
                         const progress = (cd - timer) / (cd * 0.25);
                         const frame = Math.min(Math.floor(progress * data.frames), data.frames - 1);
                         const frameX = frame * data.frameW;
                         const scale = 1.5;
-                        const offsetX = this.facing > 0 ? 30 : -30 - data.frameW * scale;
+                        const offset = weaponOffset > 0 ? weaponOffset : 30; // Use weapon offset or default
                         
                         ctx.save();
                         ctx.imageSmoothingEnabled = false;
@@ -1620,11 +1622,11 @@ class Player {
                             ctx.translate(sx, sy);
                             ctx.scale(-1, 1);
                             ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
-                                -30 - data.frameW * scale / 2, -data.frameH * scale / 2,
+                                -offset - data.frameW * scale / 2, -data.frameH * scale / 2,
                                 data.frameW * scale, data.frameH * scale);
                         } else {
                             ctx.drawImage(effectSprite, frameX, 0, data.frameW, data.frameH,
-                                sx + 30 - data.frameW * scale / 2, sy - data.frameH * scale / 2,
+                                sx + offset - data.frameW * scale / 2, sy - data.frameH * scale / 2,
                                 data.frameW * scale, data.frameH * scale);
                         }
                         ctx.restore();
@@ -1638,10 +1640,9 @@ class Player {
                 }
             }
             if (data.type === 'aura') {
-                // Aura effect with sprite animation
+                // Aura effect centered on player (offset = 0)
                 if (effectSprite && data.frameW) {
-                    const fps = 8;
-                    const frameTime = 1 / fps;
+                    const frameTime = 1 / weaponFps;
                     const totalFrames = data.frames || 10;
                     const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
                     const frameX = currentFrame * data.frameW;
@@ -2721,7 +2722,10 @@ class Game {
                     const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
                     const ang = Math.atan2(e.y - this.player.y, e.x - this.player.x);
                     const pAng = this.player.facing > 0 ? 0 : Math.PI;
-                    if (dist < range + e.width / 2 && Math.abs(ang - pAng) < Math.PI / 2) {
+                    const weaponOffset = data.offset || 0;
+                    // Hitbox: from offset distance to range, in front arc
+                    const minDist = weaponOffset > 0 ? weaponOffset * 0.5 : 0;
+                    if (dist >= minDist && dist < range + e.width / 2 && Math.abs(ang - pAng) < Math.PI / 2) {
                         const timer = this.player.wTimers[w.id] || 0, cd = this.player.getCD(w);
                         if (timer > cd * 0.82 && timer < cd * 0.95) { 
                             const hit = this.player.applyCrit(this.player.getDmg(w));
