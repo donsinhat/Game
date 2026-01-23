@@ -464,6 +464,14 @@ const CHARACTERS = {
         stats: { gold: 1, luck: 1, hp: 85, speed: 210, cooldown: 0.8, range: 1.3, crit: 0, enemyBuff: 0 },
         passiveText: ['-20% كولداون', '+30% مدى'],
         colors: { body: '#1a1a2e', head: '#4a0080', skin: '#e8d5c4', legs: '#0a0a15' }
+    },
+    mrBassla: {
+        name: 'سيد بصله', title: 'المخيف',
+        desc: 'اذا شافك وقالك تابيها ولا ماتابيها اهرب',
+        weapon: 'onion',
+        stats: { gold: 1, luck: 1, hp: 95, speed: 200, atkSpd: 1.2, crit: 0, enemyBuff: 0 },
+        passiveText: ['+20% سرعة هجوم'],
+        colors: { body: '#9a7b4f', head: '#f5f5dc', skin: '#d4a574', legs: '#5a4a3a' }
     }
 };
 
@@ -564,17 +572,17 @@ const ITEMS = {
 
 // ==================== ENEMIES ====================
 const ENEMIES = {
-    // Speed reduced by 30% (multiply by 0.7)
-    wolf: { name: 'ذئب', hpM: 1, atkM: 1, spdM: 0.84, xp: 2, time: 0, color: '#6a6a6a' },
-    scorpion: { name: 'عقرب', hpM: 0.7, atkM: 0.8, spdM: 1.05, xp: 2, time: 0, color: '#ffa500' },
-    dhub: { name: 'ضب', hpM: 2, atkM: 1.2, spdM: 0.42, xp: 4, time: 60, color: '#5a8a5a', zig: true },
-    snake: { name: 'ثعبان', hpM: 1.2, atkM: 1, spdM: 0.7, xp: 3, time: 120, color: '#2d5a27', ranged: true },
-    hyena: { name: 'ضبع', hpM: 0.8, atkM: 0.9, spdM: 0.91, xp: 2, time: 180, color: '#8b7355', pack: true },
-    eagle: { name: 'نسر', hpM: 1, atkM: 1.3, spdM: 1.12, xp: 4, time: 240, color: '#4a3728' },
+    // New animated enemies replacing old ones
+    flyingEye: { name: 'العين الطائرة', hpM: 0.8, atkM: 0.8, spdM: 1.0, xp: 2, time: 0, color: '#ff4444', ranged: true },
+    goblin: { name: 'الغوبلين', hpM: 1, atkM: 1, spdM: 0.9, xp: 2, time: 0, color: '#44aa44' },
+    mushroom: { name: 'الفطر', hpM: 1.2, atkM: 1.1, spdM: 0.7, xp: 3, time: 60, color: '#cc88ff', ranged: true },
+    skeleton: { name: 'الهيكل العظمي', hpM: 1.5, atkM: 1.3, spdM: 0.75, xp: 4, time: 120, color: '#eeeecc' },
+    // Keep some old enemies for variety
+    dhub: { name: 'ضب', hpM: 2, atkM: 1.2, spdM: 0.42, xp: 4, time: 180, color: '#5a8a5a', zig: true },
+    hyena: { name: 'ضبع', hpM: 0.8, atkM: 0.9, spdM: 0.91, xp: 2, time: 240, color: '#8b7355', pack: true },
     lion: { name: 'أسد', hpM: 3, atkM: 2, spdM: 0.56, xp: 8, time: 300, color: '#c4a35a' },
     djinn: { name: 'جني', hpM: 1.5, atkM: 1.5, spdM: 0.7, xp: 6, time: 360, color: '#4a0080' },
-    ghoul: { name: 'غول', hpM: 5, atkM: 2.5, spdM: 0.35, xp: 12, time: 420, color: '#2a2a2a' },
-    knight: { name: 'فارس', hpM: 2.5, atkM: 1.8, spdM: 0.7, xp: 10, time: 480, color: '#1a1a1a' }
+    ghoul: { name: 'غول', hpM: 5, atkM: 2.5, spdM: 0.35, xp: 12, time: 420, color: '#2a2a2a' }
 };
 
 const BOSS = { name: 'ابو حلزه', hp: 8000, atk: 35, spd: 55, color: '#8b0000' };
@@ -682,7 +690,13 @@ class AssetLoader {
             // Boss sprite (Abu Halza)
             ['boss_halza', 'assets/characters/1769115033155(1).png'],
             
-            // Enemies - New monster sprites
+            // Enemies - New animated monster sprites
+            ['enemy_flyingeye', 'assets/New enemy/Flying eye/Attack3.png'],
+            ['enemy_goblin', 'assets/New enemy/Goblin/Attack3.png'],
+            ['enemy_mushroom', 'assets/New enemy/Mushroom/Attack3.png'],
+            ['enemy_skeleton', 'assets/New enemy/Skeleton/Attack3.png'],
+            
+            // Enemies - Old static monster sprites (for fallback)
             ['enemy_wolf', 'assets/enemies/NB_01.png'],
             ['enemy_scorpion', 'assets/enemies/NB_09.png'],
             ['enemy_dhub', 'assets/enemies/NB_03.png'],
@@ -694,9 +708,12 @@ class AssetLoader {
             ['enemy_ghoul', 'assets/enemies/NB_08.png'],
             ['enemy_knight', 'assets/enemies/NB_16.png'],
             
-            // Pickups
+            // Pickups (old static)
             ['gold_coin', 'assets/pickups/gold_coin.png'],
             ['xp_gem', 'assets/pickups/xp_gem.png'],
+            // Pickups (new animated)
+            ['pickup_xp', 'assets/pickups/XP.png'],
+            ['pickup_coin', 'assets/pickups/Coin.png'],
             
             // Item Icons (new arranged icons - 500x500)
             ['item_mirinda', 'assets/New Items Icon/arrainged/icons/mirinda.png'],
@@ -782,7 +799,17 @@ class AssetLoader {
             // Jayzan new sprites
             ['jayzan_idle', 'assets/characters/Jayzan/idle.png'],
             ['jayzan_1', 'assets/characters/Jayzan/1.png'],
-            ['jayzan_2', 'assets/characters/Jayzan/2.png']
+            ['jayzan_2', 'assets/characters/Jayzan/2.png'],
+            
+            // Mr Bassla sprites
+            ['mrbassla_idle', 'assets/characters/Mr Bassla/Idle.png'],
+            ['mrbassla_walk', 'assets/characters/Mr Bassla/walk.png'],
+            
+            // New Music & SFX
+            ['sfx_item_drop', 'assets/New Music & SFX/Item Drop.mp3'],
+            ['sfx_item_taken', 'assets/New Music & SFX/Item Taken.mp3'],
+            ['sfx_lvl_up', 'assets/New Music & SFX/Lvl up.mp3'],
+            ['sfx_hit', 'assets/New Music & SFX/charecter getting hit.mp3']
         ];
         
         try {
@@ -863,11 +890,23 @@ const CHAR_SPRITES = {
         frameHeight: 32,
         fps: 6
     },
-    layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 }
+    layla: { sprite: 'char_001', idle: 'char_001_idle', frameWidth: 48, frameHeight: 48, frames: 4, rows: 4 },
+    // Mr Bassla - idle + walk sprites (190 height)
+    mrBassla: { 
+        type: 'walk_idle',
+        idleSprite: 'mrbassla_idle',
+        walkSprites: ['mrbassla_walk'],
+        frameWidth: 154,
+        frameHeight: 190,
+        idleFrames: 9, // 1386 / 154 = 9
+        walkFrames: 12, // 1848 / 154 = 12
+        fps: 8
+    }
 };
 
-// Enemy sprite mappings - using new monster sprites
+// Enemy sprite mappings - using new animated monster sprites
 const ENEMY_SPRITES = {
+    // Old static sprites (fallback)
     wolf: { sprite: 'enemy_wolf', width: 80, height: 80 },
     scorpion: { sprite: 'enemy_scorpion', width: 80, height: 80 },
     dhub: { sprite: 'enemy_dhub', width: 80, height: 80 },
@@ -877,7 +916,12 @@ const ENEMY_SPRITES = {
     lion: { sprite: 'enemy_lion', width: 80, height: 80 },
     djinn: { sprite: 'enemy_djinn', width: 80, height: 80 },
     ghoul: { sprite: 'enemy_ghoul', width: 80, height: 80 },
-    knight: { sprite: 'enemy_knight', width: 80, height: 80 }
+    knight: { sprite: 'enemy_knight', width: 80, height: 80 },
+    // New animated sprites
+    flyingEye: { sprite: 'enemy_flyingeye', width: 150, height: 150, frames: 6, fps: 8, animated: true },
+    goblin: { sprite: 'enemy_goblin', width: 150, height: 150, frames: 12, fps: 10, animated: true },
+    mushroom: { sprite: 'enemy_mushroom', width: 150, height: 150, frames: 11, fps: 8, animated: true },
+    skeleton: { sprite: 'enemy_skeleton', width: 150, height: 150, frames: 6, fps: 8, animated: true }
 };
 
 // ==================== AUDIO ====================
@@ -885,9 +929,18 @@ class Audio {
     constructor() { 
         this.ctx = null; 
         this.bgm = null;
+        this.bossBgm = null;
         this.bgmPlaying = false;
+        this.bossBgmPlaying = false;
         this.musicVolume = 0.5;
         this.sfxVolume = 0.7;
+        this.fadeInterval = null;
+        
+        // SFX audio elements
+        this.sfxItemDrop = null;
+        this.sfxItemTaken = null;
+        this.sfxLvlUp = null;
+        this.sfxHit = null;
     }
     
     init() { 
@@ -899,15 +952,29 @@ class Audio {
         
         // Load background music
         if (!this.bgm) {
-            this.bgm = new window.Audio('assets/8-bit Desert Tune [7CaoOAgagxM].mp3');
+            this.bgm = new window.Audio('assets/New Music & SFX/Bedye theme.mp3');
             this.bgm.loop = true;
             this.bgm.volume = this.musicVolume;
         }
+        
+        // Load boss music
+        if (!this.bossBgm) {
+            this.bossBgm = new window.Audio('assets/New Music & SFX/Boss Theme Abo hleza.mp3');
+            this.bossBgm.loop = true;
+            this.bossBgm.volume = this.musicVolume;
+        }
+        
+        // Load SFX
+        this.sfxItemDrop = new window.Audio('assets/New Music & SFX/Item Drop.mp3');
+        this.sfxItemTaken = new window.Audio('assets/New Music & SFX/Item Taken.mp3');
+        this.sfxLvlUp = new window.Audio('assets/New Music & SFX/Lvl up.mp3');
+        this.sfxHit = new window.Audio('assets/New Music & SFX/charecter getting hit.mp3');
     }
     
     setMusicVolume(vol) {
         this.musicVolume = vol;
-        if (this.bgm) this.bgm.volume = vol;
+        if (this.bgm && !this.bossBgmPlaying) this.bgm.volume = vol;
+        if (this.bossBgm && this.bossBgmPlaying) this.bossBgm.volume = vol;
     }
     
     setSfxVolume(vol) {
@@ -929,6 +996,7 @@ class Audio {
     startBGM() {
         if (this.bgmPlaying || !this.bgm) return;
         this.bgm.currentTime = 0;
+        this.bgm.volume = this.musicVolume;
         this.bgm.play().catch(e => console.log('BGM autoplay blocked'));
         this.bgmPlaying = true;
     }
@@ -941,26 +1009,97 @@ class Audio {
         this.bgmPlaying = false;
     }
     
+    // Fade out BGM and start boss music
+    startBossMusic() {
+        if (this.bossBgmPlaying) return;
+        
+        // Fade out main BGM
+        if (this.bgm && this.bgmPlaying) {
+            let vol = this.bgm.volume;
+            this.fadeInterval = setInterval(() => {
+                vol -= 0.05;
+                if (vol <= 0) {
+                    this.bgm.pause();
+                    this.bgm.volume = this.musicVolume;
+                    clearInterval(this.fadeInterval);
+                } else {
+                    this.bgm.volume = vol;
+                }
+            }, 100);
+        }
+        
+        // Start boss music
+        this.bossBgm.currentTime = 0;
+        this.bossBgm.volume = this.musicVolume;
+        this.bossBgm.play().catch(e => {});
+        this.bossBgmPlaying = true;
+    }
+    
+    stopBossMusic() {
+        if (this.bossBgm) {
+            this.bossBgm.pause();
+            this.bossBgm.currentTime = 0;
+        }
+        this.bossBgmPlaying = false;
+    }
+    
     pauseBGM() {
         if (this.bgm && this.bgmPlaying) {
             this.bgm.pause();
         }
+        if (this.bossBgm && this.bossBgmPlaying) {
+            this.bossBgm.pause();
+        }
     }
     
     resumeBGM() {
-        if (this.bgm && this.bgmPlaying) {
+        if (this.bossBgmPlaying && this.bossBgm) {
+            this.bossBgm.play().catch(e => {});
+        } else if (this.bgmPlaying && this.bgm) {
             this.bgm.play().catch(e => {});
         }
     }
     
-    hit() { this.tone(150, 0.1, 'sawtooth', 0.15); }
+    hit() { 
+        if (this.sfxHit) {
+            this.sfxHit.volume = this.sfxVolume;
+            this.sfxHit.currentTime = 0;
+            this.sfxHit.play().catch(e => {});
+        } else {
+            this.tone(150, 0.1, 'sawtooth', 0.15); 
+        }
+    }
     shoot() { this.tone(320, 0.03); }
-    pickup() { this.tone(520, 0.04, 'sine'); }
-    levelUp() { [523,659,784,1047].forEach((f,i) => setTimeout(() => this.tone(f,0.1,'sine',0.15), i*60)); }
+    pickup() { 
+        if (this.sfxItemTaken) {
+            this.sfxItemTaken.volume = this.sfxVolume;
+            this.sfxItemTaken.currentTime = 0;
+            this.sfxItemTaken.play().catch(e => {});
+        } else {
+            this.tone(520, 0.04, 'sine'); 
+        }
+    }
+    levelUp() { 
+        if (this.sfxLvlUp) {
+            this.sfxLvlUp.volume = this.sfxVolume;
+            this.sfxLvlUp.currentTime = 0;
+            this.sfxLvlUp.play().catch(e => {});
+        } else {
+            [523,659,784,1047].forEach((f,i) => setTimeout(() => this.tone(f,0.1,'sine',0.15), i*60)); 
+        }
+    }
     victory() { [523,659,784,880,1047].forEach((f,i) => setTimeout(() => this.tone(f,0.18,'sine',0.2), i*100)); }
     death() { this.tone(160, 0.2, 'sawtooth'); this.tone(80, 0.25, 'sawtooth'); }
     bossWarn() { this.tone(80, 0.35, 'sawtooth', 0.25); setTimeout(() => this.tone(60, 0.35, 'sawtooth', 0.25), 400); }
-    itemDrop() { this.tone(700, 0.08, 'sine', 0.2); this.tone(900, 0.12, 'sine', 0.15); }
+    itemDrop() { 
+        if (this.sfxItemDrop) {
+            this.sfxItemDrop.volume = this.sfxVolume;
+            this.sfxItemDrop.currentTime = 0;
+            this.sfxItemDrop.play().catch(e => {});
+        } else {
+            this.tone(700, 0.08, 'sine', 0.2); this.tone(900, 0.12, 'sine', 0.15); 
+        }
+    }
 }
 
 // ==================== PARTICLES ====================
@@ -1133,7 +1272,7 @@ class Player {
         const c = CHARACTERS[charId];
         this.maxHp = c.stats.hp || 100; this.hp = this.maxHp;
         this.speed = c.stats.speed || 200;
-        this.dmgMult = 1; this.atkSpd = 1;
+        this.dmgMult = 1; this.atkSpd = c.stats.atkSpd || 1;
         this.pickupRange = 40 * (c.stats.pickup || 1);
         this.xpMult = c.stats.xpMult || 1;
         this.goldMult = c.stats.gold || 1;
@@ -1822,17 +1961,41 @@ class Enemy {
             ctx.save();
             ctx.imageSmoothingEnabled = false;
             
-            const scale = 0.6; // Scale down the large sprites
-            const drawW = spriteInfo.width * scale;
-            const drawH = spriteInfo.height * scale;
-            
-            // Flip based on movement direction
-            if (this.vx < 0) {
-                ctx.translate(sx, sy);
-                ctx.scale(-1, 1);
-                ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
+            // Check if this is an animated sprite
+            if (spriteInfo.animated && spriteInfo.frames) {
+                const frameW = spriteInfo.width;
+                const frameH = spriteInfo.height;
+                const fps = spriteInfo.fps || 8;
+                const totalFrames = spriteInfo.frames;
+                const currentFrame = Math.floor(this.animTime * fps) % totalFrames;
+                const frameX = currentFrame * frameW;
+                
+                const scale = 0.5; // Scale down the large sprites
+                const drawW = frameW * scale;
+                const drawH = frameH * scale;
+                
+                // Flip based on movement direction
+                if (this.vx < 0) {
+                    ctx.translate(sx, sy);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(sprite, frameX, 0, frameW, frameH, -drawW / 2, -drawH / 2, drawW, drawH);
+                } else {
+                    ctx.drawImage(sprite, frameX, 0, frameW, frameH, sx - drawW / 2, sy - drawH / 2, drawW, drawH);
+                }
             } else {
-                ctx.drawImage(sprite, sx - drawW / 2, sy - drawH / 2, drawW, drawH);
+                // Static sprite
+                const scale = 0.6;
+                const drawW = spriteInfo.width * scale;
+                const drawH = spriteInfo.height * scale;
+                
+                // Flip based on movement direction
+                if (this.vx < 0) {
+                    ctx.translate(sx, sy);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
+                } else {
+                    ctx.drawImage(sprite, sx - drawW / 2, sy - drawH / 2, drawW, drawH);
+                }
             }
             
             ctx.restore();
@@ -2012,32 +2175,52 @@ class Boss {
 
 // ==================== PICKUPS ====================
 class Pickup {
-    constructor(x, y, type, val) { this.x = x; this.y = y; this.type = type; this.val = val; this.bob = Math.random() * Math.PI * 2; }
-    update(dt) { this.bob += dt * 3.5; }
+    constructor(x, y, type, val) { 
+        this.x = x; this.y = y; this.type = type; this.val = val; 
+        this.bob = Math.random() * Math.PI * 2; 
+        this.anim = Math.random() * 10; // Random start for animation
+    }
+    update(dt) { this.bob += dt * 3.5; this.anim += dt; }
     draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y + Math.sin(this.bob) * 3;
         
-        const sprite = this.type === 'xp' ? assets && assets.get('xp_gem') : assets && assets.get('gold_coin');
+        // Use new animated sprites
+        const isXP = this.type === 'xp';
+        const sprite = isXP ? assets && assets.get('pickup_xp') : assets && assets.get('pickup_coin');
         
         if (sprite) {
             ctx.imageSmoothingEnabled = false;
-            const size = this.type === 'xp' ? 18 : 16;
-            ctx.drawImage(sprite, sx - size / 2, sy - size / 2, size, size);
+            // XP: 4 frames 16x16 at 5fps, Coin: 5 frames 16x16 at 8fps
+            const frameW = 16, frameH = 16;
+            const fps = isXP ? 5 : 8;
+            const totalFrames = isXP ? 4 : 5;
+            const currentFrame = Math.floor(this.anim * fps) % totalFrames;
+            const frameX = currentFrame * frameW;
+            
+            const size = isXP ? 20 : 18;
+            ctx.drawImage(sprite, frameX, 0, frameW, frameH, sx - size / 2, sy - size / 2, size, size);
         } else {
-            // Fallback
-            if (this.type === 'xp') { 
-                ctx.fillStyle = '#0f0'; 
-                ctx.beginPath(); 
-                ctx.moveTo(sx, sy - 6); 
-                ctx.lineTo(sx + 6, sy); 
-                ctx.lineTo(sx, sy + 6); 
-                ctx.lineTo(sx - 6, sy); 
-                ctx.fill(); 
-            } else { 
-                ctx.fillStyle = '#ffd700'; 
-                ctx.beginPath(); 
-                ctx.arc(sx, sy, 5, 0, Math.PI * 2); 
-                ctx.fill(); 
+            // Fallback to old sprites
+            const oldSprite = isXP ? assets && assets.get('xp_gem') : assets && assets.get('gold_coin');
+            if (oldSprite) {
+                const size = isXP ? 18 : 16;
+                ctx.drawImage(oldSprite, sx - size / 2, sy - size / 2, size, size);
+            } else {
+                // Shape fallback
+                if (isXP) { 
+                    ctx.fillStyle = '#0f0'; 
+                    ctx.beginPath(); 
+                    ctx.moveTo(sx, sy - 6); 
+                    ctx.lineTo(sx + 6, sy); 
+                    ctx.lineTo(sx, sy + 6); 
+                    ctx.lineTo(sx - 6, sy); 
+                    ctx.fill(); 
+                } else { 
+                    ctx.fillStyle = '#ffd700'; 
+                    ctx.beginPath(); 
+                    ctx.arc(sx, sy, 5, 0, Math.PI * 2); 
+                    ctx.fill(); 
+                }
             }
         }
     }
@@ -2374,6 +2557,7 @@ class Game {
         this.spawnT = 0; this.time = 0;
         this.bossSpawned = false; this.bossWarnShown = false;
         this.globalSlow = 0;
+        this.rerollCount = 0;
         
         this.pendingItem = null;
         
@@ -2771,6 +2955,8 @@ class Game {
             this.bossSpawned = true;
             const a = Math.random() * Math.PI * 2;
             this.boss = new Boss(this.player.x + Math.cos(a) * 320, this.player.y + Math.sin(a) * 320, this.player.enemyBuff);
+            // Start boss music
+            this.audio.startBossMusic();
         }
         
         if (this.globalSlow > 0) this.globalSlow -= dt;
@@ -3327,10 +3513,40 @@ class Game {
             card.onclick = () => { this.selectUpgrade(c, rar, c.upgradeType); modal.style.display = 'none'; this.state = 'playing'; };
             opts.appendChild(card);
         });
+        
+        // Add reroll button
+        const rerollCost = Math.floor(10 * Math.pow(1.5, this.rerollCount || 0));
+        let rerollContainer = document.getElementById('rerollContainer');
+        if (!rerollContainer) {
+            rerollContainer = document.createElement('div');
+            rerollContainer.id = 'rerollContainer';
+            rerollContainer.style.cssText = 'width:100%;text-align:center;margin-top:12px;';
+            opts.parentNode.appendChild(rerollContainer);
+        }
+        rerollContainer.innerHTML = `
+            <button id="rerollBtn" style="background:linear-gradient(135deg,#3a3a3a,#1a1a1a);border:2px solid #ffd700;color:#ffd700;padding:8px 20px;border-radius:8px;cursor:pointer;font-family:'PixelAE',monospace;font-size:0.8rem;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;${this.player.gold >= rerollCost ? '' : 'opacity:0.5;cursor:not-allowed;'}">
+                🎲 جرب حظك <span style="color:#fff;font-size:0.7rem">(💰${rerollCost})</span>
+            </button>
+        `;
+        const rerollBtn = document.getElementById('rerollBtn');
+        if (this.player.gold >= rerollCost) {
+            rerollBtn.onclick = () => {
+                this.player.gold -= rerollCost;
+                this.rerollCount = (this.rerollCount || 0) + 1;
+                this.updateHUD();
+                this.showLevelUp(); // Re-generate options
+            };
+            rerollBtn.onmouseenter = () => { rerollBtn.style.transform = 'scale(1.05)'; rerollBtn.style.boxShadow = '0 0 15px #ffd70050'; };
+            rerollBtn.onmouseleave = () => { rerollBtn.style.transform = 'scale(1)'; rerollBtn.style.boxShadow = 'none'; };
+        }
+        
         modal.style.display = 'flex';
     }
     
     selectUpgrade(c, rar, upgradeType) {
+        // Reset reroll count after selecting upgrade
+        this.rerollCount = 0;
+        
         if (c.type === 'weapon') {
             // Use provided upgrade type or random if new weapon
             const type = upgradeType || ['damage', 'count', 'cooldown'][Math.floor(Math.random() * 3)];
