@@ -1734,53 +1734,64 @@ class ItemDrop {
         const item = ITEMS[this.id];
         const rarityColor = RARITY[item.rarity].color;
         
-        // Glowing background circle
-        const glowSize = 22 + Math.sin(this.glow) * 4;
-        ctx.fillStyle = rarityColor + '50';
-        ctx.beginPath(); 
-        ctx.arc(sx, sy, glowSize, 0, Math.PI * 2); 
-        ctx.fill();
-        
-        // Inner circle
-        ctx.fillStyle = '#000000cc';
-        ctx.beginPath(); 
-        ctx.arc(sx, sy, 18, 0, Math.PI * 2); 
-        ctx.fill();
-        
-        // Border
-        ctx.strokeStyle = rarityColor;
-        ctx.lineWidth = 3;
-        ctx.beginPath(); 
-        ctx.arc(sx, sy, 18, 0, Math.PI * 2); 
-        ctx.stroke();
-        
         // Try to draw sprite if available
         const sprite = item.sprite && assets && assets.get(item.sprite);
         const iconset = assets && assets.get('iconset');
         
+        ctx.imageSmoothingEnabled = false;
+        
         if (sprite) {
-            ctx.imageSmoothingEnabled = false;
-            const size = 28;
-            ctx.drawImage(sprite, sx - size/2, sy - size/2, size, size);
+            // Get original dimensions and preserve aspect ratio
+            const origW = sprite.width || 32;
+            const origH = sprite.height || 32;
+            const maxSize = 32;
+            const scale = Math.min(maxSize / origW, maxSize / origH);
+            const drawW = origW * scale;
+            const drawH = origH * scale;
+            
+            // Subtle glow effect (matches item shape, not circle)
+            ctx.shadowColor = rarityColor;
+            ctx.shadowBlur = 10 + Math.sin(this.glow) * 4;
+            
+            ctx.drawImage(sprite, sx - drawW/2, sy - drawH/2, drawW, drawH);
+            
+            ctx.shadowBlur = 0;
         } else if (item.iconPos && iconset) {
-            // Draw from IconSet sprite sheet
-            ctx.imageSmoothingEnabled = false;
+            // Draw from IconSet sprite sheet - 24x24 icons, preserve aspect ratio
             const iconSize = 24;
             const drawSize = 28;
+            
+            // Glow effect
+            ctx.shadowColor = rarityColor;
+            ctx.shadowBlur = 10 + Math.sin(this.glow) * 4;
+            
             ctx.drawImage(
                 iconset,
                 item.iconPos.col * iconSize, item.iconPos.row * iconSize,
                 iconSize, iconSize,
                 sx - drawSize/2, sy - drawSize/2, drawSize, drawSize
             );
+            
+            ctx.shadowBlur = 0;
         } else {
-            // Fallback to emoji icon
-            ctx.font = 'bold 20px Arial'; 
+            // Fallback to emoji icon with glow
+            ctx.shadowColor = rarityColor;
+            ctx.shadowBlur = 10 + Math.sin(this.glow) * 4;
+            
+            ctx.font = 'bold 24px Arial'; 
             ctx.textAlign = 'center'; 
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#fff';
             ctx.fillText(item.icon, sx, sy);
+            
+            ctx.shadowBlur = 0;
         }
+        
+        // Small rarity indicator dot below item
+        ctx.fillStyle = rarityColor;
+        ctx.beginPath();
+        ctx.arc(sx, sy + 20, 3, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
