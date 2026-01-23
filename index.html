@@ -902,7 +902,7 @@ const CHAR_SPRITES = {
         walkFrames: 8, // 1848 / 231 = 8
         idleFps: 8,
         walkFps: 5,
-        scale: 0.35 // Scale to match other characters
+        scale: 0.55 // Scale increased 50%
     }
 };
 
@@ -1662,7 +1662,8 @@ class Player {
                     
                     ctx.save();
                     ctx.translate(sx, sy);
-                    if (facingRight) ctx.scale(-1, 1);
+                    // Mr Bassla sprite faces LEFT by default, flip when facing right
+                    if (!facingRight) ctx.scale(-1, 1);
                     ctx.drawImage(sprite, frameX, 0, frameW, frameH, -drawW / 2, -drawH / 2, drawW, drawH);
                     ctx.restore();
                 } else {
@@ -2006,7 +2007,7 @@ class Enemy {
                 const currentFrame = Math.floor(this.animTime * fps) % totalFrames;
                 const frameX = currentFrame * frameW;
                 
-                const scale = 0.5; // Scale down the large sprites
+                const scale = 0.75; // Scale up 50% for better visibility
                 const drawW = frameW * scale;
                 const drawH = frameH * scale;
                 
@@ -3310,7 +3311,11 @@ class Game {
         const r = Math.random() * 100 / this.player.luck;
         let rarity = r < 5 ? 'LEGENDARY' : r < 16 ? 'RARE' : 'COMMON';
         const pool = Object.entries(ITEMS).filter(([, i]) => i.rarity === rarity);
-        if (pool.length > 0) { const [id] = pool[Math.floor(Math.random() * pool.length)]; this.items.push(new ItemDrop(clampedX, clampedY, id)); }
+        if (pool.length > 0) { 
+            const [id] = pool[Math.floor(Math.random() * pool.length)]; 
+            this.items.push(new ItemDrop(clampedX, clampedY, id)); 
+            this.audio.itemDrop(); // Play item drop sound
+        }
     }
     
     showItemPickup(drop) {
@@ -3346,7 +3351,7 @@ class Game {
         document.getElementById('itemDesc').textContent = item.desc;
         
         document.getElementById('itemPickupModal').style.display = 'flex';
-        this.audio.itemDrop();
+        this.audio.pickup(); // Play item taken sound
     }
     
     continueFromItem() {
