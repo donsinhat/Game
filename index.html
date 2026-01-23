@@ -1807,25 +1807,27 @@ class MapSystem {
                 // Skip center area (player spawn)
                 if (Math.abs(gx) < 200 && Math.abs(gy) < 200) continue;
                 
-                // Random chance to place a building
-                if (Math.random() < 0.4) {
+                // Random chance to place a building (only if buildingTypes has items)
+                if (buildingTypes.length > 0 && Math.random() < 0.4) {
                     const type = buildingTypes[Math.floor(Math.random() * buildingTypes.length)];
                     const tile = ARABTOWN_TILES[type];
-                    const x = gx + (Math.random() - 0.5) * 100;
-                    const y = gy + (Math.random() - 0.5) * 100;
-                    
-                    this.obstacles.push({
-                        x: x, y: y,
-                        w: tile.w * 2, h: tile.h * 2,
-                        tile: type
-                    });
+                    if (tile) {
+                        const x = gx + (Math.random() - 0.5) * 100;
+                        const y = gy + (Math.random() - 0.5) * 100;
+                        
+                        this.obstacles.push({
+                            x: x, y: y,
+                            w: tile.w * 2, h: tile.h * 2,
+                            tile: type
+                        });
+                    }
                 }
                 
                 // Palm trees
-                if (Math.random() < 0.3) {
+                const palmTile = ARABTOWN_TILES.palm;
+                if (palmTile && Math.random() < 0.3) {
                     const px = gx + (Math.random() - 0.5) * 150;
                     const py = gy + (Math.random() - 0.5) * 150;
-                    const palmTile = ARABTOWN_TILES.palm;
                     this.obstacles.push({
                         x: px, y: py,
                         w: palmTile.w * 2, h: palmTile.h * 2,
@@ -1834,10 +1836,10 @@ class MapSystem {
                 }
                 
                 // Fence sections
-                if (Math.random() < 0.15) {
+                const fenceTile = ARABTOWN_TILES.fence_small;
+                if (fenceTile && Math.random() < 0.15) {
                     const fx = gx + (Math.random() - 0.5) * 120;
                     const fy = gy + (Math.random() - 0.5) * 120;
-                    const fenceTile = ARABTOWN_TILES.fence_small;
                     this.obstacles.push({
                         x: fx, y: fy,
                         w: fenceTile.w * 2, h: fenceTile.h * 2,
