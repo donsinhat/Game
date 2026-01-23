@@ -1387,8 +1387,8 @@ class Player {
         this.weapons.forEach(w => {
             const data = WEAPONS[w.id];
             if (data.type === 'orbit') {
-                // Base count + level bonus + count upgrades
-                const baseCount = 2 + Math.floor(w.level / 3);
+                // Start with 1, add level bonus + count upgrades
+                const baseCount = 1 + Math.floor(w.level / 2); // Start at 1, +1 every 2 levels
                 const countBonus = this.getProjectileCount(w) - 1;
                 const n = baseCount + countBonus;
                 const range = this.getRange(w);
@@ -1794,8 +1794,8 @@ class Player {
             const weaponOffset = data.offset || 0;
             
             if (data.type === 'orbit') {
-                // Base count + level bonus + count upgrades
-                const baseCount = 2 + Math.floor(w.level / 3);
+                // Start with 1, add level bonus + count upgrades
+                const baseCount = 1 + Math.floor(w.level / 2); // Start at 1, +1 every 2 levels
                 const countBonus = this.getProjectileCount(w) - 1; // Extra from upgrades
                 const n = baseCount + countBonus;
                 const frameTime = 1 / weaponFps;
@@ -2348,46 +2348,45 @@ class MapSystem {
         this.decorations = [];
         this.walls = [];
         
-        // Building collision boxes based on map.png (4000x4000, centered at 0,0)
-        // Scale factor: worldSize / 4000
-        const scale = worldSize / 4000;
+        // Building collision boxes based on map.png (4000x4000)
+        // Map image pixel coords: (0,0) top-left to (4000,4000) bottom-right
+        // World coords: (-2000,-2000) to (2000,2000) with (0,0) at center
         
-        // Building locations from map image (approximate pixel positions -> world coords)
-        // Format: [centerX, centerY, width, height] in map pixels
+        // Buildings from map.png - more accurate positions and sizes
+        // Format: [centerX, centerY, width, height] in WORLD coords directly
         const buildings = [
-            // Top left building
-            [400, 180, 120, 160],
-            // Top center structure
-            [1700, 450, 180, 80],
-            // Upper middle large building
-            [1100, 850, 180, 200],
-            // Right side mosque
-            [3000, 680, 140, 180],
+            // Top left tower building
+            [-1600, -1820, 150, 200],
+            // Top area small structure
+            [-600, -1700, 100, 60],
+            // Top center horizontal structure  
+            [-300, -1550, 200, 100],
+            // Upper right mosque/dome building
+            [1000, -1320, 180, 220],
+            // Upper middle large building complex (left part)
+            [-900, -1150, 200, 250],
             // Middle left building
-            [350, 1450, 140, 180],
-            // Right side structure
-            [3300, 1400, 180, 80],
+            [-1650, -550, 180, 220],
+            // Right side horizontal structure
+            [1300, -600, 200, 100],
             // Lower left building complex
-            [420, 1900, 200, 180],
-            // Lower middle building
-            [1500, 1950, 160, 180],
-            // Lower right building
-            [2900, 1950, 180, 200],
-            // Bottom center building
-            [1900, 2700, 160, 180],
-            // Bottom structure
-            [1850, 3200, 180, 80],
+            [-1580, 0, 250, 220],
+            // Lower middle building with dome
+            [-500, 0, 200, 220],
+            // Lower right large building
+            [900, 0, 220, 250],
+            // Bottom area building
+            [-100, 700, 200, 220],
+            // Bottom horizontal structure
+            [-150, 1200, 200, 100],
+            // Well/small structures (smaller collision)
+            [-1850, -750, 80, 100],
+            [-1850, 850, 80, 100],
         ];
         
-        // Convert to world coordinates and add as obstacles
-        for (const [px, py, pw, ph] of buildings) {
-            // Convert from image coords (0-4000) to world coords (-half to +half)
-            const wx = (px - 2000) * scale;
-            const wy = (py - 2000) * scale;
-            const ww = pw * scale;
-            const wh = ph * scale;
-            
-            this.obstacles.push({ x: wx, y: wy, w: ww, h: wh });
+        // Add all buildings as obstacles
+        for (const [x, y, w, h] of buildings) {
+            this.obstacles.push({ x, y, w, h });
         }
         
         this.generated = true;
