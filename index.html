@@ -202,6 +202,12 @@
                 <div class="city-name">البدائع</div>
                 <div class="city-desc">صحراء ونخيل</div>
             </div>
+            <div class="city-card" id="cityEndless" data-city="endless">
+                <div class="city-icon">♾️</div>
+                <div class="city-name">لا نهاية</div>
+                <div class="city-desc">أعداء أقوى × 1.25</div>
+                <div style="font-size:0.6rem;color:#ff8800;margin-top:4px">بدون بوس - بدون نهاية</div>
+            </div>
             <div class="city-card locked" id="cityBaghdad" data-city="baghdad">
                 <div class="city-icon">🏛️</div>
                 <div class="city-name">بغداد</div>
@@ -223,6 +229,7 @@
             <span class="hud-stat gold-text"><span class="hud-stat-icon">💰</span> <span id="goldText">0</span></span>
             <span class="hud-stat kill-text"><span class="hud-stat-icon">💀</span> <span id="killText">0</span></span>
             <span class="hud-stat timer-text"><span class="hud-stat-icon">⏱️</span> <span id="timerText">00:00</span></span>
+            <span class="hud-stat" id="endlessIndicator" style="display:none;color:#ff8800;background:#ff880020;border-color:#ff8800"><span class="hud-stat-icon">♾️</span> لا نهاية</span>
         </div>
     </div>
     
@@ -2602,6 +2609,8 @@ class Game {
         this.charIdx = 0;
         this.charIds = Object.keys(CHARACTERS);
         this.city = 'badaya';
+        this.endlessMode = false;
+        this.endlessScaling = 1.25; // Enemy power multiplier for endless mode
         
         this.player = null;
         this.enemies = [];
@@ -2897,6 +2906,15 @@ class Game {
         document.getElementById('pauseBtn').style.display = 'block';
         document.getElementById('pauseBtn').textContent = '⏸️';
         
+        // Check if endless mode
+        this.endlessMode = (this.city === 'endless');
+        if (this.endlessMode) {
+            this.city = 'badaya'; // Use badaya map for endless
+            document.getElementById('endlessIndicator').style.display = 'flex';
+        } else {
+            document.getElementById('endlessIndicator').style.display = 'none';
+        }
+        
         // Generate map with buildings and obstacles
         this.map.generate(CONFIG.WORLD_SIZE);
         
@@ -3020,19 +3038,22 @@ class Game {
     update(dt) {
         this.time += dt;
         
-        if (this.time >= CONFIG.BOSS_TIME - 30 && !this.bossWarnShown) {
-            this.bossWarnShown = true;
-            document.getElementById('bossWarning').style.display = 'block';
-            this.audio.bossWarn();
-            setTimeout(() => document.getElementById('bossWarning').style.display = 'none', 2500);
-        }
-        
-        if (this.time >= CONFIG.BOSS_TIME && !this.bossSpawned) {
-            this.bossSpawned = true;
-            const a = Math.random() * Math.PI * 2;
-            this.boss = new Boss(this.player.x + Math.cos(a) * 320, this.player.y + Math.sin(a) * 320, this.player.enemyBuff);
-            // Start boss music
-            this.audio.startBossMusic();
+        // Boss spawning - disabled in endless mode
+        if (!this.endlessMode) {
+            if (this.time >= CONFIG.BOSS_TIME - 30 && !this.bossWarnShown) {
+                this.bossWarnShown = true;
+                document.getElementById('bossWarning').style.display = 'block';
+                this.audio.bossWarn();
+                setTimeout(() => document.getElementById('bossWarning').style.display = 'none', 2500);
+            }
+            
+            if (this.time >= CONFIG.BOSS_TIME && !this.bossSpawned) {
+                this.bossSpawned = true;
+                const a = Math.random() * Math.PI * 2;
+                this.boss = new Boss(this.player.x + Math.cos(a) * 320, this.player.y + Math.sin(a) * 320, this.player.enemyBuff);
+                // Start boss music
+                this.audio.startBossMusic();
+            }
         }
         
         if (this.globalSlow > 0) this.globalSlow -= dt;
@@ -3315,8 +3336,11 @@ class Game {
         const weights = avail.map((_, i) => Math.pow(1.7, i)), total = weights.reduce((s, w) => s + w, 0);
         let r = Math.random() * total, type = avail[0][0];
         for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { type = avail[i][0]; break; } }
-        this.enemies.push(new Enemy(x, y, type, this.time, this.player.enemyBuff));
-        if (ENEMIES[type].pack) for (let i = 0; i < 2; i++) this.enemies.push(new Enemy(x + (Math.random() - 0.5) * 35, y + (Math.random() - 0.5) * 35, type, this.time, this.player.enemyBuff));
+        
+        // In endless mode, enemies are 1.25x stronger
+        const buff = this.player.enemyBuff + (this.endlessMode ? 0.25 : 0);
+        this.enemies.push(new Enemy(x, y, type, this.time, buff));
+        if (ENEMIES[type].pack) for (let i = 0; i < 2; i++) this.enemies.push(new Enemy(x + (Math.random() - 0.5) * 35, y + (Math.random() - 0.5) * 35, type, this.time, buff));
     }
     
     killEnemy(enemy) {
