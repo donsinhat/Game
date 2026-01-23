@@ -830,12 +830,12 @@ const CHAR_SPRITES = {
         frameHeight: 32,
         fps: 6
     },
-    // Jayzen - new large sprite
+    // Jayzen - idle + walk sprites (1, 2)
     jayzen: { 
-        type: 'single',
-        sprite: 'jayzan_idle',
-        frameWidth: 516, 
-        frameHeight: 1723
+        type: 'walk_idle',
+        idleSprite: 'jayzan_idle',
+        walkSprites: ['jayzan_1', 'jayzan_2'],
+        fps: 6
     },
     // Water Priestess (Noura) - 4 separate 32x32 frames for idle animation
     noura: { 
@@ -1437,7 +1437,37 @@ class Player {
         let sprite = null;
         
         // Check sprite type
-        if (spriteInfo.type === 'single' && spriteInfo.sprite) {
+        if (spriteInfo.type === 'walk_idle') {
+            // Walk/Idle sprite system - idle when still, alternate 1/2 when walking
+            let spriteKey;
+            if (isMoving) {
+                // Alternate between walk sprites
+                const fps = spriteInfo.fps || 6;
+                const frameTime = 1 / fps;
+                const walkFrame = Math.floor(this.anim / frameTime) % 2;
+                spriteKey = spriteInfo.walkSprites[walkFrame];
+            } else {
+                // Use idle sprite
+                spriteKey = spriteInfo.idleSprite;
+            }
+            sprite = assets && assets.get(spriteKey);
+            
+            if (sprite) {
+                ctx.imageSmoothingEnabled = false;
+                const targetHeight = 70;
+                const scale = targetHeight / sprite.height;
+                const drawW = sprite.width * scale;
+                const drawH = sprite.height * scale;
+                
+                ctx.save();
+                ctx.translate(sx, sy);
+                // Flip based on facing direction - sprite faces RIGHT by default
+                // If facing left, flip it
+                if (facingRight) ctx.scale(-1, 1);
+                ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
+                ctx.restore();
+            }
+        } else if (spriteInfo.type === 'single' && spriteInfo.sprite) {
             // Single large image sprite
             sprite = assets && assets.get(spriteInfo.sprite);
             if (sprite) {
@@ -2395,7 +2425,17 @@ class Game {
         let drawAsFullImage = false;
         
         // Check for sprite type
-        if (spriteInfo.type === 'single' && spriteInfo.sprite) {
+        if (spriteInfo.type === 'walk_idle' && spriteInfo.idleSprite) {
+            sprite = this.assets && this.assets.get(spriteInfo.idleSprite);
+            if (sprite) {
+                ctx.imageSmoothingEnabled = false;
+                const targetH = 100;
+                const scale = targetH / sprite.height;
+                const drawW = sprite.width * scale;
+                const drawH = sprite.height * scale;
+                ctx.drawImage(sprite, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
+            }
+        } else if (spriteInfo.type === 'single' && spriteInfo.sprite) {
             sprite = this.assets && this.assets.get(spriteInfo.sprite);
             if (sprite) {
                 ctx.imageSmoothingEnabled = false;
@@ -2567,7 +2607,15 @@ class Game {
             ctx.imageSmoothingEnabled = false;
             
             const spriteInfo = CHAR_SPRITES[p.charId];
-            if (spriteInfo.type === 'single' && spriteInfo.sprite) {
+            if (spriteInfo.type === 'walk_idle' && spriteInfo.idleSprite) {
+                const sprite = this.assets.get(spriteInfo.idleSprite);
+                if (sprite) {
+                    const targetH = 40;
+                    const scale = targetH / sprite.height;
+                    const drawW = sprite.width * scale;
+                    ctx.drawImage(sprite, 4, 4, drawW, 40);
+                }
+            } else if (spriteInfo.type === 'single' && spriteInfo.sprite) {
                 const sprite = this.assets.get(spriteInfo.sprite);
                 if (sprite) {
                     const targetH = 40;
