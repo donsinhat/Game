@@ -550,7 +550,7 @@ const ITEMS = {
     // Common (شائع) - iconPos: {row, col} in IconSet.png (24x24 grid)
     mirinda: { name: 'حمضيات', desc: 'حار يلد .. ينعنش ويرجع لك 10 هيل', rarity: 'COMMON', effect: 'heal', val: 10, icon: '🍊', sprite: 'item_mirinda' },
     dalla: { name: 'دله قهوه', desc: 'المهيله تزيد دفاعك 1 بشكل دايم', rarity: 'COMMON', effect: 'permArmor', val: 1, icon: '☕', sprite: 'item_dalla' },
-    sandal: { name: 'نعال شرقية', desc: 'تخليك تفك سبرنت', rarity: 'COMMON', effect: 'permSpeed', val: 0.05, icon: '👟', sprite: 'item_sandal' },
+    sandal: { name: 'نعال شرقية', desc: 'تخليك تفك سبرنت', rarity: 'COMMON', effect: 'permSpeed', val: 0.025, icon: '👟', sprite: 'item_sandal' },
     klega: { name: 'كليجه', desc: 'اولاو من حلاته تزيد صحتك', rarity: 'COMMON', effect: 'permHP', val: 2, icon: '🍪', sprite: 'item_klega' },
     copper: { name: 'نحاس', desc: '+5 ذهب', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙', iconPos: {row: 11, col: 0} },
     
@@ -572,17 +572,11 @@ const ITEMS = {
 
 // ==================== ENEMIES ====================
 const ENEMIES = {
-    // New animated enemies replacing old ones
+    // New animated enemies only
     flyingEye: { name: 'العين الطائرة', hpM: 0.8, atkM: 0.8, spdM: 1.0, xp: 2, time: 0, color: '#ff4444', ranged: true },
     goblin: { name: 'الغوبلين', hpM: 1, atkM: 1, spdM: 0.9, xp: 2, time: 0, color: '#44aa44' },
     mushroom: { name: 'الفطر', hpM: 1.2, atkM: 1.1, spdM: 0.7, xp: 3, time: 60, color: '#cc88ff', ranged: true },
-    skeleton: { name: 'الهيكل العظمي', hpM: 1.5, atkM: 1.3, spdM: 0.75, xp: 4, time: 120, color: '#eeeecc' },
-    // Keep some old enemies for variety
-    dhub: { name: 'ضب', hpM: 2, atkM: 1.2, spdM: 0.42, xp: 4, time: 180, color: '#5a8a5a', zig: true },
-    hyena: { name: 'ضبع', hpM: 0.8, atkM: 0.9, spdM: 0.91, xp: 2, time: 240, color: '#8b7355', pack: true },
-    lion: { name: 'أسد', hpM: 3, atkM: 2, spdM: 0.56, xp: 8, time: 300, color: '#c4a35a' },
-    djinn: { name: 'جني', hpM: 1.5, atkM: 1.5, spdM: 0.7, xp: 6, time: 360, color: '#4a0080' },
-    ghoul: { name: 'غول', hpM: 5, atkM: 2.5, spdM: 0.35, xp: 12, time: 420, color: '#2a2a2a' }
+    skeleton: { name: 'الهيكل العظمي', hpM: 1.5, atkM: 1.3, spdM: 0.75, xp: 4, time: 120, color: '#eeeecc' }
 };
 
 const BOSS = { name: 'ابو حلزه', hp: 8000, atk: 35, spd: 55, color: '#8b0000' };
@@ -3221,13 +3215,26 @@ class Game {
             }
         }
         
-        // Item drops
+        // Item drops - collect all nearby items
+        const nearbyItems = [];
         for (let i = this.items.length - 1; i >= 0; i--) {
             const item = this.items[i];
             item.update(dt);
             if (Math.hypot(item.x - this.player.x, item.y - this.player.y) < 22) {
-                this.showItemPickup(item);
-                this.items.splice(i, 1);
+                nearbyItems.push({ item, index: i });
+            }
+        }
+        // Process all collected items
+        if (nearbyItems.length > 0) {
+            // Remove all collected items from array (in reverse order to maintain indices)
+            nearbyItems.sort((a, b) => b.index - a.index);
+            for (const { index } of nearbyItems) {
+                this.items.splice(index, 1);
+            }
+            // Show pickup for first item, directly collect the rest
+            this.showItemPickup(nearbyItems[0].item);
+            for (let i = 1; i < nearbyItems.length; i++) {
+                this.collectItem(nearbyItems[i].item);
             }
         }
         
@@ -3290,13 +3297,20 @@ class Game {
         // Add floating kill text
         this.texts.push(new FloatText(enemy.x, enemy.y - 10, '+' + enemy.xp + ' XP', '#44ff44', 12));
         
-        this.pickups.push(new Pickup(enemy.x, enemy.y, 'xp', enemy.xp));
-        if (Math.random() < 0.18) {
-            this.pickups.push(new Pickup(enemy.x + (Math.random() - 0.5) * 12, enemy.y + (Math.random() - 0.5) * 12, 'gold', 1 + Math.floor(this.time / 55)));
-            this.particles.gold(enemy.x, enemy.y);
+        // Clamp pickup positions to map bounds
+        const halfWorld = CONFIG.WORLD_SIZE / 2;
+        const margin = 30;
+        const clampX = Math.max(-halfWorld + margin, Math.min(halfWorld - margin, enemy.x));
+        const clampY = Math.max(-halfWorld + margin, Math.min(halfWorld - margin, enemy.y));
+        
+        this.pickups.push(new Pickup(clampX, clampY, 'xp', enemy.xp));
+        // Gold drop rate reduced by 50% (from 0.18 to 0.09), fixed value of 5
+        if (Math.random() < 0.09) {
+            this.pickups.push(new Pickup(clampX + (Math.random() - 0.5) * 12, clampY + (Math.random() - 0.5) * 12, 'gold', 5));
+            this.particles.gold(clampX, clampY);
         }
-        // Item drop rate: 5% base * luck multiplier (luck has stronger effect)
-        if (Math.random() < 0.05 * Math.pow(this.player.luck, 1.5)) this.dropItem(enemy.x, enemy.y);
+        // Item drop rate: 3.5% base (reduced 30% from 5%) * luck multiplier
+        if (Math.random() < 0.035 * Math.pow(this.player.luck, 1.5)) this.dropItem(clampX, clampY);
     }
     
     dropItem(x, y) {
@@ -3487,9 +3501,18 @@ class Game {
             
             if (c.type === 'weapon') {
                 const w = c.isNew ? null : this.player.weapons.find(x => x.id === c.id);
-                const types = ['damage', 'count', 'cooldown'];
-                const upgradeType = types[Math.floor(Math.random() * types.length)];
+                let types = ['damage', 'count', 'cooldown'];
                 const typeNames = { damage: '⚔️ ضرر', count: '🎯 عدد', cooldown: '⚡ سرعة' };
+                
+                // If weapon reached max count (10), remove count from upgrade options
+                if (!c.isNew && w) {
+                    const currentCount = this.player.getProjectileCount(w);
+                    if (currentCount >= 10) {
+                        types = types.filter(t => t !== 'count');
+                    }
+                }
+                
+                const upgradeType = types[Math.floor(Math.random() * types.length)];
                 
                 if (c.isNew) {
                     // New weapon - show base stats
@@ -3505,8 +3528,8 @@ class Game {
                             <div style="font-size:0.5rem;color:#ff0">${currentDmg.toFixed(1)} → ${newDmg.toFixed(1)}</div>`;
                     } else if (upgradeType === 'count') {
                         const currentCount = this.player.getProjectileCount(w);
-                        const addCount = 1 + Math.floor(rar.bonus);
-                        const newCount = Math.min(currentCount + addCount, 8);
+                        const addCount = rar.bonus; // COMMON=1, UNCOMMON=2, RARE=3, EPIC=4, LEGENDARY=5
+                        const newCount = Math.min(currentCount + addCount, 10); // Max 10 projectiles
                         statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]}</div>
                             <div style="font-size:0.5rem;color:#ff0">${currentCount} → ${newCount}</div>`;
                     } else if (upgradeType === 'cooldown') {
