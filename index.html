@@ -1899,6 +1899,113 @@ class MapSystem {
             }
         }
     }
+    
+    drawBorders(ctx, cam, worldSize) {
+        // Draw visible map borders
+        const half = worldSize / 2;
+        const borderWidth = 20;
+        
+        // Calculate screen positions of borders
+        const leftX = -half - cam.x;
+        const rightX = half - cam.x;
+        const topY = -half - cam.y;
+        const bottomY = half - cam.y;
+        
+        // Border style - thick red/orange warning stripe
+        const gradient1 = ctx.createLinearGradient(0, 0, borderWidth, 0);
+        gradient1.addColorStop(0, '#8B0000');
+        gradient1.addColorStop(0.5, '#FF4500');
+        gradient1.addColorStop(1, '#8B0000');
+        
+        ctx.save();
+        
+        // Left border
+        if (leftX > -borderWidth && leftX < ctx.canvas.width) {
+            ctx.fillStyle = '#1a0a00';
+            ctx.fillRect(leftX - borderWidth, topY, borderWidth, worldSize);
+            // Warning stripes
+            for (let y = topY; y < bottomY; y += 40) {
+                ctx.fillStyle = (Math.floor(y / 40) % 2 === 0) ? '#8B0000' : '#FF6600';
+                ctx.fillRect(leftX - borderWidth, y, borderWidth, 20);
+            }
+            // Glow effect
+            const glowGrad = ctx.createLinearGradient(leftX - borderWidth, 0, leftX + 30, 0);
+            glowGrad.addColorStop(0, 'rgba(255, 50, 0, 0.5)');
+            glowGrad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+            ctx.fillStyle = glowGrad;
+            ctx.fillRect(leftX - borderWidth, topY, 50, worldSize);
+        }
+        
+        // Right border
+        if (rightX > 0 && rightX < ctx.canvas.width + borderWidth) {
+            ctx.fillStyle = '#1a0a00';
+            ctx.fillRect(rightX, topY, borderWidth, worldSize);
+            for (let y = topY; y < bottomY; y += 40) {
+                ctx.fillStyle = (Math.floor(y / 40) % 2 === 0) ? '#8B0000' : '#FF6600';
+                ctx.fillRect(rightX, y, borderWidth, 20);
+            }
+            const glowGrad = ctx.createLinearGradient(rightX - 30, 0, rightX + borderWidth, 0);
+            glowGrad.addColorStop(0, 'rgba(255, 50, 0, 0)');
+            glowGrad.addColorStop(1, 'rgba(255, 50, 0, 0.5)');
+            ctx.fillStyle = glowGrad;
+            ctx.fillRect(rightX - 30, topY, 50, worldSize);
+        }
+        
+        // Top border
+        if (topY > -borderWidth && topY < ctx.canvas.height) {
+            ctx.fillStyle = '#1a0a00';
+            ctx.fillRect(leftX - borderWidth, topY - borderWidth, worldSize + borderWidth * 2, borderWidth);
+            for (let x = leftX; x < rightX; x += 40) {
+                ctx.fillStyle = (Math.floor(x / 40) % 2 === 0) ? '#8B0000' : '#FF6600';
+                ctx.fillRect(x, topY - borderWidth, 20, borderWidth);
+            }
+            const glowGrad = ctx.createLinearGradient(0, topY - borderWidth, 0, topY + 30);
+            glowGrad.addColorStop(0, 'rgba(255, 50, 0, 0.5)');
+            glowGrad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+            ctx.fillStyle = glowGrad;
+            ctx.fillRect(leftX - borderWidth, topY - borderWidth, worldSize + borderWidth * 2, 50);
+        }
+        
+        // Bottom border
+        if (bottomY > 0 && bottomY < ctx.canvas.height + borderWidth) {
+            ctx.fillStyle = '#1a0a00';
+            ctx.fillRect(leftX - borderWidth, bottomY, worldSize + borderWidth * 2, borderWidth);
+            for (let x = leftX; x < rightX; x += 40) {
+                ctx.fillStyle = (Math.floor(x / 40) % 2 === 0) ? '#8B0000' : '#FF6600';
+                ctx.fillRect(x, bottomY, 20, borderWidth);
+            }
+            const glowGrad = ctx.createLinearGradient(0, bottomY - 30, 0, bottomY + borderWidth);
+            glowGrad.addColorStop(0, 'rgba(255, 50, 0, 0)');
+            glowGrad.addColorStop(1, 'rgba(255, 50, 0, 0.5)');
+            ctx.fillStyle = glowGrad;
+            ctx.fillRect(leftX - borderWidth, bottomY - 30, worldSize + borderWidth * 2, 50);
+        }
+        
+        // Corner warning signs
+        const corners = [
+            { x: leftX, y: topY },
+            { x: rightX, y: topY },
+            { x: leftX, y: bottomY },
+            { x: rightX, y: bottomY }
+        ];
+        
+        for (const corner of corners) {
+            if (corner.x > -50 && corner.x < ctx.canvas.width + 50 &&
+                corner.y > -50 && corner.y < ctx.canvas.height + 50) {
+                ctx.fillStyle = '#FF4500';
+                ctx.beginPath();
+                ctx.arc(corner.x, corner.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 16px PixelAE, Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⚠', corner.x, corner.y);
+            }
+        }
+        
+        ctx.restore();
+    }
 }
 
 class Game {
@@ -2676,18 +2783,77 @@ class Game {
             const data = c.type === 'weapon' ? WEAPONS[c.id] : BOOKS[c.id];
             const lvl = c.isNew ? 0 : (c.type === 'weapon' ? this.player.weapons : this.player.books).find(x => x.id === c.id).level;
             
-            // Random upgrade type for weapons
-            let upgradeTypeText = '';
-            let upgradeType = null;
-            if (c.type === 'weapon' && !c.isNew) {
+            // Calculate stat changes for display
+            let statChangeText = '';
+            
+            if (c.type === 'weapon') {
+                const w = c.isNew ? null : this.player.weapons.find(x => x.id === c.id);
                 const types = ['damage', 'count', 'cooldown'];
-                upgradeType = types[Math.floor(Math.random() * types.length)];
+                const upgradeType = types[Math.floor(Math.random() * types.length)];
                 const typeNames = { damage: '⚔️ ضرر', count: '🎯 عدد', cooldown: '⚡ سرعة' };
-                upgradeTypeText = `<div style="font-size:0.6rem;color:#aaa;margin-top:3px">${typeNames[upgradeType]}</div>`;
+                
+                if (c.isNew) {
+                    // New weapon - show base stats
+                    const baseDmg = CONFIG.WEAPON_BASE_DMG;
+                    statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">ضرر: ${baseDmg.toFixed(1)}</div>`;
+                } else {
+                    // Existing weapon - show upgrade effect
+                    if (upgradeType === 'damage') {
+                        const currentDmg = this.player.getDmg(w);
+                        const addDmg = rar.bonus * 1.5;
+                        const newDmg = currentDmg + addDmg;
+                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]}</div>
+                            <div style="font-size:0.5rem;color:#ff0">${currentDmg.toFixed(1)} → ${newDmg.toFixed(1)}</div>`;
+                    } else if (upgradeType === 'count') {
+                        const currentCount = this.player.getProjectileCount(w);
+                        const addCount = 1 + Math.floor(rar.bonus);
+                        const newCount = Math.min(currentCount + addCount, 8);
+                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]}</div>
+                            <div style="font-size:0.5rem;color:#ff0">${currentCount} → ${newCount}</div>`;
+                    } else if (upgradeType === 'cooldown') {
+                        const wData = WEAPONS[w.id];
+                        const currentCD = this.player.getCD(w);
+                        const reduction = 1 - (rar.bonus * 0.06);
+                        const newCD = currentCD * reduction;
+                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]}</div>
+                            <div style="font-size:0.5rem;color:#ff0">${currentCD.toFixed(2)}s → ${newCD.toFixed(2)}s</div>`;
+                    }
+                }
+                c.upgradeType = upgradeType;
+            } else {
+                // Book - show stat change
+                const book = BOOKS[c.id];
+                const v = book.val * (1 + rar.bonus * 0.12);
+                const statNames = {
+                    damage: 'ضرر', atkSpd: 'سرعة هجوم', moveSpd: 'سرعة حركة',
+                    xp: 'خبرة', maxHp: 'صحة', armor: 'دفاع',
+                    pickup: 'مغناطيس', luck: 'حظ', curse: 'لعنة',
+                    regen: 'تجديد', crit: 'ضربة حرجة'
+                };
+                
+                // Get current and new values
+                let currentVal, newVal, unit = '';
+                switch (book.stat) {
+                    case 'damage': currentVal = this.player.dmgMult * 100; newVal = (this.player.dmgMult + v) * 100; unit = '%'; break;
+                    case 'atkSpd': currentVal = this.player.atkSpd * 100; newVal = (this.player.atkSpd + v) * 100; unit = '%'; break;
+                    case 'moveSpd': currentVal = this.player.speed; newVal = this.player.speed * (1 + v); unit = ''; break;
+                    case 'xp': currentVal = this.player.xpMult * 100; newVal = (this.player.xpMult + v) * 100; unit = '%'; break;
+                    case 'maxHp': currentVal = this.player.maxHp; newVal = this.player.maxHp * (1 + v); unit = ''; break;
+                    case 'armor': currentVal = this.player.armor; newVal = this.player.armor + v * 6; unit = ''; break;
+                    case 'pickup': currentVal = this.player.pickupRange; newVal = this.player.pickupRange * (1 + v); unit = ''; break;
+                    case 'luck': currentVal = this.player.luck; newVal = this.player.luck + v; unit = ''; break;
+                    case 'curse': currentVal = this.player.curse * 100; newVal = (this.player.curse + v) * 100; unit = '%'; break;
+                    case 'regen': currentVal = this.player.regen; newVal = this.player.regen + v; unit = '/s'; break;
+                    case 'crit': currentVal = this.player.crit * 100; newVal = (this.player.crit + v) * 100; unit = '%'; break;
+                    default: currentVal = 0; newVal = v; unit = '';
+                }
+                
+                statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${statNames[book.stat] || book.stat}</div>
+                    <div style="font-size:0.5rem;color:#ff0">${currentVal.toFixed(1)}${unit} → ${newVal.toFixed(1)}${unit}</div>`;
             }
             
-            card.innerHTML = `<div class="upgrade-icon">${data.icon}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? 'جديد!' : `${lvl} → ${lvl + 1}`}</div>${upgradeTypeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
-            card.onclick = () => { this.selectUpgrade(c, rar, upgradeType); modal.style.display = 'none'; this.state = 'playing'; };
+            card.innerHTML = `<div class="upgrade-icon">${data.icon}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? 'جديد!' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
+            card.onclick = () => { this.selectUpgrade(c, rar, c.upgradeType); modal.style.display = 'none'; this.state = 'playing'; };
             opts.appendChild(card);
         });
         modal.style.display = 'flex';
@@ -3199,6 +3365,8 @@ class Game {
         // Draw map obstacles and decorations using MapSystem
         if (this.map.generated) {
             this.map.draw(ctx, this.cam, this.assets);
+            // Draw map borders
+            this.map.drawBorders(ctx, this.cam, CONFIG.WORLD_SIZE);
         }
     }
     
