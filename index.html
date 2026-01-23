@@ -123,22 +123,35 @@
         #pauseBtn { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,215,0,0.5); border-radius: 50%; color: #ffd700; font-size: 1.3rem; cursor: pointer; z-index: 60; display: none; transition: all 0.2s; }
         #pauseBtn:hover { background: rgba(255,215,0,0.2); border-color: #ffd700; }
         
-        /* Pause Menu */
-        #pauseMenu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; }
-        .pause-title { font-size: 2rem; color: #ffd700; margin-bottom: 30px; }
-        .pause-controls { background: rgba(30,30,40,0.95); padding: 25px 35px; border-radius: 15px; border: 2px solid rgba(255,215,0,0.3); min-width: 280px; }
-        .volume-control { margin: 15px 0; }
-        .volume-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem; color: #ccc; }
+        /* Pause Menu - Pixel Style */
+        #pauseMenu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: row; justify-content: center; align-items: center; gap: 20px; z-index: 200; image-rendering: pixelated; }
+        .pause-title { font-size: 1.5rem; color: #ffd700; margin-bottom: 15px; text-shadow: 2px 2px #000; }
+        
+        /* Stats Panel */
+        .pause-stats-panel { background: #3d3846; border: 4px solid #8b7355; padding: 15px; min-width: 200px; image-rendering: pixelated; }
+        .pause-stats-title { font-size: 1.1rem; color: #ffd700; margin-bottom: 12px; text-align: center; border-bottom: 2px solid #8b7355; padding-bottom: 8px; }
+        .pause-char-preview { width: 64px; height: 64px; margin: 0 auto 10px; background: #2a2530; border: 2px solid #5a5060; display: flex; align-items: center; justify-content: center; }
+        .pause-char-preview canvas { image-rendering: pixelated; }
+        .pause-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 0.85rem; }
+        .pause-stat-icon { width: 16px; height: 16px; margin-right: 6px; }
+        .pause-stat-name { color: #ccc; display: flex; align-items: center; }
+        .pause-stat-value { color: #4f4; font-weight: bold; }
+        .pause-stat-value.negative { color: #f44; }
+        
+        /* Controls Panel */
+        .pause-controls { background: #3d3846; border: 4px solid #8b7355; padding: 20px; min-width: 260px; }
+        .volume-control { margin: 12px 0; }
+        .volume-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.85rem; color: #ccc; }
         .volume-label span:last-child { color: #ffd700; font-weight: bold; }
-        .volume-slider { width: 100%; height: 8px; -webkit-appearance: none; background: #333; border-radius: 4px; outline: none; }
-        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #ffd700; border-radius: 50%; cursor: pointer; }
-        .volume-slider::-moz-range-thumb { width: 20px; height: 20px; background: #ffd700; border-radius: 50%; cursor: pointer; border: none; }
-        .pause-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 25px; }
-        .pause-btn { padding: 12px 25px; font-size: 1rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: none; border-radius: 25px; cursor: pointer; transition: all 0.2s; }
-        .pause-btn-resume { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
-        .pause-btn-resume:hover { transform: scale(1.05); }
-        .pause-btn-quit { background: rgba(255,0,0,0.2); border: 2px solid #f44; color: #f44; }
-        .pause-btn-quit:hover { background: rgba(255,0,0,0.3); }
+        .volume-slider { width: 100%; height: 8px; -webkit-appearance: none; background: #2a2530; border: 2px solid #5a5060; outline: none; }
+        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #ffd700; cursor: pointer; border: 2px solid #000; }
+        .volume-slider::-moz-range-thumb { width: 16px; height: 16px; background: #ffd700; cursor: pointer; border: 2px solid #000; }
+        .pause-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .pause-btn { padding: 10px 20px; font-size: 0.95rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: 3px solid #000; cursor: pointer; transition: all 0.1s; image-rendering: pixelated; }
+        .pause-btn-resume { background: #c9a66b; color: #000; border-color: #8b7355; }
+        .pause-btn-resume:hover { background: #dab77c; transform: translateY(-2px); }
+        .pause-btn-quit { background: #8b4444; color: #fff; border-color: #5a2020; }
+        .pause-btn-quit:hover { background: #a05555; }
         
         /* Mini Map */
         #miniMap { position: fixed; bottom: 80px; right: 15px; width: 110px; height: 110px; background: rgba(0, 0, 0, 0.75); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 12px; display: none; z-index: 55; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); }
@@ -243,25 +256,67 @@
     <button id="pauseBtn">⏸️</button>
     
     <div id="pauseMenu">
-        <h1 class="pause-title">⏸️ إيقاف مؤقت</h1>
+        <!-- Stats Panel -->
+        <div class="pause-stats-panel">
+            <div class="pause-stats-title">📊 إحصائيات</div>
+            <div class="pause-char-preview">
+                <canvas id="pauseCharCanvas" width="64" height="64"></canvas>
+            </div>
+            <div id="pauseCharName" style="text-align:center; color:#ffd700; margin-bottom:10px; font-size:0.9rem;">---</div>
+            <div class="pause-stat-row">
+                <span class="pause-stat-name">❤️ الصحة</span>
+                <span class="pause-stat-value" id="pauseStatHP">100/100</span>
+            </div>
+            <div class="pause-stat-row">
+                <span class="pause-stat-name">⚔️ الضرر</span>
+                <span class="pause-stat-value" id="pauseStatDMG">10</span>
+            </div>
+            <div class="pause-stat-row">
+                <span class="pause-stat-name">🛡️ الدفاع</span>
+                <span class="pause-stat-value" id="pauseStatDEF">0</span>
+            </div>
+            <div class="pause-stat-row">
+                <span class="pause-stat-name">🍀 الحظ</span>
+                <span class="pause-stat-value" id="pauseStatLUCK">1.0</span>
+            </div>
+            <div class="pause-stat-row">
+                <span class="pause-stat-name">👟 السرعة</span>
+                <span class="pause-stat-value" id="pauseStatSPD">100%</span>
+            </div>
+            <div class="pause-stat-row">
+                <span class="pause-stat-name">🎯 المدى</span>
+                <span class="pause-stat-value" id="pauseStatRNG">100%</span>
+            </div>
+            <div class="pause-stat-row">
+                <span class="pause-stat-name">💰 الذهب</span>
+                <span class="pause-stat-value" id="pauseStatGold">0</span>
+            </div>
+            <div class="pause-stat-row">
+                <span class="pause-stat-name">💀 القتلى</span>
+                <span class="pause-stat-value" id="pauseStatKills">0</span>
+            </div>
+        </div>
+        
+        <!-- Controls Panel -->
         <div class="pause-controls">
+            <div class="pause-stats-title">⏸️ إيقاف مؤقت</div>
             <div class="volume-control">
                 <div class="volume-label">
-                    <span>🎵 صوت الموسيقى</span>
+                    <span>🎵 الموسيقى</span>
                     <span id="musicVolText">50%</span>
                 </div>
                 <input type="range" class="volume-slider" id="musicVolume" min="0" max="100" value="50">
             </div>
             <div class="volume-control">
                 <div class="volume-label">
-                    <span>🔊 صوت المؤثرات</span>
+                    <span>🔊 المؤثرات</span>
                     <span id="sfxVolText">70%</span>
                 </div>
                 <input type="range" class="volume-slider" id="sfxVolume" min="0" max="100" value="70">
             </div>
             <div class="pause-buttons">
                 <button class="pause-btn pause-btn-resume" id="resumeBtn">▶️ استمرار</button>
-                <button class="pause-btn pause-btn-quit" id="quitBtn">🚪 خروج للقائمة</button>
+                <button class="pause-btn pause-btn-quit" id="quitBtn">🚪 خروج</button>
             </div>
         </div>
     </div>
@@ -600,6 +655,10 @@ class AssetLoader {
             
             // IconSet sprite sheet (24x24 icons)
             ['iconset', 'assets/IconSet.png'],
+            
+            // Pixel GUI elements
+            ['gui_sprites', "assets/Cryo's Mini GUI/GUI/GUI_2x.png"],
+            ['gui_buttons', "assets/Cryo's Mini GUI/Buttons/buttons_2x.png"],
             
             // Desert Map
             ['desert_tiles', 'assets/New Maps/DesertTileset16x16/Tileset16x16/DesertTilemap16x16.png'],
@@ -2171,12 +2230,51 @@ class Game {
             document.getElementById('pauseMenu').style.display = 'flex';
             document.getElementById('pauseBtn').textContent = '▶️';
             this.audio.pauseBGM();
+            this.updatePauseStats();
         }
         else if (this.state === 'paused') { 
             this.state = 'playing'; 
             document.getElementById('pauseMenu').style.display = 'none';
             document.getElementById('pauseBtn').textContent = '⏸️';
             this.audio.resumeBGM();
+        }
+    }
+    
+    updatePauseStats() {
+        if (!this.player) return;
+        const p = this.player;
+        const c = CHARACTERS[p.charId];
+        
+        // Update character name
+        document.getElementById('pauseCharName').textContent = c.name;
+        
+        // Update stats
+        document.getElementById('pauseStatHP').textContent = `${Math.round(p.hp)}/${Math.round(p.maxHp)}`;
+        document.getElementById('pauseStatDMG').textContent = `${Math.round(p.dmgMult * 100)}%`;
+        document.getElementById('pauseStatDEF').textContent = `${Math.round(p.armor)}`;
+        document.getElementById('pauseStatLUCK').textContent = `${p.luck.toFixed(1)}`;
+        document.getElementById('pauseStatSPD').textContent = `${Math.round(p.spdMult * 100)}%`;
+        document.getElementById('pauseStatRNG').textContent = `${Math.round(p.rangeMult * 100)}%`;
+        document.getElementById('pauseStatGold').textContent = this.gold;
+        document.getElementById('pauseStatKills').textContent = this.kills;
+        
+        // Draw character preview
+        const canvas = document.getElementById('pauseCharCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 64, 64);
+        ctx.imageSmoothingEnabled = false;
+        
+        const spriteInfo = CHAR_SPRITES[p.charId];
+        if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+            const sprite = this.assets.get(spriteInfo.frames[0]);
+            if (sprite) {
+                ctx.drawImage(sprite, 0, 0, 32, 32, 8, 8, 48, 48);
+            }
+        } else {
+            const sprite = this.assets.get(spriteInfo.idle);
+            if (sprite) {
+                ctx.drawImage(sprite, 0, 0, spriteInfo.frameWidth, spriteInfo.frameHeight, 8, 8, 48, 48);
+            }
         }
     }
     
