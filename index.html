@@ -1240,6 +1240,31 @@ class Player {
             this.wTimers[w.id] -= dt;
             if (this.wTimers[w.id] <= 0) { this.fire(w, game, target); this.wTimers[w.id] = this.getCD(w); }
         });
+        
+        // Update orbit positions for hitbox detection
+        // Attack speed affects rotation speed
+        let atkSpdMult = this.atkSpd;
+        this.tempBuffs.filter(b => b.type === 'atkSpd').forEach(b => atkSpdMult *= (1 + b.val));
+        
+        this.weapons.forEach(w => {
+            const data = WEAPONS[w.id];
+            if (data.type === 'orbit') {
+                const n = 2 + Math.floor(w.level / 3);
+                const range = this.getRange(w);
+                const rotationSpeed = 2 * atkSpdMult;
+                
+                if (!this.orbitPositions) this.orbitPositions = {};
+                this.orbitPositions[w.id] = [];
+                
+                for (let i = 0; i < n; i++) {
+                    const a = this.anim * rotationSpeed + (i / n) * Math.PI * 2;
+                    this.orbitPositions[w.id][i] = { 
+                        x: this.x + Math.cos(a) * range, 
+                        y: this.y + Math.sin(a) * range 
+                    };
+                }
+            }
+        });
     }
     
     fire(w, game, target) {
@@ -1266,14 +1291,20 @@ class Player {
                     const baseCount = isMgma ? 3 + Math.floor(w.level / 3) : projCount;
                     const spreadAngle = isMgma ? Math.PI / 5 : Math.PI / 8;
                     
+                    const muzzleOffset = data.offset || 20;
                     for (let i = 0; i < baseCount; i++) {
                         const angleOffset = baseCount > 1 
                             ? (i - (baseCount - 1) / 2) * (spreadAngle / Math.max(baseCount - 1, 1))
                             : 0;
                         const a = baseAngle + angleOffset + (isMgma ? (Math.random() - 0.5) * 0.1 : 0);
                         const speed = isMgma ? 280 + Math.random() * 60 : 360;
+                        
+                        // Calculate spawn position with offset in firing direction
+                        const spawnX = this.x + Math.cos(a) * muzzleOffset;
+                        const spawnY = this.y + Math.sin(a) * muzzleOffset;
+                        
                         game.proj.push({ 
-                            x: this.x, y: this.y, 
+                            x: spawnX, y: spawnY, 
                             vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, 
                             dmg: isMgma ? dmg * 0.6 : dmg, 
                             life: isMgma ? 1.0 : 2.2, 
@@ -1284,15 +1315,15 @@ class Player {
                             iconPos: data.projectileIcon,
                             weaponId: w.id
                         });
+                        
+                        // Muzzle flash effect for EACH projectile
+                        if (data.effectSprite && data.frameW) {
+                            game.spriteEffects.push(new SpriteEffect(spawnX, spawnY, data.effectSprite, data.frameW, data.frameH, data.frames, 0.25, 0.8));
+                        } else if (isFlame) {
+                            game.spriteEffects.push(new SpriteEffect(spawnX, spawnY, 'fx_fire_small', 24, 24, 6, 0.2, 1.0));
+                        }
                     }
                     game.audio.shoot();
-                    // Muzzle flash effect with weapon sprite using offset
-                    const muzzleOffset = data.offset || 20;
-                    if (data.effectSprite && data.frameW) {
-                        game.spriteEffects.push(new SpriteEffect(this.x + this.facing * muzzleOffset, this.y, data.effectSprite, data.frameW, data.frameH, data.frames, 0.3, 1.0));
-                    } else if (isFlame) {
-                        game.spriteEffects.push(new SpriteEffect(this.x, this.y, 'fx_fire_small', 24, 24, 6, 0.2, 1.2));
-                    }
                 }
                 break;
             case 'radial': {
@@ -1574,22 +1605,35 @@ class Player {
         ctx.globalAlpha = 1;
         
         // Weapon visuals with sprite animations
+        // Attack speed affects animation speed
+        const atkSpdMultiplier = this.atkSpd;
+        this.tempBuffs.filter(b => b.type === 'atkSpd').forEach(b => atkSpdMultiplier * (1 + b.val));
+        
         this.weapons.forEach(w => {
             const data = WEAPONS[w.id], range = this.getRange(w);
             const effectSprite = data.effectSprite && assets && assets.get(data.effectSprite);
-            const weaponFps = data.fps || 8; // Use weapon-specific fps
-            const weaponOffset = data.offset || 0; // Distance from player
+            const baseFps = data.fps || 8;
+            const weaponFps = baseFps * atkSpdMultiplier; // Animation speed scales with attack speed
+            const weaponOffset = data.offset || 0;
             
             if (data.type === 'orbit') {
-                const n = 4 + Math.floor(w.level / 5);
+                // Start with 2, +1 every 3 levels
+                const n = 2 + Math.floor(w.level / 3);
                 const frameTime = 1 / weaponFps;
                 const totalFrames = data.frames || 10;
                 const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+                // Rotation speed also scales with attack speed
+                const rotationSpeed = 2 * atkSpdMultiplier;
                 
                 for (let i = 0; i < n; i++) {
-                    const a = this.anim * 2 + (i / n) * Math.PI * 2;
+                    const a = this.anim * rotationSpeed + (i / n) * Math.PI * 2;
                     const ox = sx + Math.cos(a) * range;
                     const oy = sy + Math.sin(a) * range;
+                    
+                    // Store orbit positions for hitbox detection
+                    if (!this.orbitPositions) this.orbitPositions = {};
+                    if (!this.orbitPositions[w.id]) this.orbitPositions[w.id] = [];
+                    this.orbitPositions[w.id][i] = { x: this.x + Math.cos(a) * range, y: this.y + Math.sin(a) * range };
                     
                     if (effectSprite && data.frameW) {
                         ctx.imageSmoothingEnabled = false;
@@ -1601,7 +1645,7 @@ class Player {
                     } else {
                         ctx.fillStyle = '#333';
                         ctx.beginPath();
-                        ctx.arc(ox, oy, 4, 0, Math.PI * 2);
+                        ctx.arc(ox, oy, 8, 0, Math.PI * 2);
                         ctx.fill();
                     }
                 }
@@ -1614,7 +1658,7 @@ class Player {
                         const frame = Math.min(Math.floor(progress * data.frames), data.frames - 1);
                         const frameX = frame * data.frameW;
                         const scale = 1.5;
-                        const offset = weaponOffset > 0 ? weaponOffset : 30; // Use weapon offset or default
+                        const offset = weaponOffset > 0 ? weaponOffset : 30;
                         
                         ctx.save();
                         ctx.imageSmoothingEnabled = false;
@@ -1640,13 +1684,22 @@ class Player {
                 }
             }
             if (data.type === 'aura') {
-                // Aura effect centered on player (offset = 0)
+                // Aura effect centered on player - damage on specific frames
+                const frameTime = 1 / weaponFps;
+                const totalFrames = data.frames || 10;
+                const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+                
+                // Store aura state for damage timing (damage on frame 0 = start of cycle)
+                if (!this.auraState) this.auraState = {};
+                const prevFrame = this.auraState[w.id] || 0;
+                this.auraState[w.id] = currentFrame;
+                // Mark damage frame when animation cycles back to 0
+                this.auraDamageFrame = this.auraDamageFrame || {};
+                this.auraDamageFrame[w.id] = (currentFrame === 0 && prevFrame !== 0);
+                
                 if (effectSprite && data.frameW) {
-                    const frameTime = 1 / weaponFps;
-                    const totalFrames = data.frames || 10;
-                    const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
                     const frameX = currentFrame * data.frameW;
-                    const scale = range / 35; // Scale based on range
+                    const scale = range / 35;
                     
                     ctx.imageSmoothingEnabled = false;
                     ctx.globalAlpha = 0.7;
@@ -2711,12 +2764,28 @@ class Game {
             // Aura/orbit/melee dmg
             for (const w of this.player.weapons) {
                 const data = WEAPONS[w.id], range = this.player.getRange(w);
-                if (data.type === 'orbit' || data.type === 'aura') {
-                    if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < range + e.width / 2) {
-                        const dps = this.player.getDmg(w) * (data.type === 'aura' ? 0.7 : 1.3);
-                        // Crit check on tick basis (lower chance for DOT)
-                        const hit = Math.random() < dt ? this.player.applyCrit(dps * dt) : { dmg: dps * dt, isCrit: false };
-                        if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                if (data.type === 'orbit') {
+                    // Orbit damage: only hits if enemy touches an actual orbiting object
+                    const orbitPositions = this.player.orbitPositions && this.player.orbitPositions[w.id];
+                    if (orbitPositions) {
+                        const orbitHitRadius = 20; // Size of each orbiting object hitbox
+                        for (const pos of orbitPositions) {
+                            if (pos && Math.hypot(e.x - pos.x, e.y - pos.y) < orbitHitRadius + e.width / 2) {
+                                const dmg = this.player.getDmg(w) * 1.3;
+                                const hit = this.player.applyCrit(dmg);
+                                if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                                break; // Only hit once per frame
+                            }
+                        }
+                    }
+                } else if (data.type === 'aura') {
+                    // Aura damage: only when animation cycles (frame 0)
+                    if (this.player.auraDamageFrame && this.player.auraDamageFrame[w.id]) {
+                        if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < range + e.width / 2) {
+                            const dmg = this.player.getDmg(w);
+                            const hit = this.player.applyCrit(dmg);
+                            if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                        }
                     }
                 } else if (data.type === 'melee') {
                     const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
@@ -2743,11 +2812,28 @@ class Game {
             if (Math.hypot(this.boss.x - this.player.x, this.boss.y - this.player.y) < (this.boss.width + this.player.width) / 2) this.player.takeDmg(this.boss.atk, this);
             for (const w of this.player.weapons) {
                 const data = WEAPONS[w.id];
-                if (data.type === 'orbit' || data.type === 'aura') {
-                    if (Math.hypot(this.boss.x - this.player.x, this.boss.y - this.player.y) < this.player.getRange(w) + this.boss.width / 2) {
-                        const dps = this.player.getDmg(w) * dt;
-                        const hit = Math.random() < dt ? this.player.applyCrit(dps) : { dmg: dps, isCrit: false };
-                        this.boss.takeDmg(hit.dmg, this, hit.isCrit);
+                if (data.type === 'orbit') {
+                    // Orbit damage: only hits if boss touches an actual orbiting object
+                    const orbitPositions = this.player.orbitPositions && this.player.orbitPositions[w.id];
+                    if (orbitPositions) {
+                        const orbitHitRadius = 20;
+                        for (const pos of orbitPositions) {
+                            if (pos && Math.hypot(this.boss.x - pos.x, this.boss.y - pos.y) < orbitHitRadius + this.boss.width / 2) {
+                                const dmg = this.player.getDmg(w);
+                                const hit = this.player.applyCrit(dmg);
+                                this.boss.takeDmg(hit.dmg, this, hit.isCrit);
+                                break;
+                            }
+                        }
+                    }
+                } else if (data.type === 'aura') {
+                    // Aura damage: only when animation cycles
+                    if (this.player.auraDamageFrame && this.player.auraDamageFrame[w.id]) {
+                        if (Math.hypot(this.boss.x - this.player.x, this.boss.y - this.player.y) < this.player.getRange(w) + this.boss.width / 2) {
+                            const dmg = this.player.getDmg(w);
+                            const hit = this.player.applyCrit(dmg);
+                            this.boss.takeDmg(hit.dmg, this, hit.isCrit);
+                        }
                     }
                 }
             }
