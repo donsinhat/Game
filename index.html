@@ -82,21 +82,22 @@
         .level-text { color: #66ff66; border: 1px solid rgba(100, 255, 100, 0.3); }
         .timer-text { color: #66ccff; border: 1px solid rgba(100, 200, 255, 0.3); }
         
-        .equipment-slots { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); display: none; gap: 10px; z-index: 50; pointer-events: none; }
-        .slot-group { display: flex; gap: 6px; padding: 8px 12px; background: linear-gradient(180deg, rgba(30, 30, 40, 0.95) 0%, rgba(15, 15, 20, 0.95) 100%); border-radius: 12px; border: 2px solid rgba(255, 215, 0, 0.3); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); }
-        .equipment-slot { width: 44px; height: 44px; background: linear-gradient(135deg, rgba(60, 60, 70, 0.9) 0%, rgba(40, 40, 50, 0.9) 100%); border: 2px solid #555; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; font-size: 1.3rem; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4); transition: all 0.2s; }
-        .equipment-slot:hover { border-color: #ffd700; transform: scale(1.1); }
-        .slot-level { position: absolute; bottom: -4px; right: -4px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; font-size: 0.6rem; padding: 2px 5px; border-radius: 6px; font-weight: bold; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
+        /* Equipment slots - smaller for mobile */
+        .equipment-slots { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); display: none; gap: 6px; z-index: 50; pointer-events: none; max-width: 95vw; }
+        .slot-group { display: flex; gap: 4px; padding: 5px 8px; background: #3d3846; border: 2px solid #5a5060; }
+        .equipment-slot { width: 32px; height: 32px; background: #2a2530; border: 2px solid #5a5060; display: flex; align-items: center; justify-content: center; position: relative; font-size: 1rem; }
+        .equipment-slot:hover { border-color: #ffd700; }
+        .slot-level { position: absolute; bottom: -2px; right: -2px; background: #ffd700; color: #000; font-size: 0.5rem; padding: 1px 3px; font-weight: bold; }
         
         #levelUpModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: none; justify-content: center; align-items: center; z-index: 200; }
         .level-up-content { text-align: center; padding: 25px; background: rgba(20, 20, 30, 0.95); border: 3px solid #ffd700; border-radius: 20px; max-width: 95%; max-height: 85vh; overflow-y: auto; }
         .level-up-title { font-size: 1.6rem; color: #ffd700; margin-bottom: 20px; }
-        .upgrade-options { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-        .upgrade-card { width: 150px; padding: 12px; background: rgba(30, 30, 40, 0.9); border: 3px solid #444; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; text-align: center; }
-        .upgrade-card:hover { transform: scale(1.05); }
-        .upgrade-icon { font-size: 2rem; margin-bottom: 8px; }
-        .upgrade-name { font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
-        .upgrade-type { font-size: 0.7rem; color: #888; margin-bottom: 4px; }
+        .upgrade-options { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: center; align-items: stretch; }
+        .upgrade-card { width: 100px; min-width: 80px; flex: 1; max-width: 120px; padding: 8px; background: #3d3846; border: 3px solid #5a5060; cursor: pointer; transition: all 0.2s ease; text-align: center; }
+        .upgrade-card:hover { transform: scale(1.02); border-color: #ffd700; }
+        .upgrade-icon { font-size: 1.5rem; margin-bottom: 5px; }
+        .upgrade-name { font-size: 0.75rem; font-weight: bold; margin-bottom: 3px; }
+        .upgrade-type { font-size: 0.6rem; color: #888; margin-bottom: 3px; }
         .upgrade-level { font-size: 0.75rem; margin-bottom: 4px; }
         .upgrade-desc { font-size: 0.65rem; color: #aaa; }
         .upgrade-rarity { font-size: 0.65rem; font-weight: bold; margin-top: 6px; padding: 2px 6px; border-radius: 8px; display: inline-block; }
@@ -126,39 +127,39 @@
         #pauseBtn { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,215,0,0.5); border-radius: 50%; color: #ffd700; font-size: 1.3rem; cursor: pointer; z-index: 60; display: none; transition: all 0.2s; }
         #pauseBtn:hover { background: rgba(255,215,0,0.2); border-color: #ffd700; }
         
-        /* Pause Menu - Pixel Style */
-        #pauseMenu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: row; justify-content: center; align-items: center; gap: 20px; z-index: 200; image-rendering: pixelated; }
-        .pause-title { font-size: 1.5rem; color: #ffd700; margin-bottom: 15px; text-shadow: 2px 2px #000; }
+        /* Pause Menu - Pixel Style - Mobile Friendly */
+        #pauseMenu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; gap: 10px; z-index: 200; image-rendering: pixelated; overflow-y: auto; padding: 10px; box-sizing: border-box; }
+        .pause-title { font-size: 1.2rem; color: #ffd700; margin-bottom: 8px; text-shadow: 2px 2px #000; }
         
         /* Stats Panel */
-        .pause-stats-panel { background: #3d3846; border: 4px solid #8b7355; padding: 15px; min-width: 200px; image-rendering: pixelated; }
-        .pause-stats-title { font-size: 1.1rem; color: #ffd700; margin-bottom: 12px; text-align: center; border-bottom: 2px solid #8b7355; padding-bottom: 8px; }
-        .pause-char-preview { width: 64px; height: 64px; margin: 0 auto 10px; background: #2a2530; border: 2px solid #5a5060; display: flex; align-items: center; justify-content: center; }
-        .pause-char-preview canvas { image-rendering: pixelated; }
-        .pause-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 0.85rem; }
-        .pause-stat-icon { width: 16px; height: 16px; margin-right: 6px; }
+        .pause-stats-panel { background: #3d3846; border: 3px solid #8b7355; padding: 10px; width: 90%; max-width: 280px; image-rendering: pixelated; }
+        .pause-stats-title { font-size: 0.9rem; color: #ffd700; margin-bottom: 8px; text-align: center; border-bottom: 2px solid #8b7355; padding-bottom: 5px; }
+        .pause-char-preview { width: 48px; height: 48px; margin: 0 auto 8px; background: #2a2530; border: 2px solid #5a5060; display: flex; align-items: center; justify-content: center; }
+        .pause-char-preview canvas { image-rendering: pixelated; width: 48px; height: 48px; }
+        .pause-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 0.7rem; }
+        .pause-stat-icon { width: 14px; height: 14px; margin-right: 4px; }
         .pause-stat-name { color: #ccc; display: flex; align-items: center; }
         .pause-stat-value { color: #4f4; font-weight: bold; }
         .pause-stat-value.negative { color: #f44; }
         
         /* Controls Panel */
-        .pause-controls { background: #3d3846; border: 4px solid #8b7355; padding: 20px; min-width: 260px; }
-        .volume-control { margin: 12px 0; }
-        .volume-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.85rem; color: #ccc; }
+        .pause-controls { background: #3d3846; border: 3px solid #8b7355; padding: 12px; width: 90%; max-width: 280px; }
+        .volume-control { margin: 8px 0; }
+        .volume-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.7rem; color: #ccc; }
         .volume-label span:last-child { color: #ffd700; font-weight: bold; }
-        .volume-slider { width: 100%; height: 8px; -webkit-appearance: none; background: #2a2530; border: 2px solid #5a5060; outline: none; }
-        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #ffd700; cursor: pointer; border: 2px solid #000; }
-        .volume-slider::-moz-range-thumb { width: 16px; height: 16px; background: #ffd700; cursor: pointer; border: 2px solid #000; }
-        .pause-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .pause-btn { padding: 10px 20px; font-size: 0.95rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: 3px solid #000; cursor: pointer; transition: all 0.1s; image-rendering: pixelated; }
+        .volume-slider { width: 100%; height: 6px; -webkit-appearance: none; background: #2a2530; border: 2px solid #5a5060; outline: none; }
+        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #ffd700; cursor: pointer; border: 1px solid #000; }
+        .volume-slider::-moz-range-thumb { width: 12px; height: 12px; background: #ffd700; cursor: pointer; border: 1px solid #000; }
+        .pause-buttons { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+        .pause-btn { padding: 8px 15px; font-size: 0.8rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: 2px solid #000; cursor: pointer; transition: all 0.1s; }
         .pause-btn-resume { background: #c9a66b; color: #000; border-color: #8b7355; }
-        .pause-btn-resume:hover { background: #dab77c; transform: translateY(-2px); }
+        .pause-btn-resume:hover { background: #dab77c; }
         .pause-btn-quit { background: #8b4444; color: #fff; border-color: #5a2020; }
         .pause-btn-quit:hover { background: #a05555; }
         
         /* Mini Map */
-        #miniMap { position: fixed; bottom: 80px; right: 15px; width: 110px; height: 110px; background: rgba(0, 0, 0, 0.75); border: 2px solid rgba(255, 215, 0, 0.5); border-radius: 12px; display: none; z-index: 55; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); }
-        #miniMapCanvas { width: 100%; height: 100%; border-radius: 10px; }
+        #miniMap { position: fixed; bottom: 55px; right: 8px; width: 80px; height: 80px; background: #2a2530; border: 2px solid #5a5060; display: none; z-index: 55; overflow: hidden; }
+        #miniMapCanvas { width: 100%; height: 100%; }
         
         /* Damage numbers animation */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
@@ -167,8 +168,13 @@
             .character-display { width: 240px; padding: 15px; }
             .char-preview { width: 90px; height: 90px; }
             .city-card { width: 130px; padding: 12px; }
-            .upgrade-card { width: 130px; padding: 10px; }
-            .hud-bar { width: 130px; height: 18px; }
+            .upgrade-card { width: 85px; min-width: 70px; padding: 6px; font-size: 0.75rem; }
+            .upgrade-icon { font-size: 1.2rem; }
+            .hud-bar { width: 110px; height: 16px; }
+            .hud-stat { font-size: 0.7rem; padding: 3px 6px; }
+            .pause-stats-panel, .pause-controls { width: 95%; max-width: 250px; padding: 8px; }
+            .pause-stat-row { font-size: 0.65rem; }
+            .equipment-slot { width: 28px; height: 28px; font-size: 0.85rem; }
         }
     </style>
 </head>
@@ -263,7 +269,7 @@
         <div class="pause-stats-panel">
             <div class="pause-stats-title">📊 إحصائيات</div>
             <div class="pause-char-preview">
-                <canvas id="pauseCharCanvas" width="64" height="64"></canvas>
+                <canvas id="pauseCharCanvas" width="48" height="48"></canvas>
             </div>
             <div id="pauseCharName" style="text-align:center; color:#ffd700; margin-bottom:10px; font-size:0.9rem;">---</div>
             <div class="pause-stat-row">
@@ -1791,8 +1797,8 @@ class MapSystem {
             });
         }
         
-        // Use simplified building tiles
-        const buildingTypes = ['building1', 'building2', 'house', 'building_tall', 'shop'];
+        // Buildings disabled due to cropping issues - empty map with just decorations
+        const buildingTypes = [];
         
         // Generate buildings in a grid pattern with some randomness
         const gridSize = 300;
@@ -2261,20 +2267,22 @@ class Game {
         
         // Draw character preview
         const canvas = document.getElementById('pauseCharCanvas');
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, 64, 64);
-        ctx.imageSmoothingEnabled = false;
-        
-        const spriteInfo = CHAR_SPRITES[p.charId];
-        if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
-            const sprite = this.assets.get(spriteInfo.frames[0]);
-            if (sprite) {
-                ctx.drawImage(sprite, 0, 0, 32, 32, 8, 8, 48, 48);
-            }
-        } else {
-            const sprite = this.assets.get(spriteInfo.idle);
-            if (sprite) {
-                ctx.drawImage(sprite, 0, 0, spriteInfo.frameWidth, spriteInfo.frameHeight, 8, 8, 48, 48);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 48, 48);
+            ctx.imageSmoothingEnabled = false;
+            
+            const spriteInfo = CHAR_SPRITES[p.charId];
+            if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+                const sprite = this.assets.get(spriteInfo.frames[0]);
+                if (sprite) {
+                    ctx.drawImage(sprite, 0, 0, 32, 32, 4, 4, 40, 40);
+                }
+            } else if (spriteInfo.idle) {
+                const sprite = this.assets.get(spriteInfo.idle);
+                if (sprite) {
+                    ctx.drawImage(sprite, 0, 0, spriteInfo.frameWidth, spriteInfo.frameHeight, 4, 4, 40, 40);
+                }
             }
         }
     }
