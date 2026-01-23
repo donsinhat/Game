@@ -289,6 +289,10 @@
                 <span class="pause-stat-value" id="pauseStatLUCK">1.0</span>
             </div>
             <div class="pause-stat-row">
+                <span class="pause-stat-name">💥 ضربة حرجة</span>
+                <span class="pause-stat-value" id="pauseStatCRIT">5%</span>
+            </div>
+            <div class="pause-stat-row">
                 <span class="pause-stat-name">👟 السرعة</span>
                 <span class="pause-stat-value" id="pauseStatSPD">100%</span>
             </div>
@@ -391,14 +395,15 @@ const RARITY = {
 };
 
 function getRandomRarity(luck = 1) {
-    // Luck affects rarity chances - higher luck = better rarities
-    // Luck multiplies the weight of rare items and reduces common weight
+    // Luck has stronger effect on rarity chances
+    // luck^2 for rare items, dramatically reduces common
+    const luckPower = Math.pow(luck, 2);
     const adjustedRarity = {
-        COMMON: { ...RARITY.COMMON, weight: RARITY.COMMON.weight / luck },
-        UNCOMMON: { ...RARITY.UNCOMMON, weight: RARITY.UNCOMMON.weight * Math.sqrt(luck) },
-        RARE: { ...RARITY.RARE, weight: RARITY.RARE.weight * luck },
-        EPIC: { ...RARITY.EPIC, weight: RARITY.EPIC.weight * luck * 1.2 },
-        LEGENDARY: { ...RARITY.LEGENDARY, weight: RARITY.LEGENDARY.weight * luck * 1.5 }
+        COMMON: { ...RARITY.COMMON, weight: RARITY.COMMON.weight / luckPower },
+        UNCOMMON: { ...RARITY.UNCOMMON, weight: RARITY.UNCOMMON.weight * luck },
+        RARE: { ...RARITY.RARE, weight: RARITY.RARE.weight * luckPower },
+        EPIC: { ...RARITY.EPIC, weight: RARITY.EPIC.weight * luckPower * 1.5 },
+        LEGENDARY: { ...RARITY.LEGENDARY, weight: RARITY.LEGENDARY.weight * luckPower * 2 }
     };
     
     const total = Object.values(adjustedRarity).reduce((s, r) => s + r.weight, 0);
@@ -487,9 +492,10 @@ const BOOKS = {
     life: { name: 'كتاب الحياة', desc: 'يزيد الصحة القصوى', stat: 'maxHp', val: 0.08, icon: '📓' },
     armor: { name: 'كتاب الدرع', desc: 'يقلل الضرر المستلم', stat: 'armor', val: 0.04, icon: '📔' },
     magnet: { name: 'كتاب المغناطيس', desc: 'يزيد مدى جمع الأيتمات', stat: 'pickup', val: 0.12, icon: '📒' },
-    luck: { name: 'كتاب الحظ', desc: 'يزيد حظ دروب الأيتمات', stat: 'luck', val: 0.06, icon: '📚' },
+    luck: { name: 'كتاب الحظ', desc: 'يزيد حظ دروب الأيتمات', stat: 'luck', val: 0.08, icon: '📚' },
     curse: { name: 'كتاب اللعنة', desc: 'أعداء أكثر، خبرة أكثر', stat: 'curse', val: 0.15, icon: '📖' },
-    regen: { name: 'كتاب التجديد', desc: 'شفاء مستمر كل ثانية', stat: 'regen', val: 0.8, icon: '📜' }
+    regen: { name: 'كتاب التجديد', desc: 'شفاء مستمر كل ثانية', stat: 'regen', val: 0.8, icon: '📜' },
+    critical: { name: 'كتاب الضربة الحرجة', desc: 'يزيد نسبة الضربة الحرجة', stat: 'crit', val: 0.04, icon: '💥' }
 };
 
 // ==================== ITEMS ====================
@@ -914,9 +920,8 @@ class Particles {
     }
     
     blood(x, y) { 
-        this.emit(x, y, 10, { color: '#8b0000', minS: 35, maxS: 130, gravity: 160 }); 
-        this.stains.push({ x, y, size: 5 + Math.random() * 8, alpha: 0.4 }); 
-        if (this.stains.length > 100) this.stains.shift(); 
+        // Just particles, no permanent stains
+        this.emit(x, y, 6, { color: '#8b0000', minS: 30, maxS: 80, gravity: 120, life: 0.4 }); 
     }
     
     spark(x, y, color = '#ffff00') {
@@ -961,16 +966,7 @@ class Particles {
     }
     
     draw(ctx, cam) {
-        // Draw stains
-        for (const s of this.stains) { 
-            ctx.globalAlpha = s.alpha || 0.3; 
-            ctx.fillStyle = '#4a0000';
-            ctx.beginPath(); 
-            ctx.arc(s.x - cam.x, s.y - cam.y, s.size, 0, Math.PI * 2); 
-            ctx.fill(); 
-        }
-        
-        // Draw particles
+        // Draw particles (no permanent stains)
         for (const p of this.list) { 
             const alpha = p.life / p.maxLife;
             ctx.globalAlpha = alpha;
@@ -1078,7 +1074,7 @@ class Player {
         this.goldMult = c.stats.gold || 1;
         this.dmgReduce = c.stats.dmgReduce || 0;
         this.luck = c.stats.luck || 1;
-        this.crit = c.stats.crit || 0;
+        this.crit = 0.05 + (c.stats.crit || 0); // Base 5% crit + character bonus
         this.enemyBuff = c.stats.enemyBuff || 0;
         this.extraEnemySpawn = 0;
         this.armor = 0; this.regen = 0; this.curse = 0;
@@ -1102,17 +1098,25 @@ class Player {
         });
         d *= this.dmgMult;
         this.tempBuffs.filter(b => b.type === 'dmg').forEach(b => d *= (1 + b.val));
-        if (this.crit > 0 && Math.random() < this.crit) d *= 2;
         return d;
     }
     
+    // Apply crit to damage - returns {dmg, isCrit}
+    applyCrit(baseDmg) {
+        const isCrit = this.crit > 0 && Math.random() < this.crit;
+        return { dmg: isCrit ? baseDmg * 2 : baseDmg, isCrit };
+    }
+    
     getProjectileCount(w) {
-        // Count upgrades add extra projectiles
+        // Count upgrades add extra projectiles based on rarity
+        // COMMON: +1, UNCOMMON: +1, RARE: +2, EPIC: +2, LEGENDARY: +3
         let count = 1;
         w.upgrades.forEach(u => {
-            if (u.type === 'count') count += Math.ceil(u.rarity.bonus * 0.4);
+            if (u.type === 'count') {
+                count += 1 + Math.floor(u.rarity.bonus);
+            }
         });
-        return Math.min(count, 5);
+        return Math.min(count, 8);
     }
     
     getCD(w) { 
@@ -1176,10 +1180,11 @@ class Player {
     
     fire(w, game, target) {
         const data = WEAPONS[w.id], dmg = this.getDmg(w), range = this.getRange(w);
+        const projCount = this.getProjectileCount(w);
         switch(data.type) {
             case 'projectile':
                 if (target && Math.hypot(target.x - this.x, target.y - this.y) < range) {
-                    const a = Math.atan2(target.y - this.y, target.x - this.x);
+                    const baseAngle = Math.atan2(target.y - this.y, target.x - this.x);
                     const isFlame = w.id === 'flame';
                     const isBlueFlame = this.charId === 'layla' && isFlame;
                     const isRock = w.id === 'rock';
@@ -1191,15 +1196,23 @@ class Player {
                     else if (isRock) projType = 'rock';
                     else if (isSpear) projType = 'spear';
                     
-                    game.proj.push({ 
-                        x: this.x, y: this.y, 
-                        vx: Math.cos(a) * 360, vy: Math.sin(a) * 360, 
-                        dmg, life: 2.2, size: isFlame ? 10 : (isSpear ? 8 : 6), 
-                        color: isBlueFlame ? '#00aaff' : (isFlame ? '#ff4500' : '#8b4513'), 
-                        pierce: w.level > 10 ? 2 : 1,
-                        type: projType,
-                        iconPos: data.projectileIcon
-                    });
+                    // Fire multiple projectiles if count > 1
+                    const spreadAngle = Math.PI / 8; // 22.5 degrees spread
+                    for (let i = 0; i < projCount; i++) {
+                        const angleOffset = projCount > 1 
+                            ? (i - (projCount - 1) / 2) * (spreadAngle / Math.max(projCount - 1, 1))
+                            : 0;
+                        const a = baseAngle + angleOffset;
+                        game.proj.push({ 
+                            x: this.x, y: this.y, 
+                            vx: Math.cos(a) * 360, vy: Math.sin(a) * 360, 
+                            dmg, life: 2.2, size: isFlame ? 10 : (isSpear ? 8 : 6), 
+                            color: isBlueFlame ? '#00aaff' : (isFlame ? '#ff4500' : '#8b4513'), 
+                            pierce: w.level > 10 ? 2 : 1,
+                            type: projType,
+                            iconPos: data.projectileIcon
+                        });
+                    }
                     game.audio.shoot();
                     // Muzzle flash effect
                     if (isFlame) {
@@ -1208,7 +1221,8 @@ class Player {
                 }
                 break;
             case 'radial': {
-                const n = 4 + Math.floor(w.level / 4);
+                const baseN = 4 + Math.floor(w.level / 4);
+                const n = baseN + (projCount - 1); // Add count upgrades
                 for (let i = 0; i < n; i++) { 
                     const a = (i / n) * Math.PI * 2; 
                     game.proj.push({ 
@@ -1225,19 +1239,24 @@ class Player {
             case 'lightning': {
                 const ts = game.enemies.filter(e => Math.hypot(e.x - this.x, e.y - this.y) < range);
                 if (ts.length > 0) { 
-                    const t = ts[Math.floor(Math.random() * ts.length)]; 
-                    game.fx.push({ type: 'lightning', x: t.x, y: t.y, life: 0.25 }); 
-                    // Add spark and electric effects
-                    game.spriteEffects.push(new SpriteEffect(t.x, t.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
-                    game.particles.spark(t.x, t.y, '#ffff88');
-                    game.particles.spark(t.x, t.y, '#ffffff');
-                    if (t.takeDmg(dmg, game)) game.killEnemy(t); 
+                    // Hit multiple targets based on projCount
+                    const targetsToHit = Math.min(projCount, ts.length);
+                    const shuffled = ts.sort(() => Math.random() - 0.5).slice(0, targetsToHit);
+                    for (const t of shuffled) {
+                        game.fx.push({ type: 'lightning', x: t.x, y: t.y, life: 0.25 }); 
+                        game.spriteEffects.push(new SpriteEffect(t.x, t.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
+                        game.particles.spark(t.x, t.y, '#ffff88');
+                        game.particles.spark(t.x, t.y, '#ffffff');
+                        const hit = this.applyCrit(dmg);
+                        if (t.takeDmg(hit.dmg, game, hit.isCrit)) game.killEnemy(t); 
+                    }
                     game.audio.tone(650, 0.06, 'sawtooth'); 
                 }
                 break;
             }
             case 'meteor': {
-                const n = 1 + Math.floor(w.level / 4);
+                const baseN = 1 + Math.floor(w.level / 4);
+                const n = baseN + (projCount - 1); // Add count upgrades
                 for (let i = 0; i < n; i++) {
                     const mx = this.x + (Math.random() - 0.5) * range * 2;
                     const my = this.y + (Math.random() - 0.5) * range * 2;
@@ -1464,7 +1483,15 @@ class Enemy {
         this.animTime += dt; // Update animation
     }
     
-    takeDmg(amt, game) { this.hp -= amt; this.hitFlash = 0.06; game.texts.push(new FloatText(this.x + (Math.random() - 0.5) * 12, this.y - 12, Math.round(amt).toString(), '#ff0')); return this.hp <= 0; }
+    takeDmg(amt, game, isCrit = false) { 
+        this.hp -= amt; 
+        this.hitFlash = 0.06; 
+        const color = isCrit ? '#ff4444' : '#ff0';
+        const size = isCrit ? 18 : 14;
+        const text = isCrit ? '💥' + Math.round(amt) : Math.round(amt).toString();
+        game.texts.push(new FloatText(this.x + (Math.random() - 0.5) * 12, this.y - 12, text, color, size)); 
+        return this.hp <= 0; 
+    }
     
     draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y;
@@ -1609,7 +1636,15 @@ class Boss {
         }
         if (this.hitFlash > 0) this.hitFlash -= dt;
     }
-    takeDmg(amt, game) { this.hp -= amt; this.hitFlash = 0.06; game.texts.push(new FloatText(this.x + (Math.random() - 0.5) * 25, this.y - 25, Math.round(amt).toString(), '#ff0', 16)); return this.hp <= 0; }
+    takeDmg(amt, game, isCrit = false) { 
+        this.hp -= amt; 
+        this.hitFlash = 0.06; 
+        const color = isCrit ? '#ff4444' : '#ff0';
+        const size = isCrit ? 22 : 16;
+        const text = isCrit ? '💥' + Math.round(amt) : Math.round(amt).toString();
+        game.texts.push(new FloatText(this.x + (Math.random() - 0.5) * 25, this.y - 25, text, color, size)); 
+        return this.hp <= 0; 
+    }
     draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y;
         
@@ -2177,6 +2212,7 @@ class Game {
         document.getElementById('pauseStatDMG').textContent = `${Math.round(p.dmgMult * 100)}%`;
         document.getElementById('pauseStatDEF').textContent = `${Math.round(p.armor)}`;
         document.getElementById('pauseStatLUCK').textContent = `${p.luck.toFixed(1)}`;
+        document.getElementById('pauseStatCRIT').textContent = `${Math.round(p.crit * 100)}%`;
         document.getElementById('pauseStatSPD').textContent = `${Math.round(p.speed)}`;
         document.getElementById('pauseStatRNG').textContent = `${(p.range * 100).toFixed(0)}%`;
         document.getElementById('pauseStatGold').textContent = p.gold || 0;
@@ -2280,7 +2316,9 @@ class Game {
                 if (data.type === 'orbit' || data.type === 'aura') {
                     if (Math.hypot(e.x - this.player.x, e.y - this.player.y) < range + e.width / 2) {
                         const dps = this.player.getDmg(w) * (data.type === 'aura' ? 0.7 : 1.3);
-                        if (e.takeDmg(dps * dt, this)) this.killEnemy(e);
+                        // Crit check on tick basis (lower chance for DOT)
+                        const hit = Math.random() < dt ? this.player.applyCrit(dps * dt) : { dmg: dps * dt, isCrit: false };
+                        if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
                     }
                 } else if (data.type === 'melee') {
                     const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
@@ -2288,7 +2326,10 @@ class Game {
                     const pAng = this.player.facing > 0 ? 0 : Math.PI;
                     if (dist < range + e.width / 2 && Math.abs(ang - pAng) < Math.PI / 2) {
                         const timer = this.player.wTimers[w.id] || 0, cd = this.player.getCD(w);
-                        if (timer > cd * 0.82 && timer < cd * 0.95) { if (e.takeDmg(this.player.getDmg(w), this)) this.killEnemy(e); }
+                        if (timer > cd * 0.82 && timer < cd * 0.95) { 
+                            const hit = this.player.applyCrit(this.player.getDmg(w));
+                            if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e); 
+                        }
                     }
                 }
             }
@@ -2302,8 +2343,11 @@ class Game {
             for (const w of this.player.weapons) {
                 const data = WEAPONS[w.id];
                 if (data.type === 'orbit' || data.type === 'aura') {
-                    if (Math.hypot(this.boss.x - this.player.x, this.boss.y - this.player.y) < this.player.getRange(w) + this.boss.width / 2)
-                        this.boss.takeDmg(this.player.getDmg(w) * dt, this);
+                    if (Math.hypot(this.boss.x - this.player.x, this.boss.y - this.player.y) < this.player.getRange(w) + this.boss.width / 2) {
+                        const dps = this.player.getDmg(w) * dt;
+                        const hit = Math.random() < dt ? this.player.applyCrit(dps) : { dmg: dps, isCrit: false };
+                        this.boss.takeDmg(hit.dmg, this, hit.isCrit);
+                    }
                 }
             }
             if (this.boss.hp <= 0) this.over(true);
@@ -2316,13 +2360,18 @@ class Game {
             if (p.life <= 0) { this.proj.splice(i, 1); continue; }
             for (const e of this.enemies) {
                 if (Math.hypot(p.x - e.x, p.y - e.y) < p.size + e.width / 2) {
-                    if (e.takeDmg(p.dmg, this)) this.killEnemy(e);
+                    const hit = this.player.applyCrit(p.dmg);
+                    if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
                     p.pierce = (p.pierce || 1) - 1;
                     if (p.pierce <= 0) this.proj.splice(i, 1);
                     break;
                 }
             }
-            if (this.boss && Math.hypot(p.x - this.boss.x, p.y - this.boss.y) < p.size + this.boss.width / 2) { this.boss.takeDmg(p.dmg, this); this.proj.splice(i, 1); }
+            if (this.boss && Math.hypot(p.x - this.boss.x, p.y - this.boss.y) < p.size + this.boss.width / 2) { 
+                const hit = this.player.applyCrit(p.dmg);
+                this.boss.takeDmg(hit.dmg, this, hit.isCrit); 
+                this.proj.splice(i, 1); 
+            }
         }
         
         // Enemy projectiles
@@ -2340,12 +2389,29 @@ class Game {
             else if (f.type === 'meteor') {
                 if (f.delay > 0) { f.delay -= dt; continue; }
                 f.life -= dt;
-                if (f.life <= 0.35 && !f.hit) { f.hit = true; this.particles.emit(f.x, f.y, 10, { color: '#ff4500', minS: 50, maxS: 140 }); for (const e of this.enemies) { if (Math.hypot(f.x - e.x, f.y - e.y) < f.radius) { if (e.takeDmg(f.dmg, this)) this.killEnemy(e); } } }
+                if (f.life <= 0.35 && !f.hit) { 
+                    f.hit = true; 
+                    this.particles.emit(f.x, f.y, 10, { color: '#ff4500', minS: 50, maxS: 140 }); 
+                    for (const e of this.enemies) { 
+                        if (Math.hypot(f.x - e.x, f.y - e.y) < f.radius) { 
+                            const hit = this.player.applyCrit(f.dmg);
+                            if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e); 
+                        } 
+                    } 
+                }
                 if (f.life <= 0) this.fx.splice(i, 1);
             }
             else if (f.type === 'tornado') {
                 f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt;
-                for (const e of this.enemies) { if (Math.hypot(f.x - e.x, f.y - e.y) < f.radius + e.width / 2) { e.takeDmg(f.dmg * dt, this); e.slow = f.slow; e.slowT = 0.35; } }
+                for (const e of this.enemies) { 
+                    if (Math.hypot(f.x - e.x, f.y - e.y) < f.radius + e.width / 2) { 
+                        // Tornado DOT - rare crit
+                        const hit = Math.random() < dt ? this.player.applyCrit(f.dmg * dt) : { dmg: f.dmg * dt, isCrit: false };
+                        e.takeDmg(hit.dmg, this, hit.isCrit); 
+                        e.slow = f.slow; 
+                        e.slowT = 0.35; 
+                    } 
+                }
                 if (f.life <= 0) this.fx.splice(i, 1);
             }
         }
@@ -2448,7 +2514,8 @@ class Game {
             this.pickups.push(new Pickup(enemy.x + (Math.random() - 0.5) * 12, enemy.y + (Math.random() - 0.5) * 12, 'gold', 1 + Math.floor(this.time / 55)));
             this.particles.gold(enemy.x, enemy.y);
         }
-        if (Math.random() < 0.025 * this.player.luck) this.dropItem(enemy.x, enemy.y);
+        // Item drop rate: 5% base * luck multiplier (luck has stronger effect)
+        if (Math.random() < 0.05 * Math.pow(this.player.luck, 1.5)) this.dropItem(enemy.x, enemy.y);
     }
     
     dropItem(x, y) {
@@ -2577,7 +2644,15 @@ class Game {
     }
     
     checkLevelUp() {
-        const req = Math.floor(10 * Math.pow(1.35, this.player.level - 1));
+        // Easier scaling: lower growth rate, especially after level 10
+        const level = this.player.level;
+        let req;
+        if (level <= 10) {
+            req = Math.floor(10 * Math.pow(1.25, level - 1)); // 1.25 instead of 1.35
+        } else {
+            // After level 10, even slower growth
+            req = Math.floor(10 * Math.pow(1.25, 9) * Math.pow(1.15, level - 10));
+        }
         if (this.player.xp >= req) { this.player.xp -= req; this.player.level++; this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.maxHp * 0.12); this.audio.levelUp(); this.showLevelUp(); }
     }
     
@@ -2646,6 +2721,7 @@ class Game {
             case 'luck': this.player.luck += v; break;
             case 'curse': this.player.curse += v; break;
             case 'regen': this.player.regen += v; break;
+            case 'crit': this.player.crit += v; break;
         }
     }
     
@@ -2678,7 +2754,11 @@ class Game {
             healthBar.style.animation = '';
         }
         
-        const req = Math.floor(10 * Math.pow(1.35, this.player.level - 1));
+        // Same formula as checkLevelUp
+        const level = this.player.level;
+        const req = level <= 10 
+            ? Math.floor(10 * Math.pow(1.25, level - 1))
+            : Math.floor(10 * Math.pow(1.25, 9) * Math.pow(1.15, level - 10));
         document.getElementById('xpBar').style.width = `${(this.player.xp / req) * 100}%`;
         document.getElementById('xpText').textContent = `${Math.floor(this.player.xp)}/${req}`;
         document.getElementById('levelText').textContent = `المستوى: ${this.player.level}`;
