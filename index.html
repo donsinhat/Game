@@ -64,17 +64,20 @@
         .btn-primary:hover { transform: scale(1.05); box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5); }
         .high-score { margin-top: 15px; font-size: 0.8rem; color: #666; }
         
-        #hud { position: fixed; top: 0; left: 0; width: 100%; padding: 10px 15px; display: none; justify-content: space-between; align-items: flex-start; z-index: 50; pointer-events: none; }
-        .hud-left, .hud-right { display: flex; flex-direction: column; gap: 6px; }
-        .hud-bar { width: 180px; height: 24px; background: linear-gradient(180deg, rgba(20, 20, 30, 0.95) 0%, rgba(10, 10, 15, 0.95) 100%); border-radius: 12px; overflow: hidden; border: 2px solid rgba(255, 215, 0, 0.4); position: relative; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.5); }
-        .hud-bar-fill { height: 100%; transition: width 0.3s ease; border-radius: 10px; position: relative; }
-        .hud-bar-fill::after { content: ''; position: absolute; top: 2px; left: 4px; right: 4px; height: 8px; background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 100%); border-radius: 4px; }
-        .hud-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.7rem; font-weight: bold; text-shadow: 1px 1px 3px #000, 0 0 10px rgba(0,0,0,0.8); letter-spacing: 1px; }
-        .health-fill { background: linear-gradient(90deg, #ff2222 0%, #ff4444 50%, #ff6666 100%); box-shadow: 0 0 15px rgba(255, 50, 50, 0.5); }
-        .xp-fill { background: linear-gradient(90deg, #22ff22 0%, #44ff44 50%, #66ff66 100%); box-shadow: 0 0 15px rgba(50, 255, 50, 0.5); }
-        .hud-stat { font-size: 0.9rem; font-weight: 700; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: rgba(0, 0, 0, 0.5); border-radius: 8px; }
-        .hud-stat-icon { font-size: 1.1rem; }
-        .gold-text { color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); }
+        /* Pixel-style HUD */
+        #hud { position: fixed; top: 0; left: 0; width: 100%; padding: 8px 12px; display: none; justify-content: space-between; align-items: flex-start; z-index: 50; pointer-events: none; image-rendering: pixelated; }
+        .hud-left, .hud-right { display: flex; flex-direction: column; gap: 5px; }
+        .hud-bar { width: 160px; height: 20px; background: #2a2530; border: 3px solid #5a5060; overflow: hidden; position: relative; }
+        .hud-bar-fill { height: 100%; transition: width 0.2s ease; position: relative; }
+        .hud-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.65rem; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+        .health-fill { background: #e74c3c; }
+        .xp-fill { background: #2ecc71; }
+        .hud-stat { font-size: 0.8rem; font-weight: 700; text-shadow: 1px 1px 0 #000; display: flex; align-items: center; gap: 5px; padding: 4px 8px; background: #3d3846; border: 2px solid #5a5060; }
+        .hud-stat-icon { font-size: 0.9rem; }
+        .gold-text { color: #f1c40f; }
+        .kill-text { color: #e74c3c; }
+        .level-text { color: #3498db; }
+        .timer-text { color: #9b59b6; }
         .kill-text { color: #ff6666; border: 1px solid rgba(255, 100, 100, 0.3); }
         .level-text { color: #66ff66; border: 1px solid rgba(100, 255, 100, 0.3); }
         .timer-text { color: #66ccff; border: 1px solid rgba(100, 200, 255, 0.3); }
@@ -348,30 +351,28 @@ const CONFIG = {
 // Tileset is arranged with various buildings and decorations
 // Each tile definition: { x, y, w, h, collision: true/false }
 const ARABTOWN_TILES = {
-    // Ground is the background color #c9a66b
-    // Pixel-perfect coordinates from 246x135 arabtown-tile.png
-    // Row 1: Long fence (y=0-15)
-    fence_top: { x: 0, y: 0, w: 133, h: 13, collision: true },
-    // Row 2: Large buildings (y=13-66)
-    gate_large: { x: 0, y: 13, w: 63, h: 51, collision: true },
-    dome: { x: 64, y: 14, w: 31, h: 50, collision: true },
-    tower: { x: 96, y: 0, w: 36, h: 64, collision: true },
-    // Small fence (y=64-85)
-    fence_small: { x: 0, y: 64, w: 40, h: 20, collision: true },
-    // Palm and rocks (middle area)
-    palm: { x: 133, y: 41, w: 14, h: 23, collision: true },
-    rock1: { x: 148, y: 56, w: 10, h: 8, collision: false },
-    rock2: { x: 159, y: 55, w: 12, h: 9, collision: false },
-    rock3: { x: 172, y: 56, w: 10, h: 8, collision: false },
-    // Right side buildings
-    house_small: { x: 147, y: 0, w: 30, h: 42, collision: true },
-    building_tall: { x: 205, y: 0, w: 40, h: 71, collision: true },
-    well: { x: 178, y: 42, w: 25, h: 22, collision: true },
-    // Bottom row - shops and gate
-    gate_small: { x: 0, y: 86, w: 40, h: 47, collision: true },
-    shop1: { x: 42, y: 86, w: 50, h: 32, collision: true },
-    shop2: { x: 94, y: 86, w: 50, h: 32, collision: true },
-    person: { x: 133, y: 22, w: 13, h: 19, collision: false }
+    // Simplified tiles from 246x135 arabtown-tile.png
+    // Only using clearly separated elements
+    
+    // Fence for borders
+    fence_top: { x: 0, y: 0, w: 133, h: 12, collision: true },
+    
+    // Main buildings - carefully selected
+    building1: { x: 0, y: 13, w: 62, h: 50, collision: true },     // Large gate building
+    building2: { x: 64, y: 13, w: 30, h: 50, collision: true },    // Dome building  
+    tower: { x: 96, y: 0, w: 35, h: 63, collision: true },         // Tower
+    house: { x: 147, y: 0, w: 32, h: 40, collision: true },        // Small house
+    building_tall: { x: 205, y: 0, w: 40, h: 70, collision: true }, // Tall building
+    
+    // Decorations
+    palm: { x: 133, y: 40, w: 14, h: 24, collision: true },
+    well: { x: 178, y: 42, w: 24, h: 20, collision: true },
+    rock1: { x: 148, y: 55, w: 10, h: 9, collision: false },
+    rock2: { x: 160, y: 55, w: 12, h: 9, collision: false },
+    
+    // Bottom buildings
+    shop: { x: 42, y: 85, w: 50, h: 33, collision: true },
+    fence_small: { x: 0, y: 64, w: 40, h: 18, collision: true }
 };
 
 // ==================== RARITY ====================
@@ -1790,8 +1791,8 @@ class MapSystem {
             });
         }
         
-        // Use only well-defined building tiles
-        const buildingTypes = ['gate_large', 'dome', 'house_small', 'building_tall', 'shop1', 'gate_small'];
+        // Use simplified building tiles
+        const buildingTypes = ['building1', 'building2', 'house', 'building_tall', 'shop'];
         
         // Generate buildings in a grid pattern with some randomness
         const gridSize = 300;
@@ -2253,10 +2254,10 @@ class Game {
         document.getElementById('pauseStatDMG').textContent = `${Math.round(p.dmgMult * 100)}%`;
         document.getElementById('pauseStatDEF').textContent = `${Math.round(p.armor)}`;
         document.getElementById('pauseStatLUCK').textContent = `${p.luck.toFixed(1)}`;
-        document.getElementById('pauseStatSPD').textContent = `${Math.round(p.spdMult * 100)}%`;
-        document.getElementById('pauseStatRNG').textContent = `${Math.round(p.rangeMult * 100)}%`;
-        document.getElementById('pauseStatGold').textContent = this.gold;
-        document.getElementById('pauseStatKills').textContent = this.kills;
+        document.getElementById('pauseStatSPD').textContent = `${Math.round(p.speed)}`;
+        document.getElementById('pauseStatRNG').textContent = `${(p.range * 100).toFixed(0)}%`;
+        document.getElementById('pauseStatGold').textContent = p.gold || 0;
+        document.getElementById('pauseStatKills').textContent = p.kills || 0;
         
         // Draw character preview
         const canvas = document.getElementById('pauseCharCanvas');
