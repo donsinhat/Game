@@ -497,6 +497,14 @@ const CHARACTERS = {
         stats: { gold: 1, luck: 1, hp: 95, speed: 200, atkSpd: 1.2, crit: 0, enemyBuff: 0 },
         passiveText: ['+20% سرعة هجوم'],
         colors: { body: '#9a7b4f', head: '#f5f5dc', skin: '#d4a574', legs: '#5a4a3a' }
+    },
+    samurai: {
+        name: 'ساموراي المع', title: 'النينجا',
+        desc: 'لا غيرك الشيب تراه متعافي',
+        weapon: 'shuriken',
+        stats: { gold: 1, luck: 1, hp: 100, speed: 210, dmgMult: 1.2, crit: 0, enemyBuff: 0 },
+        passiveText: ['+20% ضرر'],
+        colors: { body: '#2a2a4a', head: '#1a1a2a', skin: '#d4a574', legs: '#1a1a2a' }
     }
 };
 
@@ -550,9 +558,15 @@ const WEAPONS = {
         type: 'dot', dmg: 3, cd: 1.5, range: 450, icon: '🧅',
         effectSprite: 'weapon_onion_effect', frameW: 64, frameH: 65, frames: 15, fps: 8,
         projectileSprite: 'weapon_onion_projectile', projFrameW: 64, projFrameH: 65, projFrames: 14, projFps: 8,
-        iconSprite: 'weapon_onion_icon', offset: 0 // effect at target
+        iconSprite: 'weapon_onion_icon', offset: 0
+    },
+    shuriken: {
+        name: 'الشوريكن', desc: 'نجمة نينجا تقفز بين الأعداء',
+        type: 'bounce', dmg: 5, cd: 0.8, range: 350, icon: '✴️',
+        effectSprite: 'weapon_shuriken_effect', frameW: 146, frameH: 137, frames: 3, fps: 8,
+        iconSprite: 'weapon_shuriken_icon', offset: 0,
+        bounces: 2, bounceDmgReduce: 0.3 // Bounces to 2 more enemies, -30% damage each bounce
     }
-    // Old weapons removed: arrows, tornado
 };
 
 // ==================== BOOKS ====================
@@ -828,6 +842,14 @@ class AssetLoader {
             ['mrbassla_idle', 'assets/characters/Mr Bassla/Idle.png'],
             ['mrbassla_walk', 'assets/characters/Mr Bassla/walk.png'],
             
+            // Samurai sprites
+            ['samurai_idle', 'assets/characters/Samurai/IDLE.png'],
+            ['samurai_run', 'assets/characters/Samurai/RUN.png'],
+            
+            // Shuriken weapon
+            ['weapon_shuriken_effect', 'assets/New Weapons/Shuriken/Shuriken animation.png'],
+            ['weapon_shuriken_icon', 'assets/New Weapons/Shuriken/shurikon.png'],
+            
             // New Music & SFX
             ['sfx_item_drop', 'assets/New Music & SFX/Item Drop.mp3'],
             ['sfx_item_taken', 'assets/New Music & SFX/Item Taken.mp3'],
@@ -921,8 +943,20 @@ const CHAR_SPRITES = {
         walkSprites: ['mrbassla_walk'],
         frameWidth: 231,
         frameHeight: 190,
-        idleFrames: 6, // 1386 / 231 = 6
-        walkFrames: 8, // 1848 / 231 = 8
+        idleFrames: 6,
+        walkFrames: 8,
+        idleFps: 8,
+        walkFps: 5,
+        scale: 0.55
+    },
+    samurai: {
+        type: 'walk_idle',
+        idleSprite: 'samurai_idle',
+        walkSprites: ['samurai_run'],
+        frameWidth: 96,
+        frameHeight: 96,
+        idleFrames: 10, // 960 / 96 = 10
+        walkFrames: 16, // 1536 / 96 = 16
         idleFps: 8,
         walkFps: 5,
         scale: 0.55 // Scale increased 50%
@@ -1297,7 +1331,7 @@ class Player {
         const c = CHARACTERS[charId];
         this.maxHp = c.stats.hp || 100; this.hp = this.maxHp;
         this.speed = c.stats.speed || 200;
-        this.dmgMult = 1; this.atkSpd = c.stats.atkSpd || 1;
+        this.dmgMult = c.stats.dmgMult || 1; this.atkSpd = c.stats.atkSpd || 1;
         this.pickupRange = 40 * (c.stats.pickup || 1);
         this.xpMult = c.stats.xpMult || 1;
         this.goldMult = c.stats.gold || 1;
@@ -1570,6 +1604,38 @@ class Player {
                         current = next.length > 0 ? next[Math.floor(Math.random() * next.length)] : null;
                     }
                     game.audio.tone(500, 0.08, 'sine');
+                }
+                break;
+            }
+            case 'bounce': {
+                // Shuriken weapon - projectile that bounces between enemies
+                const ts = game.enemies.filter(e => Math.hypot(e.x - this.x, e.y - this.y) < range);
+                if (ts.length > 0) {
+                    const target = ts.reduce((a, b) => 
+                        Math.hypot(a.x - this.x, a.y - this.y) < Math.hypot(b.x - this.x, b.y - this.y) ? a : b
+                    );
+                    const a = Math.atan2(target.y - this.y, target.x - this.x);
+                    const bounceCount = (data.bounces || 2) + Math.floor(w.level / 3);
+                    const dmgReduce = data.bounceDmgReduce || 0.3;
+                    
+                    for (let i = 0; i < projCount; i++) {
+                        const spread = projCount > 1 ? (i - (projCount - 1) / 2) * 0.2 : 0;
+                        game.proj.push({
+                            x: this.x, y: this.y,
+                            vx: Math.cos(a + spread) * 350, vy: Math.sin(a + spread) * 350,
+                            dmg, life: 3, size: 12,
+                            color: '#aaf', type: 'bounce',
+                            bounces: bounceCount,
+                            dmgReduce: dmgReduce,
+                            hitEnemies: new Set(),
+                            weaponId: w.id,
+                            effectSprite: data.effectSprite,
+                            frameW: data.frameW, frameH: data.frameH,
+                            frames: data.frames, fps: data.fps || 8,
+                            frameTime: 0, currentFrame: 0
+                        });
+                    }
+                    game.audio.tone(600, 0.06, 'triangle');
                 }
                 break;
             }
@@ -3392,9 +3458,60 @@ class Game {
         for (let i = this.proj.length - 1; i >= 0; i--) {
             const p = this.proj[i];
             p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+            
+            // Update animation frame for bounce projectiles
+            if (p.type === 'bounce' && p.frames) {
+                p.frameTime = (p.frameTime || 0) + dt;
+                if (p.frameTime > 1 / (p.fps || 8)) {
+                    p.frameTime = 0;
+                    p.currentFrame = ((p.currentFrame || 0) + 1) % p.frames;
+                }
+            }
+            
             if (p.life <= 0) { this.proj.splice(i, 1); continue; }
             for (const e of this.enemies) {
                 if (Math.hypot(p.x - e.x, p.y - e.y) < p.size + e.width / 2) {
+                    // Handle bounce projectiles (shuriken)
+                    if (p.type === 'bounce' && p.hitEnemies) {
+                        if (p.hitEnemies.has(e)) continue; // Already hit this enemy
+                        p.hitEnemies.add(e);
+                        
+                        const hit = this.player.applyCrit(p.dmg);
+                        if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                        
+                        // Show effect
+                        if (p.effectSprite) {
+                            this.spriteEffects.push(new SpriteEffect(e.x, e.y, p.effectSprite, p.frameW, p.frameH, p.frames, 0.3, 0.8));
+                        }
+                        this.particles.emit(e.x, e.y, 5, { color: '#aaf', minS: 30, maxS: 60 });
+                        
+                        // Bounce to next enemy
+                        if (p.bounces > 0) {
+                            p.bounces--;
+                            p.dmg *= (1 - p.dmgReduce); // Reduce damage
+                            
+                            // Find next nearest enemy not yet hit
+                            const nextTargets = this.enemies.filter(en => 
+                                !p.hitEnemies.has(en) && en.hp > 0 && Math.hypot(en.x - e.x, en.y - e.y) < 200
+                            );
+                            if (nextTargets.length > 0) {
+                                const next = nextTargets.reduce((a, b) => 
+                                    Math.hypot(a.x - e.x, a.y - e.y) < Math.hypot(b.x - e.x, b.y - e.y) ? a : b
+                                );
+                                const a = Math.atan2(next.y - p.y, next.x - p.x);
+                                p.vx = Math.cos(a) * 350;
+                                p.vy = Math.sin(a) * 350;
+                                p.life = 2; // Reset life for next bounce
+                            } else {
+                                this.proj.splice(i, 1);
+                            }
+                        } else {
+                            this.proj.splice(i, 1);
+                        }
+                        break;
+                    }
+                    
+                    // Normal projectile handling
                     const hit = this.player.applyCrit(p.dmg);
                     if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
                     // Apply DOT if projectile has it
@@ -4394,6 +4511,36 @@ class Game {
                     ctx.beginPath();
                     ctx.arc(px, py, p.size, 0, Math.PI * 2);
                     ctx.fill();
+                }
+            } else if (p.type === 'bounce') {
+                // Shuriken projectile with spinning animation
+                const effectSprite = p.effectSprite && this.assets.get(p.effectSprite);
+                if (effectSprite && p.frameW) {
+                    ctx.save();
+                    ctx.translate(px, py);
+                    // Spinning rotation based on time
+                    ctx.rotate(this.time * 12);
+                    ctx.imageSmoothingEnabled = false;
+                    const frame = p.currentFrame || 0;
+                    const scale = 0.5; // Smaller projectile
+                    ctx.drawImage(effectSprite, frame * p.frameW, 0, p.frameW, p.frameH,
+                        -p.frameW * scale / 2, -p.frameH * scale / 2, p.frameW * scale, p.frameH * scale);
+                    ctx.restore();
+                } else {
+                    // Fallback: draw star shape
+                    ctx.save();
+                    ctx.translate(px, py);
+                    ctx.rotate(this.time * 12);
+                    ctx.fillStyle = '#aaf';
+                    ctx.beginPath();
+                    for (let j = 0; j < 4; j++) {
+                        const a = j * Math.PI / 2;
+                        ctx.lineTo(Math.cos(a) * p.size, Math.sin(a) * p.size);
+                        ctx.lineTo(Math.cos(a + Math.PI / 4) * p.size * 0.4, Math.sin(a + Math.PI / 4) * p.size * 0.4);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
                 }
             } else {
                 ctx.fillStyle = p.color; 
