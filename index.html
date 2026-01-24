@@ -2746,86 +2746,55 @@ class Game {
         document.getElementById('closeLeaderboardBtn').onclick = () => { document.getElementById('leaderboardModal').style.display = 'none'; };
         document.getElementById('submitScoreBtn').onclick = () => this.submitScore();
         document.getElementById('shareScoreBtn').onclick = () => this.shareScore();
-        
-        // Check for shared scores in URL
-        this.checkSharedScore();
     }
     
     shareScore() {
-        // Get top local score to share with URL
-        const leaderboard = this.getLeaderboard();
-        if (leaderboard.length === 0) {
-            alert('لا توجد نتائج للمشاركة!');
-            return;
-        }
-        
-        const top = leaderboard[0];
-        const encoded = btoa(JSON.stringify(top));
-        const shareUrl = `${window.location.origin}${window.location.pathname}?score=${encoded}`;
-        const mode = top.mode === 'endless' ? 'لا نهاية' : 'البدائع';
-        const text = `🏆 حققت ${top.kills} قتيل في Gold Blood!\n\n📊 المستوى: ${top.level || '?'}\n🎮 الوضع: ${mode}\n👤 ${top.character || '?'}\n\n🔗 أضف نتيجتي لقائمتك:\n${shareUrl}`;
-        
+        // Share game link
+        const text = `🏆 جرب لعبة Gold Blood!\n\nhttps://donsinhat.github.io/Game/`;
         if (navigator.share) {
-            navigator.share({ title: 'Gold Blood - نتيجتي', text, url: shareUrl }).catch(() => {});
+            navigator.share({ title: 'Gold Blood', text, url: 'https://donsinhat.github.io/Game/' }).catch(() => {});
         } else if (navigator.clipboard) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('تم نسخ الرابط! شاركه مع أصدقائك - عند فتحه ستضاف نتيجتك لقائمتهم 🎮');
-            }).catch(() => {
-                prompt('انسخ الرابط:', shareUrl);
+            navigator.clipboard.writeText(text).then(() => alert('تم نسخ الرابط!'));
+        }
+    }
+    
+    // Supabase Online Leaderboard - Automatic & Global!
+    SUPABASE_URL = 'https://kiffjsdbobwiubgdesmr.supabase.co';
+    SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZmZqc2Rib2J3aXViZ2Rlc21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkyNTc2MzMsImV4cCI6MjA4NDgzMzYzM30.KW1LvUorzfy1CMq2N7K4nWo8tlc3eA6-5g4SQYHqrmY';
+    
+    async fetchLeaderboard() {
+        try {
+            const response = await fetch(
+                `${this.SUPABASE_URL}/rest/v1/leaderboard?select=*&order=kills.desc&limit=100`,
+                { headers: { 'apikey': this.SUPABASE_KEY, 'Authorization': `Bearer ${this.SUPABASE_KEY}` } }
+            );
+            if (response.ok) return await response.json();
+        } catch (e) { console.log('Leaderboard fetch error:', e); }
+        return [];
+    }
+    
+    async submitScoreOnline(entry) {
+        try {
+            const response = await fetch(`${this.SUPABASE_URL}/rest/v1/leaderboard`, {
+                method: 'POST',
+                headers: {
+                    'apikey': this.SUPABASE_KEY,
+                    'Authorization': `Bearer ${this.SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(entry)
             });
-        } else {
-            prompt('انسخ الرابط:', shareUrl);
-        }
+            return response.ok;
+        } catch (e) { console.log('Submit error:', e); return false; }
     }
     
-    // Leaderboard Methods - Local storage with URL sharing
-    getLeaderboard() {
-        const data = localStorage.getItem('goldblood_leaderboard');
-        return data ? JSON.parse(data) : [];
-    }
-    
-    saveLeaderboard(leaderboard) {
-        // Sort by kills and keep top 100
-        leaderboard.sort((a, b) => b.kills - a.kills);
-        if (leaderboard.length > 100) leaderboard.length = 100;
-        localStorage.setItem('goldblood_leaderboard', JSON.stringify(leaderboard));
-    }
-    
-    // Check URL for shared scores on page load
-    checkSharedScore() {
-        const params = new URLSearchParams(window.location.search);
-        const scoreData = params.get('score');
-        if (scoreData) {
-            try {
-                const entry = JSON.parse(atob(scoreData));
-                if (entry && entry.name && typeof entry.kills === 'number') {
-                    const leaderboard = this.getLeaderboard();
-                    // Check if score already exists
-                    const exists = leaderboard.some(e => 
-                        e.name === entry.name && e.kills === entry.kills && e.date === entry.date
-                    );
-                    if (!exists) {
-                        leaderboard.push(entry);
-                        this.saveLeaderboard(leaderboard);
-                        // Show notification
-                        setTimeout(() => {
-                            alert(`تمت إضافة نتيجة ${entry.name} (${entry.kills} قتيل) للقائمة!`);
-                        }, 500);
-                    }
-                    // Clear URL parameter
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
-            } catch (e) {
-                console.log('Invalid shared score');
-            }
-        }
-    }
-    
-    showLeaderboard() {
+    async showLeaderboard() {
         const listEl = document.getElementById('leaderboardList');
+        listEl.innerHTML = '<p style="text-align:center;color:#ffd700">⏳ جاري التحميل...</p>';
         document.getElementById('leaderboardModal').style.display = 'flex';
         
-        const leaderboard = this.getLeaderboard();
+        const leaderboard = await this.fetchLeaderboard();
         
         if (leaderboard.length === 0) {
             listEl.innerHTML = '<p style="text-align:center;color:#888">لا يوجد أبطال بعد! كن أول بطل! 🏆</p>';
@@ -2844,63 +2813,41 @@ class Game {
         }
     }
     
-    submitScore() {
+    async submitScore() {
         const nameInput = document.getElementById('playerNameInput');
         const name = nameInput.value.trim() || 'مجهول';
-        const kills = this.player.kills;
-        const mode = this.endlessMode ? 'endless' : 'normal';
-        const time = Math.floor(this.time);
-        const level = this.player.level;
-        const character = CHARACTERS[this.player.charId].name;
-        
-        // Save player name for next time
         localStorage.setItem('goldblood_playerName', name);
         
-        const entry = { name, kills, mode, time, level, character, date: Date.now() };
-        
-        // Save to local leaderboard
-        const leaderboard = this.getLeaderboard();
-        leaderboard.push(entry);
-        this.saveLeaderboard(leaderboard);
-        
-        // Store for sharing
-        this.lastScore = entry;
-        
-        // Find rank
-        const sortedBoard = this.getLeaderboard();
-        const rank = sortedBoard.findIndex(e => e.date === entry.date) + 1;
-        
-        // Show success with share options
         const nameSection = document.getElementById('nameInputSection');
-        nameSection.innerHTML = `
-            <div style="background:#1a3320;padding:15px;border-radius:10px;border:2px solid #4f4;text-align:center">
-                <p style="color:#4f4;font-size:1.2rem;margin-bottom:5px">✅ تم حفظ نتيجتك!</p>
-                <p style="color:#ffd700;font-size:1rem;margin-bottom:15px">🏆 ترتيبك: #${rank}</p>
-                <button id="shareScoreNow" class="btn" style="background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:12px 25px;width:100%;font-size:1rem;font-weight:bold;border-radius:8px;border:none;cursor:pointer;margin-bottom:10px">
-                    📤 شارك نتيجتك مع الأصدقاء
-                </button>
-                <p style="color:#888;font-size:0.75rem">عند المشاركة، أصدقائك يقدرون يضيفون نتيجتك لقائمتهم!</p>
-            </div>
-        `;
+        nameSection.innerHTML = '<p style="color:#ffd700;text-align:center;font-size:1.1rem">⏳ جاري رفع النتيجة...</p>';
         
-        document.getElementById('shareScoreNow').onclick = () => this.shareLastScore();
-    }
-    
-    shareLastScore() {
-        if (!this.lastScore) return;
+        const entry = {
+            name,
+            kills: this.player.kills,
+            mode: this.endlessMode ? 'endless' : 'normal',
+            level: this.player.level,
+            character: CHARACTERS[this.player.charId].name
+        };
         
-        const encoded = btoa(JSON.stringify(this.lastScore));
-        const shareUrl = `${window.location.origin}${window.location.pathname}?score=${encoded}`;
-        const text = `🏆 حققت ${this.lastScore.kills} قتيل في Gold Blood!\n\nجرب اللعبة وانافسني:\n${shareUrl}`;
+        const success = await this.submitScoreOnline(entry);
         
-        if (navigator.share) {
-            navigator.share({ title: 'Gold Blood - نتيجتي', text, url: shareUrl });
-        } else if (navigator.clipboard) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('تم نسخ الرابط! شاركه مع أصدقائك');
-            });
+        if (success) {
+            const leaderboard = await this.fetchLeaderboard();
+            const rank = leaderboard.findIndex(e => e.name === name && e.kills === entry.kills) + 1;
+            
+            nameSection.innerHTML = `
+                <div style="background:#1a3320;padding:20px;border-radius:10px;border:2px solid #4f4;text-align:center">
+                    <p style="color:#4f4;font-size:1.3rem;margin-bottom:8px">✅ تم رفع نتيجتك!</p>
+                    <p style="color:#ffd700;font-size:1.1rem">🏆 ترتيبك العالمي: #${rank || '?'}</p>
+                </div>
+            `;
         } else {
-            prompt('انسخ الرابط:', shareUrl);
+            nameSection.innerHTML = `
+                <div style="background:#331a1a;padding:20px;border-radius:10px;border:2px solid #f44;text-align:center">
+                    <p style="color:#f44;font-size:1.1rem">❌ فشل الرفع</p>
+                    <p style="color:#888;font-size:0.9rem">تحقق من اتصالك بالإنترنت</p>
+                </div>
+            `;
         }
     }
     
