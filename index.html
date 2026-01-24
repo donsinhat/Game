@@ -3601,7 +3601,7 @@ class Game {
                     iconHtml = `<img src="${iconImg.src}" style="width:36px;height:36px;object-fit:contain;image-rendering:pixelated;">`;
                 }
             }
-            card.innerHTML = `<div class="upgrade-icon">${iconHtml}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? 'جديد!' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
+            card.innerHTML = `<div class="upgrade-icon">${iconHtml}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? '<span style="font-size:1rem;font-weight:bold;color:#00ff88;text-shadow:0 0 10px #00ff88,0 0 20px #00ff8850;animation:pulse 0.8s infinite">✨ جديد! ✨</span>' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
             card.onclick = () => { this.selectUpgrade(c, rar, c.upgradeType); modal.style.display = 'none'; this.state = 'playing'; };
             opts.appendChild(card);
         });
