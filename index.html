@@ -2853,29 +2853,37 @@ class Game {
         const level = this.player.level;
         const character = CHARACTERS[this.player.charId].name;
         
+        // Save player name for next time
+        localStorage.setItem('goldblood_playerName', name);
+        
         const entry = { name, kills, mode, time, level, character, date: Date.now() };
         
-        // Save locally
+        // Save to local leaderboard
         const leaderboard = this.getLeaderboard();
         leaderboard.push(entry);
         this.saveLeaderboard(leaderboard);
         
-        // Store last score for sharing
+        // Store for sharing
         this.lastScore = entry;
         
-        // Show success
-        document.getElementById('nameInputSection').innerHTML = `
-            <p style="color:#4f4;text-align:center;margin-bottom:10px">✅ تم حفظ نتيجتك!</p>
-            <button id="shareScoreNow" class="btn" style="background:#28a745;color:#fff;padding:10px 20px;width:100%">📤 شارك نتيجتك مع الأصدقاء</button>
+        // Find rank
+        const sortedBoard = this.getLeaderboard();
+        const rank = sortedBoard.findIndex(e => e.date === entry.date) + 1;
+        
+        // Show success with share options
+        const nameSection = document.getElementById('nameInputSection');
+        nameSection.innerHTML = `
+            <div style="background:#1a3320;padding:15px;border-radius:10px;border:2px solid #4f4;text-align:center">
+                <p style="color:#4f4;font-size:1.2rem;margin-bottom:5px">✅ تم حفظ نتيجتك!</p>
+                <p style="color:#ffd700;font-size:1rem;margin-bottom:15px">🏆 ترتيبك: #${rank}</p>
+                <button id="shareScoreNow" class="btn" style="background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:12px 25px;width:100%;font-size:1rem;font-weight:bold;border-radius:8px;border:none;cursor:pointer;margin-bottom:10px">
+                    📤 شارك نتيجتك مع الأصدقاء
+                </button>
+                <p style="color:#888;font-size:0.75rem">عند المشاركة، أصدقائك يقدرون يضيفون نتيجتك لقائمتهم!</p>
+            </div>
         `;
         
         document.getElementById('shareScoreNow').onclick = () => this.shareLastScore();
-        
-        // Show leaderboard after delay
-        setTimeout(() => {
-            document.getElementById('nameInputSection').style.display = 'none';
-            this.showLeaderboard();
-        }, 3000);
     }
     
     shareLastScore() {
@@ -3876,23 +3884,63 @@ class Game {
     
     over(victory) {
         this.state = 'gameover';
-        this.audio.stopBGM(); // Stop background music
-        this.audio.stopBossMusic(); // Stop boss music too
+        this.audio.stopBGM();
+        this.audio.stopBossMusic();
         document.getElementById('hud').style.display = 'none';
         document.getElementById('equipmentSlots').style.display = 'none';
         document.getElementById('miniMap').style.display = 'none';
         document.getElementById('pauseBtn').style.display = 'none';
-        const title = document.getElementById('gameOverTitle'), unlock = document.getElementById('unlockMessage');
-        if (victory) { this.audio.victory(); title.textContent = '🎉 انتصار! 🎉'; title.className = 'game-over-title victory-title'; if (!this.baghdadUnlocked) { this.baghdadUnlocked = true; localStorage.setItem('baghdadUnlocked', 'true'); unlock.textContent = '🔓 تم فتح خريطة بغداد!'; unlock.style.display = 'block'; } else unlock.style.display = 'none'; }
-        else { this.audio.death(); title.textContent = 'انتهت اللعبة'; title.className = 'game-over-title'; unlock.style.display = 'none'; }
-        if (this.player.kills > this.highScore) { this.highScore = this.player.kills; localStorage.setItem('goldBloodHighScore', this.highScore.toString()); document.getElementById('highScore').textContent = this.highScore; }
-        const m = Math.floor(this.time / 60), s = Math.floor(this.time % 60);
-        document.getElementById('finalStats').innerHTML = `<p>⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}</p><p>⭐ المستوى: ${this.player.level}</p><p>💀 القتلى: ${this.player.kills}</p><p>💰 الذهب: ${this.player.gold}</p>`;
         
-        // Show name input for leaderboard
-        document.getElementById('nameInputSection').style.display = 'block';
-        document.getElementById('submitScoreBtn').style.display = 'inline-block';
-        document.getElementById('playerNameInput').value = '';
+        const title = document.getElementById('gameOverTitle'), unlock = document.getElementById('unlockMessage');
+        if (victory) { 
+            this.audio.victory(); 
+            title.textContent = '🎉 انتصار! 🎉'; 
+            title.className = 'game-over-title victory-title'; 
+            if (!this.baghdadUnlocked) { 
+                this.baghdadUnlocked = true; 
+                localStorage.setItem('baghdadUnlocked', 'true'); 
+                unlock.textContent = '🔓 تم فتح خريطة بغداد!'; 
+                unlock.style.display = 'block'; 
+            } else unlock.style.display = 'none'; 
+        } else { 
+            this.audio.death(); 
+            title.textContent = 'انتهت اللعبة'; 
+            title.className = 'game-over-title'; 
+            unlock.style.display = 'none'; 
+        }
+        
+        if (this.player.kills > this.highScore) { 
+            this.highScore = this.player.kills; 
+            localStorage.setItem('goldBloodHighScore', this.highScore.toString()); 
+            document.getElementById('highScore').textContent = this.highScore; 
+        }
+        
+        const m = Math.floor(this.time / 60), s = Math.floor(this.time % 60);
+        document.getElementById('finalStats').innerHTML = `
+            <p>⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}</p>
+            <p>⭐ المستوى: ${this.player.level}</p>
+            <p>💀 القتلى: ${this.player.kills}</p>
+            <p>💰 الذهب: ${this.player.gold}</p>
+        `;
+        
+        // Auto-save with last used name, show quick name change option
+        const savedName = localStorage.getItem('goldblood_playerName') || '';
+        const nameSection = document.getElementById('nameInputSection');
+        
+        nameSection.innerHTML = `
+            <div style="background:#1a1a2e;padding:15px;border-radius:10px;border:2px solid #ffd700">
+                <p style="color:#ffd700;margin-bottom:10px;font-size:0.9rem">📝 اسمك في قائمة الأبطال:</p>
+                <input type="text" id="playerNameInput" value="${savedName}" placeholder="اكتب اسمك..." maxlength="15" 
+                    style="padding:10px 15px;font-size:1rem;border-radius:8px;border:2px solid #ffd700;background:#0a0a1e;color:#fff;text-align:center;font-family:'PixelAE',sans-serif;width:100%;margin-bottom:10px">
+                <button id="submitScoreBtn" class="btn" style="background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;padding:12px 25px;width:100%;font-size:1rem;font-weight:bold;border-radius:8px;border:none;cursor:pointer">
+                    ✅ احفظ وشارك نتيجتك
+                </button>
+            </div>
+        `;
+        nameSection.style.display = 'block';
+        
+        // Re-bind submit button
+        document.getElementById('submitScoreBtn').onclick = () => this.submitScore();
         
         document.getElementById('gameOverScreen').style.display = 'flex';
     }
