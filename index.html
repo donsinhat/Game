@@ -2774,51 +2774,53 @@ class Game {
         }
     }
     
-    // Online Leaderboard - reads from GitHub, writes locally + merges
-    LEADERBOARD_ONLINE_URL = 'https://raw.githubusercontent.com/donsinhat/Game/main/leaderboard.json';
+    // JSONBlob Online Leaderboard - Free cloud storage
+    LEADERBOARD_BLOB_ID = '019bf022-056e-734d-bfbe-28a32969a85b';
+    LEADERBOARD_URL = 'https://jsonblob.com/api/jsonBlob/019bf022-056e-734d-bfbe-28a32969a85b';
     
     async fetchOnlineLeaderboard() {
         try {
-            const response = await fetch(this.LEADERBOARD_ONLINE_URL + '?t=' + Date.now());
+            const response = await fetch(this.LEADERBOARD_URL, {
+                headers: { 'Accept': 'application/json' }
+            });
             if (response.ok) {
-                return await response.json();
+                const data = await response.json();
+                if (data && data.leaderboard) {
+                    return data.leaderboard.sort((a, b) => b.kills - a.kills);
+                }
             }
         } catch (e) {
-            console.log('Could not fetch online leaderboard');
+            console.log('Could not fetch online leaderboard:', e);
         }
         return [];
     }
     
-    getLocalLeaderboard() {
-        const data = localStorage.getItem('gameLeaderboard');
-        return data ? JSON.parse(data) : [];
-    }
-    
-    saveLocalLeaderboard(leaderboard) {
-        localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
-    }
-    
-    async getMergedLeaderboard() {
-        // Merge online and local leaderboards
-        const online = await this.fetchOnlineLeaderboard();
-        const local = this.getLocalLeaderboard();
-        
-        // Combine and dedupe by name+kills+date
-        const all = [...online, ...local];
-        const unique = [];
-        const seen = new Set();
-        
-        for (const entry of all) {
-            const key = `${entry.name}-${entry.kills}-${entry.date || 0}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                unique.push(entry);
-            }
+    async submitScoreOnline(entry) {
+        try {
+            // First, fetch current leaderboard
+            const currentData = await this.fetchOnlineLeaderboard();
+            
+            // Add new entry
+            currentData.push(entry);
+            
+            // Sort by kills and keep top 100
+            currentData.sort((a, b) => b.kills - a.kills);
+            if (currentData.length > 100) currentData.length = 100;
+            
+            // Update the blob
+            const response = await fetch(this.LEADERBOARD_URL, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ leaderboard: currentData })
+            });
+            return response.ok;
+        } catch (e) {
+            console.log('Could not submit score online:', e);
+            return false;
         }
-        
-        // Sort by kills descending
-        unique.sort((a, b) => b.kills - a.kills);
-        return unique.slice(0, 100);
     }
     
     async showLeaderboard() {
@@ -2826,7 +2828,7 @@ class Game {
         listEl.innerHTML = '<p style="text-align:center;color:#888">⏳ جاري التحميل...</p>';
         document.getElementById('leaderboardModal').style.display = 'flex';
         
-        const leaderboard = await this.getMergedLeaderboard();
+        const leaderboard = await this.fetchOnlineLeaderboard();
         
         if (leaderboard.length === 0) {
             listEl.innerHTML = '<p style="text-align:center;color:#888">لا يوجد أبطال بعد! كن أول بطل! 🏆</p>';
@@ -2854,18 +2856,25 @@ class Game {
         const level = this.player.level;
         const character = CHARACTERS[this.player.charId].name;
         
-        // Save to local storage
-        const local = this.getLocalLeaderboard();
-        local.push({ name, kills, mode, time, level, character, date: Date.now() });
-        local.sort((a, b) => b.kills - a.kills);
-        if (local.length > 50) local.length = 50;
-        this.saveLocalLeaderboard(local);
+        document.getElementById('submitScoreBtn').textContent = '⏳ جاري الرفع...';
+        document.getElementById('submitScoreBtn').disabled = true;
         
-        document.getElementById('nameInputSection').style.display = 'none';
-        document.getElementById('submitScoreBtn').style.display = 'none';
+        const entry = { name, kills, mode, time, level, character, date: Date.now() };
         
-        // Show leaderboard
-        await this.showLeaderboard();
+        // Submit to Firebase
+        const success = await this.submitScoreOnline(entry);
+        
+        if (success) {
+            document.getElementById('nameInputSection').innerHTML = '<p style="color:#4f4;text-align:center">✅ تم رفع نتيجتك!</p>';
+        } else {
+            document.getElementById('nameInputSection').innerHTML = '<p style="color:#f44;text-align:center">❌ فشل الرفع، حاول مرة أخرى</p>';
+        }
+        
+        // Show leaderboard after short delay
+        setTimeout(() => {
+            document.getElementById('nameInputSection').style.display = 'none';
+            this.showLeaderboard();
+        }, 1500);
     }
     
     updateCharDisplay() {
