@@ -948,7 +948,7 @@ const CHAR_SPRITES = {
         idleFps: 8,
         walkFps: 5,
         scale: 0.45,
-        previewScale: 0.4 // Larger preview in menu
+        previewScale: 0.8 // 200% bigger preview in menu
     },
     samurai: {
         type: 'walk_idle',
@@ -960,8 +960,8 @@ const CHAR_SPRITES = {
         walkFrames: 16,
         idleFps: 8,
         walkFps: 12,
-        scale: 1.0, // Bigger character
-        previewScale: 0.9 // Larger preview in menu
+        scale: 1.6, // 160% bigger character in game
+        previewScale: 1.8 // 200% bigger preview in menu
     }
 };
 
@@ -3481,11 +3481,9 @@ class Game {
                         const hit = this.player.applyCrit(p.dmg);
                         if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
                         
-                        // Show effect
-                        if (p.effectSprite) {
-                            this.spriteEffects.push(new SpriteEffect(e.x, e.y, p.effectSprite, p.frameW, p.frameH, p.frames, 0.3, 0.8));
-                        }
-                        this.particles.emit(e.x, e.y, 5, { color: '#aaf', minS: 30, maxS: 60 });
+                        // Show small hit particles only (no large sprite effect)
+                        this.particles.emit(e.x, e.y, 8, { color: '#aaf', minS: 20, maxS: 50 });
+                        this.particles.spark(e.x, e.y, '#88f');
                         
                         // Bounce to next enemy
                         if (p.bounces > 0) {
