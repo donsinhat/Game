@@ -510,10 +510,10 @@ const WEAPONS = {
         iconSprite: 'weapon_agal_icon', offset: 0 // centered on player
     },
     vape: { 
-        name: 'الفيب', desc: 'هجوم قريب بالدخان', 
-        type: 'melee', dmg: 6, cd: 0.55, range: 80, icon: '💨',
-        effectSprite: 'weapon_vape_effect', frameW: 64, frameH: 59, frames: 12, fps: 8,
-        iconSprite: 'weapon_vape_icon', offset: 30 // small offset in front
+        name: 'الفيب', desc: 'دخان سام يسبب ضرر مستمر أمامك', 
+        type: 'cone_aoe', dmg: 10, cd: 0.1, range: 70, icon: '💨',
+        effectSprite: 'weapon_vape_effect', frameW: 63, frameH: 64, frames: 15, fps: 8,
+        iconSprite: 'weapon_vape_icon', offset: 40, dotDmg: 10 // 10 damage per second, cone in front
     },
     aura: { 
         name: 'الهيبة', desc: 'هالة ضرر حولك كل 0.5 ثانية', 
@@ -801,7 +801,7 @@ class AssetLoader {
             ['weapon_agal_effect', 'assets/New Weapons/agal/effect.png'],
             ['weapon_aura_effect', 'assets/New Weapons/aura/effect.png'],
             ['weapon_sword_effect', 'assets/New Weapons/sword/effect.png'],
-            ['weapon_vape_effect', 'assets/New Weapons/vape/effect.png'],
+            ['weapon_vape_effect', 'assets/New Weapons/vape/New_effect2.png'],
             ['weapon_meteor_effect', 'assets/New Weapons/meteor/effect.png'],
             ['weapon_mgma_effect', 'assets/New Weapons/Mgma/effect.png'],
             ['weapon_mgma_fire', 'assets/New Weapons/Mgma/Fire_03.png'],
@@ -1909,6 +1909,19 @@ class Player {
                 this.auraDamageFrame = this.auraDamageFrame || {};
                 this.auraDamageFrame[w.id] = (currentFrame === 0 && prevFrame !== 0);
             }
+            
+            // Cone AOE (like vape) - continuous damage in front
+            if (data.type === 'cone_aoe') {
+                const frameTime = 1 / weaponFps;
+                const totalFrames = data.frames || 15;
+                const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+                
+                if (!this.coneState) this.coneState = {};
+                this.coneState[w.id] = currentFrame;
+                // Continuous damage flag - always true while active
+                this.coneDamageActive = this.coneDamageActive || {};
+                this.coneDamageActive[w.id] = true;
+            }
         });
     }
     
@@ -1951,6 +1964,48 @@ class Player {
                     ctx.arc(sx, sy, range * 1.5, 0, Math.PI * 2);
                     ctx.stroke();
                     ctx.setLineDash([]);
+                }
+            }
+            
+            // Cone AOE (vape smoke) - in front of player
+            if (data.type === 'cone_aoe') {
+                const range = this.getRange(w);
+                const effectSprite = data.effectSprite && assets && assets.get(data.effectSprite);
+                const baseFps = data.fps || 8;
+                const weaponFps = baseFps * atkSpdMult;
+                
+                const frameTime = 1 / weaponFps;
+                const totalFrames = data.frames || 15;
+                const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
+                // Vertical spritesheet - frameY instead of frameX
+                const frameY = currentFrame * data.frameH;
+                
+                if (effectSprite && data.frameW) {
+                    const scale = (range / 35) * 1.8;
+                    const offset = data.offset || 40;
+                    
+                    ctx.save();
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.globalAlpha = 0.8;
+                    
+                    // Position in front of player based on facing direction
+                    const drawX = sx + (this.facing * offset);
+                    const drawY = sy;
+                    
+                    // Flip horizontally if facing left
+                    if (this.facing < 0) {
+                        ctx.translate(drawX, drawY);
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(effectSprite, 0, frameY, data.frameW, data.frameH,
+                            -data.frameW * scale / 2, -data.frameH * scale / 2,
+                            data.frameW * scale, data.frameH * scale);
+                    } else {
+                        ctx.drawImage(effectSprite, 0, frameY, data.frameW, data.frameH,
+                            drawX - data.frameW * scale / 2, drawY - data.frameH * scale / 2,
+                            data.frameW * scale, data.frameH * scale);
+                    }
+                    
+                    ctx.restore();
                 }
             }
         });
@@ -3226,6 +3281,20 @@ class Game {
                             if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e); 
                         }
                     }
+                } else if (data.type === 'cone_aoe') {
+                    // Cone AOE: continuous damage in front of player
+                    const dist = Math.hypot(e.x - this.player.x, e.y - this.player.y);
+                    const ang = Math.atan2(e.y - this.player.y, e.x - this.player.x);
+                    const pAng = this.player.facing > 0 ? 0 : Math.PI;
+                    const offset = data.offset || 40;
+                    
+                    // Check if enemy is in cone (in front, within range)
+                    if (dist < range + offset + e.width / 2 && Math.abs(ang - pAng) < Math.PI / 3) {
+                        // Continuous damage per second (scaled by dt)
+                        const dotDmg = (data.dotDmg || 10) * dt;
+                        const hit = this.player.applyCrit(dotDmg * this.player.dmgMult);
+                        if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                    }
                 }
             }
         }
@@ -3259,6 +3328,19 @@ class Game {
                             const hit = this.player.applyCrit(dmg);
                             this.boss.takeDmg(hit.dmg, this, hit.isCrit);
                         }
+                    }
+                } else if (data.type === 'cone_aoe') {
+                    // Cone AOE damage to boss
+                    const dist = Math.hypot(this.boss.x - this.player.x, this.boss.y - this.player.y);
+                    const ang = Math.atan2(this.boss.y - this.player.y, this.boss.x - this.player.x);
+                    const pAng = this.player.facing > 0 ? 0 : Math.PI;
+                    const range = this.player.getRange(w);
+                    const offset = data.offset || 40;
+                    
+                    if (dist < range + offset + this.boss.width / 2 && Math.abs(ang - pAng) < Math.PI / 3) {
+                        const dotDmg = (data.dotDmg || 10) * dt;
+                        const hit = this.player.applyCrit(dotDmg * this.player.dmgMult);
+                        this.boss.takeDmg(hit.dmg, this, hit.isCrit);
                     }
                 }
             }
