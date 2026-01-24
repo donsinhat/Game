@@ -275,8 +275,12 @@
     <div id="leaderboardModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center">
         <div style="background:linear-gradient(135deg,#1a1a2e,#0a0a15);border:3px solid #ffd700;border-radius:20px;padding:25px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto">
             <h2 style="color:#ffd700;text-align:center;margin-bottom:20px">🏆 قائمة الأبطال 🏆</h2>
+            <p style="text-align:center;font-size:0.7rem;color:#888;margin-bottom:15px">النتائج المحلية + العالمية</p>
             <div id="leaderboardList" style="display:flex;flex-direction:column;gap:8px"></div>
-            <button id="closeLeaderboardBtn" class="btn" style="background:#444;color:#fff;padding:10px 30px;margin-top:20px;width:100%">إغلاق</button>
+            <div style="display:flex;gap:10px;margin-top:20px">
+                <button id="shareScoreBtn" class="btn" style="background:#28a745;color:#fff;padding:10px 15px;flex:1;font-size:0.8rem">📤 شارك نتيجتك</button>
+                <button id="closeLeaderboardBtn" class="btn" style="background:#444;color:#fff;padding:10px 15px;flex:1">إغلاق</button>
+            </div>
         </div>
     </div>
     
@@ -2741,58 +2745,127 @@ class Game {
         document.getElementById('leaderboardBtn').onclick = () => this.showLeaderboard();
         document.getElementById('closeLeaderboardBtn').onclick = () => { document.getElementById('leaderboardModal').style.display = 'none'; };
         document.getElementById('submitScoreBtn').onclick = () => this.submitScore();
+        document.getElementById('shareScoreBtn').onclick = () => this.shareScore();
     }
     
-    // Leaderboard functions
-    getLeaderboard() {
+    shareScore() {
+        // Get top local score to share
+        const local = this.getLocalLeaderboard();
+        if (local.length === 0) {
+            alert('لا توجد نتائج للمشاركة!');
+            return;
+        }
+        
+        const top = local[0];
+        const mode = top.mode === 'endless' ? 'لا نهاية' : 'البدائع';
+        const text = `🏆 نتيجتي في لعبة Gold & Blood!\n\n💀 القتلى: ${top.kills}\n📊 المستوى: ${top.level || '?'}\n🎮 الوضع: ${mode}\n👤 الشخصية: ${top.character || '?'}\n\nجرب اللعبة: https://donsinhat.github.io/Game/`;
+        
+        // Try to use Web Share API
+        if (navigator.share) {
+            navigator.share({ title: 'Gold & Blood - نتيجتي', text: text }).catch(() => {});
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(text).then(() => {
+                alert('تم نسخ النتيجة! شاركها مع أصدقائك 🎮');
+            }).catch(() => {
+                // Last fallback: show text
+                prompt('انسخ النتيجة:', text);
+            });
+        }
+    }
+    
+    // Online Leaderboard - reads from GitHub, writes locally + merges
+    LEADERBOARD_ONLINE_URL = 'https://raw.githubusercontent.com/donsinhat/Game/main/leaderboard.json';
+    
+    async fetchOnlineLeaderboard() {
+        try {
+            const response = await fetch(this.LEADERBOARD_ONLINE_URL + '?t=' + Date.now());
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (e) {
+            console.log('Could not fetch online leaderboard');
+        }
+        return [];
+    }
+    
+    getLocalLeaderboard() {
         const data = localStorage.getItem('gameLeaderboard');
         return data ? JSON.parse(data) : [];
     }
     
-    saveLeaderboard(leaderboard) {
+    saveLocalLeaderboard(leaderboard) {
         localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
     }
     
-    showLeaderboard() {
-        const leaderboard = this.getLeaderboard();
+    async getMergedLeaderboard() {
+        // Merge online and local leaderboards
+        const online = await this.fetchOnlineLeaderboard();
+        const local = this.getLocalLeaderboard();
+        
+        // Combine and dedupe by name+kills+date
+        const all = [...online, ...local];
+        const unique = [];
+        const seen = new Set();
+        
+        for (const entry of all) {
+            const key = `${entry.name}-${entry.kills}-${entry.date || 0}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(entry);
+            }
+        }
+        
+        // Sort by kills descending
+        unique.sort((a, b) => b.kills - a.kills);
+        return unique.slice(0, 100);
+    }
+    
+    async showLeaderboard() {
         const listEl = document.getElementById('leaderboardList');
+        listEl.innerHTML = '<p style="text-align:center;color:#888">⏳ جاري التحميل...</p>';
+        document.getElementById('leaderboardModal').style.display = 'flex';
+        
+        const leaderboard = await this.getMergedLeaderboard();
         
         if (leaderboard.length === 0) {
-            listEl.innerHTML = '<p style="text-align:center;color:#888">لا يوجد أبطال بعد!</p>';
+            listEl.innerHTML = '<p style="text-align:center;color:#888">لا يوجد أبطال بعد! كن أول بطل! 🏆</p>';
         } else {
             listEl.innerHTML = leaderboard.slice(0, 20).map((entry, i) => {
                 const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
                 const bg = i === 0 ? '#ffd70030' : i === 1 ? '#c0c0c030' : i === 2 ? '#cd7f3230' : '#ffffff10';
+                const mode = entry.mode === 'endless' ? '♾️' : '🏜️';
                 return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:${bg};border-radius:8px;border:1px solid #333">
-                    <span style="color:#ffd700;font-weight:bold">${medal}</span>
-                    <span style="color:#fff;flex:1;margin:0 10px">${entry.name}</span>
+                    <span style="color:#ffd700;font-weight:bold;min-width:30px">${medal}</span>
+                    <span style="color:#fff;flex:1;margin:0 10px;text-align:right">${entry.name}</span>
                     <span style="color:#ff8800;font-weight:bold">💀 ${entry.kills}</span>
+                    <span style="margin-left:8px">${mode}</span>
                 </div>`;
             }).join('');
         }
-        
-        document.getElementById('leaderboardModal').style.display = 'flex';
     }
     
-    submitScore() {
+    async submitScore() {
         const nameInput = document.getElementById('playerNameInput');
         const name = nameInput.value.trim() || 'مجهول';
         const kills = this.player.kills;
+        const mode = this.endlessMode ? 'endless' : 'normal';
+        const time = Math.floor(this.time);
+        const level = this.player.level;
+        const character = CHARACTERS[this.player.charId].name;
         
-        const leaderboard = this.getLeaderboard();
-        leaderboard.push({ name, kills, date: Date.now() });
-        leaderboard.sort((a, b) => b.kills - a.kills);
-        
-        // Keep top 100
-        if (leaderboard.length > 100) leaderboard.length = 100;
-        
-        this.saveLeaderboard(leaderboard);
+        // Save to local storage
+        const local = this.getLocalLeaderboard();
+        local.push({ name, kills, mode, time, level, character, date: Date.now() });
+        local.sort((a, b) => b.kills - a.kills);
+        if (local.length > 50) local.length = 50;
+        this.saveLocalLeaderboard(local);
         
         document.getElementById('nameInputSection').style.display = 'none';
         document.getElementById('submitScoreBtn').style.display = 'none';
         
         // Show leaderboard
-        this.showLeaderboard();
+        await this.showLeaderboard();
     }
     
     updateCharDisplay() {
