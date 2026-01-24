@@ -318,8 +318,8 @@
                 <span class="pause-stat-value" id="pauseStatSPD">100%</span>
             </div>
             <div class="pause-stat-row">
-                <span class="pause-stat-name">🎯 المدى</span>
-                <span class="pause-stat-value" id="pauseStatRNG">100%</span>
+                <span class="pause-stat-name">⚡ سرعة الهجوم</span>
+                <span class="pause-stat-value" id="pauseStatATKSPD">100%</span>
             </div>
             <div class="pause-stat-row">
                 <span class="pause-stat-name">💰 الذهب</span>
@@ -576,6 +576,7 @@ const ITEMS = {
     copper: { name: 'نحاس', desc: '+5 ذهب', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙', iconPos: {row: 11, col: 0} },
     
     // Rare (نادر)
+    magnet: { name: 'مغناطيس', desc: 'اسحب كل الاكس بي والفلوس', rarity: 'RARE', effect: 'magnetPull', val: 1, icon: '🧲', sprite: 'item_magnet' },
     redPotion: { name: 'جرعة حمراء', desc: 'يستعيد 30 صحة', rarity: 'RARE', effect: 'heal', val: 30, icon: '🧪', iconPos: {row: 0, col: 0} },
     bluePotion: { name: 'جرعة زرقاء', desc: '+30% سرعة هجوم لمدة 15 ثانية', rarity: 'RARE', effect: 'tempAtkSpd', val: 0.3, dur: 15, icon: '🧴', iconPos: {row: 0, col: 1} },
     amulet: { name: 'تميمة', desc: 'درع يمتص 20 ضرر', rarity: 'RARE', effect: 'shield', val: 20, icon: '📿', iconPos: {row: 12, col: 8} },
@@ -736,6 +737,7 @@ class AssetLoader {
             ['item_klega', 'assets/New Items Icon/arrainged/icons/klega.png'],
             ['item_arika', 'assets/New Items Icon/arrainged/icons/arika.png'],
             ['item_sandal', 'assets/New Items Icon/arrainged/icons/9.png'],
+            ['item_magnet', 'assets/New Items Icon/Magnetic.png'],
             
             // IconSet sprite sheet (24x24 icons)
             ['iconset', 'assets/IconSet.png'],
@@ -1465,11 +1467,15 @@ class Player {
                         const spawnX = this.x + Math.cos(a) * muzzleOffset;
                         const spawnY = this.y + Math.sin(a) * muzzleOffset;
                         
+                        // Projectile life determines range (shorter life = shorter range)
+                        // Screen is roughly 800-1000px, speed is 300-400, so life 1.2-1.5 = screen range
+                        const projLife = isMgma ? 0.8 : 1.3; // Limited to roughly screen size
+                        
                         game.proj.push({ 
                             x: spawnX, y: spawnY, 
                             vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, 
                             dmg: isMgma ? dmg * 0.6 : dmg, 
-                            life: isMgma ? 1.0 : 2.2, 
+                            life: projLife, 
                             size: isMgma ? 5 : (isFlame ? 10 : (isSpear ? 8 : 6)), 
                             color: isMgma ? '#f80' : (isBlueFlame ? '#00aaff' : (isFlame ? '#ff4500' : '#8b4513')), 
                             pierce: w.level > 10 ? 2 : 1,
@@ -1573,7 +1579,7 @@ class Player {
                         game.proj.push({
                             x: this.x, y: this.y,
                             vx: Math.cos(a + spread) * 280, vy: Math.sin(a + spread) * 280,
-                            dmg, life: 3.5, size: 8,
+                            dmg, life: 1.5, size: 8, // Limited range (roughly screen size)
                             color: '#9f9', type: 'dot',
                             dotDmg: 2, dotDur: 3 + w.level * 0.5, // 2 damage per second
                             weaponId: w.id,
@@ -2999,7 +3005,7 @@ class Game {
         document.getElementById('pauseStatLUCK').textContent = `${p.luck.toFixed(1)}`;
         document.getElementById('pauseStatCRIT').textContent = `${Math.round(p.crit * 100)}%`;
         document.getElementById('pauseStatSPD').textContent = `${Math.round(p.speed)}`;
-        document.getElementById('pauseStatRNG').textContent = `${(p.range * 100).toFixed(0)}%`;
+        document.getElementById('pauseStatATKSPD').textContent = `${Math.round(p.atkSpd * 100)}%`;
         document.getElementById('pauseStatGold').textContent = p.gold || 0;
         document.getElementById('pauseStatKills').textContent = p.kills || 0;
         
@@ -3097,14 +3103,22 @@ class Game {
         if (this.shake > 0) { this.shake -= dt; this.cam.x += (Math.random() - 0.5) * 6; this.cam.y += (Math.random() - 0.5) * 6; }
         
         // Spawn enemies
-        if (!this.bossSpawned) {
+        // In endless mode, spawn continuously. In normal mode, stop when boss spawns
+        if (!this.bossSpawned || this.endlessMode) {
             this.spawnT -= dt;
-            const spawnMult = 1 + this.player.curse * 0.35 + this.player.extraEnemySpawn;
+            let spawnMult = 1 + this.player.curse * 0.35 + this.player.extraEnemySpawn;
+            
+            // Endless mode: +20% enemies gradually based on time/level
+            if (this.endlessMode) {
+                const endlessMult = 1 + (this.player.level * 0.02) + (this.time / 600 * 0.1); // +2% per level, +10% per 10min
+                spawnMult *= Math.min(endlessMult, 2.0); // Cap at 2x
+            }
+            
             let rate = 1.2 / spawnMult;
             
-            // Reduce spawn rate by 60% after the last enemy type appears (knight at 480s = 8 min)
-            if (this.time >= 480) {
-                rate *= 2.5; // 60% slower = rate * 2.5
+            // Reduce spawn rate by 60% after 480s (only in normal mode)
+            if (this.time >= 480 && !this.endlessMode) {
+                rate *= 2.5;
             }
             
             const maxE = Math.floor((55 + this.player.curse * 12) * spawnMult);
@@ -3384,8 +3398,15 @@ class Game {
         this.spriteEffects.push(new SpriteEffect(enemy.x, enemy.y, 'fx_explosion', 32, 32, 7, 0.4, 1.5));
         this.particles.spark(enemy.x, enemy.y, '#ff6600');
         
+        // Calculate XP - bonus in endless mode based on time/level for balance
+        let xpReward = enemy.xp;
+        if (this.endlessMode) {
+            const xpMult = 1 + (this.time / 300 * 0.3) + (this.player.level * 0.05); // +30% per 5min, +5% per level
+            xpReward = Math.round(enemy.xp * xpMult);
+        }
+        
         // Add floating kill text
-        this.texts.push(new FloatText(enemy.x, enemy.y - 10, '+' + enemy.xp + ' XP', '#44ff44', 12));
+        this.texts.push(new FloatText(enemy.x, enemy.y - 10, '+' + xpReward + ' XP', '#44ff44', 12));
         
         // Clamp pickup positions to map bounds
         const halfWorld = CONFIG.WORLD_SIZE / 2;
@@ -3393,7 +3414,7 @@ class Game {
         const clampX = Math.max(-halfWorld + margin, Math.min(halfWorld - margin, enemy.x));
         const clampY = Math.max(-halfWorld + margin, Math.min(halfWorld - margin, enemy.y));
         
-        this.pickups.push(new Pickup(clampX, clampY, 'xp', enemy.xp));
+        this.pickups.push(new Pickup(clampX, clampY, 'xp', xpReward));
         // Gold drop rate reduced by 50% (from 0.18 to 0.09), fixed value of 5
         if (Math.random() < 0.09) {
             this.pickups.push(new Pickup(clampX + (Math.random() - 0.5) * 12, clampY + (Math.random() - 0.5) * 12, 'gold', 5));
@@ -3539,6 +3560,18 @@ class Game {
             case 'moreEnemies': 
                 this.player.extraEnemySpawn += item.val; 
                 this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'أعداء أكثر!', '#f44')); 
+                break;
+            case 'magnetPull':
+                // Pull all existing pickups to player instantly
+                let pulled = 0;
+                for (const p of this.pickups) {
+                    p.x = this.player.x + (Math.random() - 0.5) * 30;
+                    p.y = this.player.y + (Math.random() - 0.5) * 30;
+                    pulled++;
+                }
+                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `سحب ${pulled}!`, '#00ffff', 16)); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.6, 3));
+                this.particles.emit(this.player.x, this.player.y, 15, { color: '#00ffff', minS: 50, maxS: 150, life: 0.5 });
                 break;
         }
     }
