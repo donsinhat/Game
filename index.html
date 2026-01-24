@@ -1980,11 +1980,12 @@ class Player {
                 const currentFrame = (totalFrames - 1) - (Math.floor(this.anim / frameTime) % totalFrames);
                 const frameY = currentFrame * data.frameH;
                 
-                // Find nearest enemy for auto-targeting
+                // Find nearest enemy for auto-targeting (use window.gameInstance)
                 let nearestEnemy = null;
                 let nearestDist = range + 100;
-                if (game && game.enemies) {
-                    for (const e of game.enemies) {
+                const gameRef = window.gameInstance;
+                if (gameRef && gameRef.enemies) {
+                    for (const e of gameRef.enemies) {
                         const dist = Math.hypot(e.x - this.x, e.y - this.y);
                         if (dist < nearestDist) {
                             nearestDist = dist;
@@ -1993,11 +1994,11 @@ class Player {
                     }
                 }
                 // Also check boss
-                if (game && game.boss && game.boss.hp > 0) {
-                    const bossDist = Math.hypot(game.boss.x - this.x, game.boss.y - this.y);
+                if (gameRef && gameRef.boss && gameRef.boss.hp > 0) {
+                    const bossDist = Math.hypot(gameRef.boss.x - this.x, gameRef.boss.y - this.y);
                     if (bossDist < nearestDist) {
                         nearestDist = bossDist;
-                        nearestEnemy = game.boss;
+                        nearestEnemy = gameRef.boss;
                     }
                 }
                 
@@ -4625,7 +4626,7 @@ class Game {
     }
 }
 
-window.addEventListener('load', () => new Game());
+window.addEventListener('load', () => { window.gameInstance = new Game(); });
     </script>
 </body>
 </html>
