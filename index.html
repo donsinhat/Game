@@ -216,6 +216,7 @@
             </div>
         </div>
         <button class="btn btn-primary" id="startBtn">ابدأ اللعب</button>
+        <button class="btn" id="leaderboardBtn" style="background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:#ffd700;border:2px solid #ffd700;margin-top:10px;padding:8px 25px;font-size:0.9rem">🏆 قائمة الأبطال</button>
         <p class="high-score">أعلى نتيجة: <span id="highScore">0</span> قتيل</p>
     </div>
     
@@ -263,7 +264,20 @@
         <h1 class="game-over-title" id="gameOverTitle">انتهت اللعبة</h1>
         <div class="unlock-message" id="unlockMessage" style="display: none;"></div>
         <div class="final-stats" id="finalStats"></div>
+        <div id="nameInputSection" style="margin:15px 0;display:none">
+            <p style="color:#ffd700;margin-bottom:8px">سجل اسمك في قائمة الأبطال!</p>
+            <input type="text" id="playerNameInput" placeholder="اسمك هنا..." maxlength="15" style="padding:10px 15px;font-size:1rem;border-radius:8px;border:2px solid #ffd700;background:#1a1a2e;color:#fff;text-align:center;font-family:'PixelAE',sans-serif;width:200px">
+            <button id="submitScoreBtn" class="btn" style="background:#ffd700;color:#000;padding:10px 20px;margin-top:10px;font-size:0.9rem">📤 سجل النتيجة</button>
+        </div>
         <button class="btn btn-primary" id="restartBtn">العب مرة أخرى</button>
+    </div>
+    
+    <div id="leaderboardModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0a0a15);border:3px solid #ffd700;border-radius:20px;padding:25px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto">
+            <h2 style="color:#ffd700;text-align:center;margin-bottom:20px">🏆 قائمة الأبطال 🏆</h2>
+            <div id="leaderboardList" style="display:flex;flex-direction:column;gap:8px"></div>
+            <button id="closeLeaderboardBtn" class="btn" style="background:#444;color:#fff;padding:10px 30px;margin-top:20px;width:100%">إغلاق</button>
+        </div>
     </div>
     
     <div id="bossWarning">⚠️ تحذير! ⚠️<br><span style="font-size: 1.2rem;">ابو حلزه قادم!</span></div>
@@ -2716,6 +2730,63 @@ class Game {
             this.audio.setSfxVolume(vol);
             document.getElementById('sfxVolText').textContent = e.target.value + '%';
         };
+        
+        // Leaderboard buttons
+        document.getElementById('leaderboardBtn').onclick = () => this.showLeaderboard();
+        document.getElementById('closeLeaderboardBtn').onclick = () => { document.getElementById('leaderboardModal').style.display = 'none'; };
+        document.getElementById('submitScoreBtn').onclick = () => this.submitScore();
+    }
+    
+    // Leaderboard functions
+    getLeaderboard() {
+        const data = localStorage.getItem('gameLeaderboard');
+        return data ? JSON.parse(data) : [];
+    }
+    
+    saveLeaderboard(leaderboard) {
+        localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
+    }
+    
+    showLeaderboard() {
+        const leaderboard = this.getLeaderboard();
+        const listEl = document.getElementById('leaderboardList');
+        
+        if (leaderboard.length === 0) {
+            listEl.innerHTML = '<p style="text-align:center;color:#888">لا يوجد أبطال بعد!</p>';
+        } else {
+            listEl.innerHTML = leaderboard.slice(0, 20).map((entry, i) => {
+                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                const bg = i === 0 ? '#ffd70030' : i === 1 ? '#c0c0c030' : i === 2 ? '#cd7f3230' : '#ffffff10';
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:${bg};border-radius:8px;border:1px solid #333">
+                    <span style="color:#ffd700;font-weight:bold">${medal}</span>
+                    <span style="color:#fff;flex:1;margin:0 10px">${entry.name}</span>
+                    <span style="color:#ff8800;font-weight:bold">💀 ${entry.kills}</span>
+                </div>`;
+            }).join('');
+        }
+        
+        document.getElementById('leaderboardModal').style.display = 'flex';
+    }
+    
+    submitScore() {
+        const nameInput = document.getElementById('playerNameInput');
+        const name = nameInput.value.trim() || 'مجهول';
+        const kills = this.player.kills;
+        
+        const leaderboard = this.getLeaderboard();
+        leaderboard.push({ name, kills, date: Date.now() });
+        leaderboard.sort((a, b) => b.kills - a.kills);
+        
+        // Keep top 100
+        if (leaderboard.length > 100) leaderboard.length = 100;
+        
+        this.saveLeaderboard(leaderboard);
+        
+        document.getElementById('nameInputSection').style.display = 'none';
+        document.getElementById('submitScoreBtn').style.display = 'none';
+        
+        // Show leaderboard
+        this.showLeaderboard();
     }
     
     updateCharDisplay() {
@@ -3601,7 +3672,7 @@ class Game {
                     iconHtml = `<img src="${iconImg.src}" style="width:36px;height:36px;object-fit:contain;image-rendering:pixelated;">`;
                 }
             }
-            card.innerHTML = `<div class="upgrade-icon">${iconHtml}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? '<span style="font-size:1rem;font-weight:bold;color:#00ff88;text-shadow:0 0 10px #00ff88,0 0 20px #00ff8850;animation:pulse 0.8s infinite">✨ جديد! ✨</span>' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
+            card.innerHTML = `<div class="upgrade-icon">${iconHtml}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? '<span style="font-size:0.75rem;font-weight:bold;color:#00ff88;text-shadow:0 0 8px #00ff88;white-space:nowrap">✨جديد!✨</span>' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
             card.onclick = () => { this.selectUpgrade(c, rar, c.upgradeType); modal.style.display = 'none'; this.state = 'playing'; };
             opts.appendChild(card);
         });
@@ -3672,6 +3743,7 @@ class Game {
     over(victory) {
         this.state = 'gameover';
         this.audio.stopBGM(); // Stop background music
+        this.audio.stopBossMusic(); // Stop boss music too
         document.getElementById('hud').style.display = 'none';
         document.getElementById('equipmentSlots').style.display = 'none';
         document.getElementById('miniMap').style.display = 'none';
@@ -3682,6 +3754,12 @@ class Game {
         if (this.player.kills > this.highScore) { this.highScore = this.player.kills; localStorage.setItem('goldBloodHighScore', this.highScore.toString()); document.getElementById('highScore').textContent = this.highScore; }
         const m = Math.floor(this.time / 60), s = Math.floor(this.time % 60);
         document.getElementById('finalStats').innerHTML = `<p>⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}</p><p>⭐ المستوى: ${this.player.level}</p><p>💀 القتلى: ${this.player.kills}</p><p>💰 الذهب: ${this.player.gold}</p>`;
+        
+        // Show name input for leaderboard
+        document.getElementById('nameInputSection').style.display = 'block';
+        document.getElementById('submitScoreBtn').style.display = 'inline-block';
+        document.getElementById('playerNameInput').value = '';
+        
         document.getElementById('gameOverScreen').style.display = 'flex';
     }
     
