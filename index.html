@@ -947,7 +947,8 @@ const CHAR_SPRITES = {
         walkFrames: 8,
         idleFps: 8,
         walkFps: 5,
-        scale: 0.55
+        scale: 0.45,
+        previewScale: 0.4 // Larger preview in menu
     },
     samurai: {
         type: 'walk_idle',
@@ -955,11 +956,12 @@ const CHAR_SPRITES = {
         walkSprites: ['samurai_run'],
         frameWidth: 96,
         frameHeight: 96,
-        idleFrames: 10, // 960 / 96 = 10
-        walkFrames: 16, // 1536 / 96 = 16
+        idleFrames: 10,
+        walkFrames: 16,
         idleFps: 8,
-        walkFps: 5,
-        scale: 0.55 // Scale increased 50%
+        walkFps: 12,
+        scale: 1.0, // Bigger character
+        previewScale: 0.9 // Larger preview in menu
     }
 };
 
@@ -3032,10 +3034,10 @@ class Game {
                 if (spriteInfo.frameWidth && spriteInfo.idleFrames) {
                     const frameW = spriteInfo.frameWidth;
                     const frameH = spriteInfo.frameHeight;
-                    const targetH = 100;
-                    const scale = targetH / frameH;
-                    const drawW = frameW * scale;
-                    const drawH = frameH * scale;
+                    // Use previewScale if defined, otherwise calculate from target height
+                    const previewScale = spriteInfo.previewScale || (100 / frameH);
+                    const drawW = frameW * previewScale;
+                    const drawH = frameH * previewScale;
                     // Draw first frame
                     ctx.drawImage(sprite, 0, 0, frameW, frameH, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
                 } else {
@@ -4519,10 +4521,10 @@ class Game {
                     ctx.save();
                     ctx.translate(px, py);
                     // Spinning rotation based on time
-                    ctx.rotate(this.time * 12);
+                    ctx.rotate(this.time * 15);
                     ctx.imageSmoothingEnabled = false;
                     const frame = p.currentFrame || 0;
-                    const scale = 0.5; // Smaller projectile
+                    const scale = 0.18; // Much smaller projectile
                     ctx.drawImage(effectSprite, frame * p.frameW, 0, p.frameW, p.frameH,
                         -p.frameW * scale / 2, -p.frameH * scale / 2, p.frameW * scale, p.frameH * scale);
                     ctx.restore();
@@ -4530,13 +4532,13 @@ class Game {
                     // Fallback: draw star shape
                     ctx.save();
                     ctx.translate(px, py);
-                    ctx.rotate(this.time * 12);
+                    ctx.rotate(this.time * 15);
                     ctx.fillStyle = '#aaf';
                     ctx.beginPath();
                     for (let j = 0; j < 4; j++) {
                         const a = j * Math.PI / 2;
-                        ctx.lineTo(Math.cos(a) * p.size, Math.sin(a) * p.size);
-                        ctx.lineTo(Math.cos(a + Math.PI / 4) * p.size * 0.4, Math.sin(a + Math.PI / 4) * p.size * 0.4);
+                        ctx.lineTo(Math.cos(a) * p.size * 0.6, Math.sin(a) * p.size * 0.6);
+                        ctx.lineTo(Math.cos(a + Math.PI / 4) * p.size * 0.25, Math.sin(a + Math.PI / 4) * p.size * 0.25);
                     }
                     ctx.closePath();
                     ctx.fill();
