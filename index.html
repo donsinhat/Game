@@ -4182,7 +4182,8 @@ class Game {
     
     quitToMenu() {
         // In endless mode, show confirmation dialog to submit score
-        if (this.endlessMode && this.player.kills > 0) {
+        // Check player exists and has kills
+        if (this.endlessMode && this.player && this.player.kills > 0) {
             this.showQuitConfirmation();
             return;
         }
@@ -5048,12 +5049,21 @@ class Game {
         }
         // Process all collected items
         if (nearbyItems.length > 0) {
-            // Remove all collected items from array (in reverse order to maintain indices)
-            nearbyItems.sort((a, b) => b.index - a.index);
-            for (const { index } of nearbyItems) {
+            // Sort by rarity - LEGENDARY items first so they get the popup
+            const rarityOrder = { 'LEGENDARY': 0, 'EPIC': 1, 'RARE': 2, 'UNCOMMON': 3, 'COMMON': 4 };
+            nearbyItems.sort((a, b) => {
+                const rarA = ITEMS[a.item.id]?.rarity || 'COMMON';
+                const rarB = ITEMS[b.item.id]?.rarity || 'COMMON';
+                return (rarityOrder[rarA] || 4) - (rarityOrder[rarB] || 4);
+            });
+            
+            // Remove all collected items from array (by index, in reverse order)
+            const sortedByIndex = [...nearbyItems].sort((a, b) => b.index - a.index);
+            for (const { index } of sortedByIndex) {
                 this.items.splice(index, 1);
             }
-            // Show pickup for first item, directly collect the rest
+            
+            // Show pickup for highest rarity item, directly collect the rest
             this.showItemPickup(nearbyItems[0].item);
             for (let i = 1; i < nearbyItems.length; i++) {
                 this.collectItem(nearbyItems[i].item);
@@ -5510,8 +5520,10 @@ class Game {
             case 'revive': 
                 this.player.reviveCount++;
                 this.updateReviveUI(); 
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'إحياء محفوظ!', '#ffd700')); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.6, 2.5));
+                this.texts.push(new FloatText(this.player.x, this.player.y - 25, '🍚 +1 عريكه!', '#ffd700', 20)); 
+                this.texts.push(new FloatText(this.player.x, this.player.y - 45, `إجمالي: ${this.player.reviveCount}`, '#ffffff', 14)); 
+                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.8, 3));
+                this.particles.emit(this.player.x, this.player.y, 20, { color: '#ffd700', minS: 80, maxS: 150, life: 0.8 });
                 break;
             case 'permGold': 
                 this.player.goldMult += item.val; 
