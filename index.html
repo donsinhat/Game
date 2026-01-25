@@ -1053,9 +1053,9 @@ const CHAR_SPRITES = {
         walkFrames: 16,
         idleFps: 8,
         walkFps: 12,
-        scale: 1.0, // Match other character sizes
-        previewScale: 1.0,
-        yOffset: -15 // Align with shadow
+        scale: 1.5, // 100% bigger than before
+        previewScale: 1.3,
+        yOffset: -25 // Adjusted for larger size
     }
 };
 
@@ -3889,11 +3889,15 @@ class Game {
                 break;
                 
             case 'magnetPull':
-                // Instant: pull all XP and gold
+                // Gradual pull: set magnet effect on all pickups
                 for (const p of this.pickups) {
-                    const angle = Math.atan2(this.player.y - p.y, this.player.x - p.x);
-                    p.x = this.player.x + (Math.random() - 0.5) * 50;
-                    p.y = this.player.y + (Math.random() - 0.5) * 50;
+                    p.magnetPull = true; // Flag for gradual pull
+                    p.magnetSpeed = 800 + Math.random() * 400; // Fast pull speed
+                }
+                // Also pull items
+                for (const item of this.items) {
+                    item.magnetPull = true;
+                    item.magnetSpeed = 600 + Math.random() * 300;
                 }
                 this.texts.push(new FloatText(this.player.x, this.player.y - 40, '🧲 مغناطيس!', '#00ff88'));
                 break;
@@ -4465,7 +4469,26 @@ class Game {
             const p = this.pickups[i];
             p.update(dt);
             const d = Math.hypot(p.x - this.player.x, p.y - this.player.y);
-            if (d < this.player.pickupRange * 1.8) { const a = Math.atan2(this.player.y - p.y, this.player.x - p.x); const s = 200 * (1 - d / (this.player.pickupRange * 1.8)); p.x += Math.cos(a) * s * dt; p.y += Math.sin(a) * s * dt; }
+            
+            // Magnet pull - fast gradual movement toward player
+            if (p.magnetPull) {
+                const a = Math.atan2(this.player.y - p.y, this.player.x - p.x);
+                const speed = p.magnetSpeed || 600;
+                p.x += Math.cos(a) * speed * dt;
+                p.y += Math.sin(a) * speed * dt;
+                // Trail effect
+                if (Math.random() < 0.3) {
+                    this.particles.emit(p.x, p.y, 1, { color: p.type === 'xp' ? '#44ff44' : '#ffd700', minS: 20, maxS: 40, size: 2, life: 0.2 });
+                }
+            }
+            // Normal pickup range attraction
+            else if (d < this.player.pickupRange * 1.8) { 
+                const a = Math.atan2(this.player.y - p.y, this.player.x - p.x); 
+                const s = 200 * (1 - d / (this.player.pickupRange * 1.8)); 
+                p.x += Math.cos(a) * s * dt; 
+                p.y += Math.sin(a) * s * dt; 
+            }
+            
             if (d < this.player.pickupRange) {
                 if (p.type === 'xp') { 
                     this.player.xp += p.val * this.player.xpMult * (1 + this.player.curse * 0.4); 
@@ -4490,6 +4513,20 @@ class Game {
         for (let i = this.items.length - 1; i >= 0; i--) {
             const item = this.items[i];
             item.update(dt);
+            
+            // Magnet pull for items
+            if (item.magnetPull) {
+                const d = Math.hypot(item.x - this.player.x, item.y - this.player.y);
+                const a = Math.atan2(this.player.y - item.y, this.player.x - item.x);
+                const speed = item.magnetSpeed || 500;
+                item.x += Math.cos(a) * speed * dt;
+                item.y += Math.sin(a) * speed * dt;
+                // Glow trail
+                if (Math.random() < 0.4) {
+                    this.particles.emit(item.x, item.y, 1, { color: '#ffd700', minS: 30, maxS: 60, size: 3, life: 0.25 });
+                }
+            }
+            
             if (Math.hypot(item.x - this.player.x, item.y - this.player.y) < 22) {
                 nearbyItems.push({ item, index: i });
             }
@@ -5583,20 +5620,35 @@ class Game {
             ctx.fill(); 
         }
         
-        // Boss health bar
+        // Boss health bar - positioned below HUD
         if (this.boss) {
             const bw = Math.min(350, this.canvas.width * 0.8), bx = (this.canvas.width - bw) / 2;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
-            ctx.fillRect(bx - 3, 44, bw + 6, 26);
-            ctx.fillStyle = '#222'; 
-            ctx.fillRect(bx, 47, bw, 20);
+            const by = 85; // Moved down to be below HUD
+            
+            // Background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; 
+            ctx.fillRect(bx - 5, by - 5, bw + 10, 35);
+            
+            // Border
+            ctx.strokeStyle = '#ff4444';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bx - 5, by - 5, bw + 10, 35);
+            
+            // HP bar background
+            ctx.fillStyle = '#333'; 
+            ctx.fillRect(bx, by + 10, bw, 16);
+            
+            // HP fill
             const hpColor = this.boss.phase === 3 ? '#ff0000' : this.boss.phase === 2 ? '#ff6600' : '#ffcc00';
             ctx.fillStyle = hpColor;
-            ctx.fillRect(bx, 47, bw * (this.boss.hp / this.boss.maxHp), 20);
+            ctx.fillRect(bx, by + 10, bw * (this.boss.hp / this.boss.maxHp), 16);
+            
+            // Boss name
+            const bossName = this.boss.name || BOSS.name;
             ctx.fillStyle = '#fff'; 
-            ctx.font = 'bold 12px PixelAE, Cairo'; 
+            ctx.font = 'bold 11px PixelAE, Cairo'; 
             ctx.textAlign = 'center';
-            ctx.fillText(`👹 ${BOSS.name} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, 42);
+            ctx.fillText(`👹 ${bossName} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, by + 5);
         }
         
         // Draw price below each chest
