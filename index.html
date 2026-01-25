@@ -3703,6 +3703,10 @@ class Game {
         this.groundBuffs = []; this.activeBuffs = {};
         this.time = 0; this.spawnT = 0; this.bossSpawned = false; this.bossWarnShown = false;
         
+        // Endless mode boss tracking
+        this.endlessBossPhase = 0; // 0 = no boss yet, 1 = phase 1 killed, 2 = phase 2 killed, 3 = phase 3 killed
+        this.endlessBossActive = false;
+        
         // Spawn chests randomly on map
         ChestManager.reset();
         this.chests = ChestManager.spawnChests(CONFIG.WORLD_SIZE);
@@ -3936,54 +3940,84 @@ class Game {
         return this.activeBuffs.goldBonus && this.activeBuffs.goldBonus > 0;
     }
     
+    onEndlessBossKilled() {
+        const bossX = this.boss.x;
+        const bossY = this.boss.y;
+        const phase = this.boss.endlessPhase || 1;
+        
+        // Big celebration effects
+        this.particles.emit(bossX, bossY, 30, { color: '#ffd700', minS: 80, maxS: 200, life: 1 });
+        this.particles.emit(bossX, bossY, 20, { color: '#ff6600', minS: 60, maxS: 150, life: 0.8 });
+        this.shake = 0.8;
+        this.audio.victory();
+        
+        // Drop rewards based on phase
+        const xpReward = 100 * phase;
+        const goldReward = 50 * phase;
+        
+        // Drop XP
+        for (let i = 0; i < 10; i++) {
+            this.pickups.push(new Pickup(
+                bossX + (Math.random() - 0.5) * 100,
+                bossY + (Math.random() - 0.5) * 100,
+                'xp',
+                xpReward / 10
+            ));
+        }
+        
+        // Drop gold
+        this.player.gold += goldReward;
+        this.texts.push(new FloatText(bossX, bossY - 60, `+${goldReward} 🪙`, '#ffd700', 20));
+        
+        // Spawn a chest at boss location
+        this.chests.push(new Chest(bossX, bossY));
+        
+        // Show victory message
+        const phaseNames = ['', 'المرحلة الأولى!', 'المرحلة الثانية!', 'المرحلة الأخيرة!'];
+        this.texts.push(new FloatText(bossX, bossY - 90, `🎉 ${phaseNames[phase]}`, '#00ff00', 24));
+        
+        // Clear boss and prepare for next
+        this.boss = null;
+        this.endlessBossActive = false;
+        this.endlessBossPhase++;
+        
+        // Stop boss music, resume normal
+        this.audio.stopBossMusic();
+        this.audio.startBGM();
+        
+        // If all 3 phases complete, show special message
+        if (this.endlessBossPhase >= 3) {
+            this.texts.push(new FloatText(this.player.x, this.player.y - 50, '👑 أنت البطل!', '#ffd700', 28));
+        }
+    }
+    
     spawnChestReward(x, y) {
-        // Always give guaranteed rewards
-        let gaveReward = false;
+        // Always drop a random item - rarity based on luck
+        const itemIds = Object.keys(ITEMS);
+        const luck = this.player.luck || 1;
         
-        // Try to give weapon or book
-        const roll = Math.random();
+        // Calculate rarity chances based on luck
+        // Higher luck = better chance for rare items
+        const roll = Math.random() * 100;
+        let targetRarity;
         
-        if (roll < 0.3) {
-            // Try weapon (30%)
-            const weaponIds = Object.keys(WEAPONS);
-            const randomWeapon = weaponIds[Math.floor(Math.random() * weaponIds.length)];
-            const existing = this.player.weapons.find(w => w.id === randomWeapon);
-            
-            if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
-                existing.lv++;
-                this.texts.push(new FloatText(x, y - 30, `${WEAPONS[randomWeapon].name} +1`, '#00ff00'));
-                gaveReward = true;
-            } else if (!existing && this.player.weapons.length < CONFIG.MAX_WEAPONS) {
-                this.player.weapons.push({ id: randomWeapon, lv: 1, cd: 0 });
-                this.texts.push(new FloatText(x, y - 30, `${WEAPONS[randomWeapon].name}!`, '#ffd700'));
-                gaveReward = true;
-            }
-        } else if (roll < 0.6) {
-            // Try book (30%)
-            const bookIds = Object.keys(BOOKS);
-            const randomBook = bookIds[Math.floor(Math.random() * bookIds.length)];
-            const existing = this.player.books.find(b => b.id === randomBook);
-            
-            if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
-                existing.lv++;
-                this.player.applyBookStats();
-                this.texts.push(new FloatText(x, y - 30, `${BOOKS[randomBook].name} +1`, '#00ff00'));
-                gaveReward = true;
-            } else if (!existing && this.player.books.length < CONFIG.MAX_BOOKS) {
-                this.player.books.push({ id: randomBook, lv: 1 });
-                this.player.applyBookStats();
-                this.texts.push(new FloatText(x, y - 30, `${BOOKS[randomBook].name}!`, '#00ffff'));
-                gaveReward = true;
-            }
+        if (roll < 5 * luck * luck) { // Legendary: 5% * luck^2
+            targetRarity = 'LEGENDARY';
+        } else if (roll < 20 * luck) { // Rare: 20% * luck
+            targetRarity = 'RARE';
+        } else {
+            targetRarity = 'COMMON';
         }
         
-        // If no weapon/book given, always drop an item
-        if (!gaveReward) {
-            const itemIds = Object.keys(ITEMS);
-            const randomItem = itemIds[Math.floor(Math.random() * itemIds.length)];
-            this.items.push(new ItemDrop(x, y, randomItem));
-            this.texts.push(new FloatText(x, y - 30, `${ITEMS[randomItem].name}!`, RARITY[ITEMS[randomItem].rarity].color));
+        // Find items of target rarity, fallback to any if none found
+        let possibleItems = itemIds.filter(id => ITEMS[id].rarity === targetRarity);
+        if (possibleItems.length === 0) {
+            possibleItems = itemIds;
         }
+        
+        const randomItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+        this.items.push(new ItemDrop(x, y, randomItem));
+        this.texts.push(new FloatText(x, y - 30, `${ITEMS[randomItem].name}!`, RARITY[ITEMS[randomItem].rarity].color));
         
         // Always drop gold (guaranteed)
         const goldAmount = 15 + Math.floor(Math.random() * 25);
@@ -4016,8 +4050,44 @@ class Game {
     update(dt) {
         this.time += dt;
         
-        // Boss spawning - disabled in endless mode
-        if (!this.endlessMode) {
+        // Boss spawning
+        if (this.endlessMode) {
+            // Endless mode: Boss spawns at 5min (phase1), 10min (phase2), 15min (phase3)
+            const bossSchedule = [
+                { time: 300, phase: 1, hp: 800, atk: 8, name: 'ابو حلزه الصغير' },   // 5 min - weak
+                { time: 600, phase: 2, hp: 2500, atk: 15, name: 'ابو حلزه' },        // 10 min - medium
+                { time: 900, phase: 3, hp: 6000, atk: 25, name: 'ابو حلزه العظيم' }  // 15 min - strong
+            ];
+            
+            const nextBoss = bossSchedule[this.endlessBossPhase];
+            
+            if (nextBoss && !this.endlessBossActive && !this.boss) {
+                // Show warning 30 seconds before
+                if (this.time >= nextBoss.time - 30 && !this.bossWarnShown) {
+                    this.bossWarnShown = true;
+                    document.getElementById('bossWarning').style.display = 'block';
+                    this.audio.bossWarn();
+                    setTimeout(() => document.getElementById('bossWarning').style.display = 'none', 2500);
+                }
+                
+                // Spawn boss
+                if (this.time >= nextBoss.time) {
+                    this.endlessBossActive = true;
+                    this.bossWarnShown = false;
+                    const a = Math.random() * Math.PI * 2;
+                    this.boss = new Boss(this.player.x + Math.cos(a) * 320, this.player.y + Math.sin(a) * 320, this.player.enemyBuff);
+                    // Override boss stats for endless mode
+                    this.boss.hp = nextBoss.hp;
+                    this.boss.maxHp = nextBoss.hp;
+                    this.boss.atk = nextBoss.atk;
+                    this.boss.phase = nextBoss.phase;
+                    this.boss.endlessPhase = nextBoss.phase;
+                    this.boss.name = nextBoss.name;
+                    this.audio.startBossMusic();
+                }
+            }
+        } else {
+            // Normal mode: Single boss at BOSS_TIME
             if (this.time >= CONFIG.BOSS_TIME - 30 && !this.bossWarnShown) {
                 this.bossWarnShown = true;
                 document.getElementById('bossWarning').style.display = 'block';
@@ -4043,14 +4113,23 @@ class Game {
         
         // Spawn enemies
         // In endless mode, spawn continuously. In normal mode, stop when boss spawns
-        if (!this.bossSpawned || this.endlessMode) {
+        // Don't spawn during boss fight in endless mode
+        const canSpawnEnemies = this.endlessMode ? !this.endlessBossActive : !this.bossSpawned;
+        
+        if (canSpawnEnemies || this.endlessMode) {
             this.spawnT -= dt;
-            let spawnMult = 1 + this.player.curse * 0.35 + this.player.extraEnemySpawn;
             
-            // Endless mode: +20% enemies gradually based on time/level
+            // Base spawn multiplier from curse (more enemies with curse)
+            let spawnMult = 1 + this.player.curse * 0.5 + this.player.extraEnemySpawn;
+            
+            // Time-based scaling: more enemies over time
+            const timeScale = 1 + (this.time / 60) * 0.08; // +8% per minute
+            spawnMult *= timeScale;
+            
+            // Endless mode: additional scaling
             if (this.endlessMode) {
-                const endlessMult = 1 + (this.player.level * 0.02) + (this.time / 600 * 0.1); // +2% per level, +10% per 10min
-                spawnMult *= Math.min(endlessMult, 2.0); // Cap at 2x
+                const endlessMult = 1 + (this.player.level * 0.03) + (this.time / 300 * 0.15); // +3% per level, +15% per 5min
+                spawnMult *= Math.min(endlessMult, 3.0); // Cap at 3x
             }
             
             let rate = 1.2 / spawnMult;
@@ -4220,7 +4299,15 @@ class Game {
                     }
                 }
             }
-            if (this.boss.hp <= 0) this.over(true);
+            if (this.boss.hp <= 0) {
+                if (this.endlessMode) {
+                    // Endless mode: Drop rewards and prepare for next boss
+                    this.onEndlessBossKilled();
+                } else {
+                    // Normal mode: Game over (victory)
+                    this.over(true);
+                }
+            }
         }
         
         // Projectiles
@@ -4534,10 +4621,21 @@ class Game {
         let r = Math.random() * total, type = avail[0][0];
         for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { type = avail[i][0]; break; } }
         
-        // In endless mode, enemies are 1.25x stronger
-        const buff = this.player.enemyBuff + (this.endlessMode ? 0.25 : 0);
+        // Enemy strength buff: base + curse effect + endless mode bonus
+        // Curse makes enemies stronger (15% per curse level)
+        const curseBuff = this.player.curse * 0.15;
+        const endlessBuff = this.endlessMode ? 0.25 : 0;
+        const buff = this.player.enemyBuff + curseBuff + endlessBuff;
+        
         this.enemies.push(new Enemy(x, y, type, this.time, buff));
-        if (ENEMIES[type].pack) for (let i = 0; i < 2; i++) this.enemies.push(new Enemy(x + (Math.random() - 0.5) * 35, y + (Math.random() - 0.5) * 35, type, this.time, buff));
+        
+        // Pack enemies spawn together
+        if (ENEMIES[type].pack) {
+            const packSize = 2 + Math.floor(this.player.curse * 0.5); // More pack members with curse
+            for (let i = 0; i < packSize; i++) {
+                this.enemies.push(new Enemy(x + (Math.random() - 0.5) * 35, y + (Math.random() - 0.5) * 35, type, this.time, buff));
+            }
+        }
     }
     
     killEnemy(enemy) {
