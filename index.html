@@ -460,13 +460,13 @@ const CONFIG = {
     MAX_UPGRADE_LEVEL: 20,
     BOSS_TIME: 600, // 10 minutes
     
-    // Enemy base stats
-    ENEMY_BASE_HP: 8,
-    ENEMY_BASE_ATK: 5,
-    ENEMY_BASE_SPEED: 55,
+    // Enemy base stats (BALANCED)
+    ENEMY_BASE_HP: 18,      // Was 8 - now takes 3-4 hits
+    ENEMY_BASE_ATK: 8,      // Was 5 - more threatening
+    ENEMY_BASE_SPEED: 60,   // Was 55 - slightly faster
     
-    // Scaling +20% per minute
-    SCALING_PER_MIN: 0.20,
+    // Scaling per minute (BALANCED)
+    SCALING_PER_MIN: 0.25,  // Was 0.20 - harder late game
     
     // Weapon base damage
     WEAPON_BASE_DMG: 5
@@ -702,14 +702,14 @@ const ITEMS = {
 
 // ==================== ENEMIES ====================
 const ENEMIES = {
-    // New animated enemies only
-    flyingEye: { name: 'العين الطائرة', hpM: 0.8, atkM: 0.8, spdM: 1.0, xp: 2, time: 0, color: '#ff4444', ranged: true },
-    goblin: { name: 'الغوبلين', hpM: 1, atkM: 1, spdM: 0.9, xp: 2, time: 0, color: '#44aa44' },
-    mushroom: { name: 'الفطر', hpM: 1.2, atkM: 1.1, spdM: 0.7, xp: 3, time: 60, color: '#cc88ff', ranged: true },
-    skeleton: { name: 'الهيكل العظمي', hpM: 1.5, atkM: 1.3, spdM: 0.75, xp: 4, time: 120, color: '#eeeecc' }
+    // BALANCED enemy stats
+    flyingEye: { name: 'العين الطائرة', hpM: 0.7, atkM: 0.7, spdM: 1.1, xp: 3, time: 0, color: '#ff4444', ranged: true },
+    goblin: { name: 'الغوبلين', hpM: 1.0, atkM: 1.0, spdM: 1.0, xp: 4, time: 0, color: '#44aa44' },
+    mushroom: { name: 'الفطر', hpM: 1.4, atkM: 1.2, spdM: 0.8, xp: 6, time: 30, color: '#cc88ff', ranged: true },
+    skeleton: { name: 'الهيكل العظمي', hpM: 2.0, atkM: 1.5, spdM: 0.85, xp: 8, time: 60, color: '#eeeecc' }
 };
 
-const BOSS = { name: 'ابو حلزه', hp: 8000, atk: 35, spd: 55, color: '#8b0000' };
+const BOSS = { name: 'ابو حلزه', hp: 12000, atk: 40, spd: 60, color: '#8b0000' };
 
 // ==================== ASSET LOADER ====================
 class AssetLoader {
@@ -1453,10 +1453,11 @@ class Player {
     }
     
     getDmg(w) {
-        let d = CONFIG.WEAPON_BASE_DMG + (w.level - 1) * 0.5;
+        // Base damage + level scaling (BALANCED: +1.5 per level instead of +0.5)
+        let d = CONFIG.WEAPON_BASE_DMG + (w.level - 1) * 1.5;
         // Damage upgrades add bonus damage based on rarity
         w.upgrades.forEach(u => {
-            if (u.type === 'damage' || !u.type) d += u.rarity.bonus * 1.5;
+            if (u.type === 'damage' || !u.type) d += u.rarity.bonus * 2;
         });
         d *= this.dmgMult;
         this.tempBuffs.filter(b => b.type === 'dmg').forEach(b => d *= (1 + b.val));
@@ -4051,9 +4052,9 @@ class Game {
         if (this.endlessMode) {
             // Endless mode: Boss spawns at 5min (phase1), 10min (phase2), 15min (phase3)
             const bossSchedule = [
-                { time: 300, phase: 1, hp: 800, atk: 8, name: 'ابو حلزه الصغير' },   // 5 min - weak
-                { time: 600, phase: 2, hp: 2500, atk: 15, name: 'ابو حلزه' },        // 10 min - medium
-                { time: 900, phase: 3, hp: 6000, atk: 25, name: 'ابو حلزه العظيم' }  // 15 min - strong
+                { time: 300, phase: 1, hp: 1500, atk: 12, name: 'ابو حلزه الصغير' },   // 5 min - challenging
+                { time: 600, phase: 2, hp: 4000, atk: 20, name: 'ابو حلزه' },          // 10 min - hard
+                { time: 900, phase: 3, hp: 10000, atk: 35, name: 'ابو حلزه العظيم' }   // 15 min - very hard
             ];
             
             const nextBoss = bossSchedule[this.endlessBossPhase];
