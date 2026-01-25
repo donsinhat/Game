@@ -519,6 +519,29 @@
         </div>
     </div>
     
+    <!-- Quit Confirmation Modal for Endless Mode -->
+    <div id="quitConfirmModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:1100;justify-content:center;align-items:center">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0a0a15);border:3px solid #ffd700;border-radius:20px;padding:30px;max-width:420px;width:90%">
+            <h2 style="color:#ffd700;text-align:center;margin-bottom:15px">🚪 تأكيد الخروج</h2>
+            <div id="quitConfirmStats" style="background:#0a0a15;border-radius:10px;padding:15px;margin-bottom:20px;text-align:center;border:1px solid #333"></div>
+            <p style="color:#fff;text-align:center;margin-bottom:20px;font-size:1rem">هل تريد رفع نتيجتك على قائمة الأبطال قبل الخروج؟</p>
+            <div id="quitScoreSection" style="margin-bottom:20px">
+                <div style="background:#1a1a2e;padding:15px;border-radius:10px;border:2px solid #ffd700">
+                    <p style="color:#ffd700;margin-bottom:10px;font-size:0.9rem">📝 اسمك في قائمة الأبطال:</p>
+                    <input type="text" id="quitPlayerNameInput" placeholder="اكتب اسمك..." maxlength="15" 
+                        style="padding:10px 15px;font-size:1rem;border-radius:8px;border:2px solid #ffd700;background:#0a0a1e;color:#fff;text-align:center;font-family:'PixelAE',sans-serif;width:100%;margin-bottom:10px;box-sizing:border-box">
+                    <button id="quitSubmitScoreBtn" class="btn" style="background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;padding:12px 25px;width:100%;font-size:1rem;font-weight:bold;border-radius:8px;border:none;cursor:pointer">
+                        ✅ احفظ نتيجتك واخرج
+                    </button>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px">
+                <button id="quitWithoutSaveBtn" class="btn" style="background:#8b4444;color:#fff;padding:12px 20px;flex:1;border-radius:8px;font-size:0.95rem">🚫 اخرج بدون حفظ</button>
+                <button id="cancelQuitBtn" class="btn" style="background:#444;color:#fff;padding:12px 20px;flex:1;border-radius:8px;font-size:0.95rem">↩️ رجوع</button>
+            </div>
+        </div>
+    </div>
+
     <div id="bossWarning">⚠️ تحذير! ⚠️<br><span style="font-size: 1.2rem;">ابو حلزه قادم!</span></div>
     <div id="pauseIndicator">⏸️ إيقاف مؤقت</div>
     
@@ -3609,6 +3632,13 @@ class Game {
         document.getElementById('resumeBtn').onclick = () => this.pause();
         document.getElementById('quitBtn').onclick = () => this.quitToMenu();
         
+        // Quit confirmation modal buttons (for endless mode)
+        document.getElementById('quitWithoutSaveBtn').onclick = () => this.doQuitToMenu();
+        document.getElementById('cancelQuitBtn').onclick = () => {
+            document.getElementById('quitConfirmModal').style.display = 'none';
+            document.getElementById('pauseMenu').style.display = 'flex';
+        };
+        
         // Volume controls
         document.getElementById('musicVolume').oninput = (e) => {
             const vol = e.target.value / 100;
@@ -4039,6 +4069,110 @@ class Game {
     }
     
     quitToMenu() {
+        // In endless mode, show confirmation dialog to submit score
+        if (this.endlessMode && this.player.kills > 0) {
+            this.showQuitConfirmation();
+            return;
+        }
+        this.doQuitToMenu();
+    }
+    
+    showQuitConfirmation() {
+        // Show stats
+        const m = Math.floor(this.time / 60), s = Math.floor(this.time % 60);
+        document.getElementById('quitConfirmStats').innerHTML = `
+            <p style="color:#ffd700;font-size:1.1rem;margin-bottom:8px">♾️ وضع اللانهائي</p>
+            <p style="color:#fff">⏱️ الوقت: ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}</p>
+            <p style="color:#fff">⭐ المستوى: ${this.player.level}</p>
+            <p style="color:#ff4444;font-size:1.2rem;font-weight:bold">💀 القتلى: ${this.player.kills}</p>
+        `;
+        
+        // Load saved name
+        const savedName = localStorage.getItem('goldblood_playerName') || '';
+        document.getElementById('quitPlayerNameInput').value = savedName;
+        
+        // Reset score section (in case it was modified)
+        const scoreSection = document.getElementById('quitScoreSection');
+        scoreSection.innerHTML = `
+            <div style="background:#1a1a2e;padding:15px;border-radius:10px;border:2px solid #ffd700">
+                <p style="color:#ffd700;margin-bottom:10px;font-size:0.9rem">📝 اسمك في قائمة الأبطال:</p>
+                <input type="text" id="quitPlayerNameInput" value="${savedName}" placeholder="اكتب اسمك..." maxlength="15" 
+                    style="padding:10px 15px;font-size:1rem;border-radius:8px;border:2px solid #ffd700;background:#0a0a1e;color:#fff;text-align:center;font-family:'PixelAE',sans-serif;width:100%;margin-bottom:10px;box-sizing:border-box">
+                <button id="quitSubmitScoreBtn" class="btn" style="background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;padding:12px 25px;width:100%;font-size:1rem;font-weight:bold;border-radius:8px;border:none;cursor:pointer">
+                    ✅ احفظ نتيجتك واخرج
+                </button>
+            </div>
+        `;
+        
+        // Bind submit score button
+        document.getElementById('quitSubmitScoreBtn').onclick = () => this.submitScoreAndQuit();
+        
+        // Show modal
+        document.getElementById('quitConfirmModal').style.display = 'flex';
+        document.getElementById('pauseMenu').style.display = 'none';
+    }
+    
+    async submitScoreAndQuit() {
+        const nameInput = document.getElementById('quitPlayerNameInput');
+        const name = nameInput.value.trim() || 'مجهول';
+        localStorage.setItem('goldblood_playerName', name);
+        
+        // Update high score
+        if (this.player.kills > this.highScore) { 
+            this.highScore = this.player.kills; 
+            localStorage.setItem('goldBloodHighScore', this.highScore.toString()); 
+            document.getElementById('highScore').textContent = this.highScore; 
+        }
+        
+        const scoreSection = document.getElementById('quitScoreSection');
+        scoreSection.innerHTML = '<p style="color:#ffd700;text-align:center;font-size:1.1rem">⏳ جاري رفع النتيجة...</p>';
+        
+        const entry = {
+            name,
+            kills: this.player.kills,
+            mode: 'endless',
+            level: this.player.level,
+            character: CHARACTERS[this.player.charId].name
+        };
+        
+        const success = await this.submitScoreOnline(entry);
+        
+        if (success) {
+            const leaderboard = await this.fetchLeaderboard();
+            const rank = leaderboard.findIndex(e => e.name === name && e.kills === entry.kills) + 1;
+            
+            scoreSection.innerHTML = `
+                <div style="background:#1a3320;padding:20px;border-radius:10px;border:2px solid #4f4;text-align:center">
+                    <p style="color:#4f4;font-size:1.3rem;margin-bottom:8px">✅ تم رفع نتيجتك!</p>
+                    <p style="color:#ffd700;font-size:1.1rem">🏆 ترتيبك العالمي: #${rank || '?'}</p>
+                </div>
+            `;
+            
+            // Auto quit after 2 seconds
+            setTimeout(() => {
+                document.getElementById('quitConfirmModal').style.display = 'none';
+                this.doQuitToMenu();
+            }, 2000);
+        } else {
+            scoreSection.innerHTML = `
+                <div style="background:#331a1a;padding:20px;border-radius:10px;border:2px solid #f44;text-align:center">
+                    <p style="color:#f44;font-size:1.1rem">❌ فشل الرفع</p>
+                    <p style="color:#888;font-size:0.9rem">تحقق من اتصالك بالإنترنت</p>
+                    <button id="retryQuitSubmitBtn" class="btn" style="background:#ffd700;color:#000;padding:8px 15px;margin-top:10px;border-radius:5px">🔄 حاول مرة أخرى</button>
+                </div>
+            `;
+            document.getElementById('retryQuitSubmitBtn').onclick = () => this.showQuitConfirmation();
+        }
+    }
+    
+    doQuitToMenu() {
+        // Update high score before quitting
+        if (this.player && this.player.kills > this.highScore) { 
+            this.highScore = this.player.kills; 
+            localStorage.setItem('goldBloodHighScore', this.highScore.toString()); 
+            document.getElementById('highScore').textContent = this.highScore; 
+        }
+        
         this.state = 'menu';
         this.audio.stopBGM();
         document.getElementById('pauseMenu').style.display = 'none';
@@ -4046,6 +4180,7 @@ class Game {
         document.getElementById('hud').style.display = 'none';
         document.getElementById('equipmentSlots').style.display = 'none';
         document.getElementById('miniMap').style.display = 'none';
+        document.getElementById('quitConfirmModal').style.display = 'none';
         document.getElementById('mainMenu').style.display = 'flex';
         if (this.baghdadUnlocked) { 
             document.getElementById('cityBaghdad').classList.remove('locked'); 
