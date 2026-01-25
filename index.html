@@ -460,6 +460,11 @@
                 <span class="hud-gold-icon">🪙</span>
                 <span class="hud-gold-text" id="goldText">0</span>
             </div>
+            <!-- Revive counter -->
+            <div id="reviveCounter" style="display:none;background:rgba(0,0,0,0.7);border:2px solid #ffd700;border-radius:8px;padding:4px 10px;margin-top:5px">
+                <span style="font-size:1.1rem">🍚</span>
+                <span id="reviveText" style="color:#ffd700;font-weight:bold;margin-left:4px">0</span>
+            </div>
         </div>
         <div class="hud-right">
             <span class="hud-stat level-text"><span class="hud-stat-icon">📊</span> <span id="levelText">Lv.1</span></span>
@@ -637,7 +642,10 @@ const CONFIG = {
     SCALING_PER_MIN: 0.30,  // +30% per minute - enemies stay dangerous
     
     // Weapon base damage
-    WEAPON_BASE_DMG: 5
+    WEAPON_BASE_DMG: 5,
+    
+    // Player speed cap (to prevent uncontrollable movement at high levels)
+    MAX_PLAYER_SPEED: 400   // Max speed cap (base is ~200)
 };
 
 // ==================== MAP TILES (arabtown-tile.png 246x135) ====================
@@ -1622,7 +1630,7 @@ class Player {
         this.books = [];
         this.xp = 0; this.level = 1; this.gold = 0; this.kills = 0;
         this.invuln = 0; this.facing = 1; this.vx = 0; this.vy = 0; this.anim = 0;
-        this.shield = 0; this.hasRevive = false; this.tempBuffs = [];
+        this.shield = 0; this.reviveCount = 0; this.tempBuffs = [];
         this.wTimers = {};
         this.width = 32; this.height = 45;
     }
@@ -1959,7 +1967,22 @@ class Player {
         game.audio.hit(); game.shake = 0.12;
         game.texts.push(new FloatText(this.x, this.y - 20, `-${Math.round(actual)}`, '#f00'));
         if (this.hp <= 0) {
-            if (this.hasRevive) { this.hasRevive = false; this.hp = this.maxHp * 0.5; this.invuln = 1.2; game.texts.push(new FloatText(this.x, this.y - 35, 'إحياء!', '#ffd700', 18)); }
+            if (this.reviveCount > 0) { 
+                this.reviveCount--; 
+                this.hp = this.maxHp * 0.5; 
+                this.invuln = 2.0; 
+                game.texts.push(new FloatText(this.x, this.y - 35, '🍚 إحياء!', '#ffd700', 22)); 
+                // Revive animation effects
+                game.shake = 0.3;
+                game.particles.emit(this.x, this.y, 30, { color: '#ffd700', minS: 100, maxS: 200, life: 1.0 });
+                game.particles.emit(this.x, this.y, 20, { color: '#ffffff', minS: 50, maxS: 150, life: 0.8 });
+                game.spriteEffects.push(new SpriteEffect(this.x, this.y, 'fx_heal', 24, 24, 6, 0.8, 3));
+                // Show remaining revives
+                if (this.reviveCount > 0) {
+                    game.texts.push(new FloatText(this.x, this.y - 55, `باقي ${this.reviveCount} عريكه`, '#ffffff', 14));
+                }
+                game.updateReviveUI();
+            }
             else game.over(false);
         }
     }
@@ -2720,6 +2743,7 @@ class Pickup {
         this.x = x; this.y = y; this.type = type; this.val = val; 
         this.bob = Math.random() * Math.PI * 2; 
         this.anim = Math.random() * 10; // Random start for animation
+        this.isGoldBag = false; // For consolidated gold
     }
     update(dt) { this.bob += dt * 3.5; this.anim += dt; }
     draw(ctx, cam, assets) {
@@ -2727,6 +2751,47 @@ class Pickup {
         
         // Use new animated sprites
         const isXP = this.type === 'xp';
+        const isGold = this.type === 'gold';
+        
+        // Gold bag (consolidated gold) - draw special
+        if (isGold && this.isGoldBag) {
+            // Draw gold bag with glow
+            const bagSize = Math.min(20 + this.val / 10, 35); // Size based on value
+            const glowIntensity = 10 + Math.sin(this.anim * 4) * 5;
+            
+            // Glow
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = glowIntensity;
+            
+            // Bag shape
+            ctx.fillStyle = '#8B6914'; // Brown bag
+            ctx.beginPath();
+            ctx.ellipse(sx, sy + bagSize * 0.1, bagSize * 0.5, bagSize * 0.4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Bag top (tie)
+            ctx.fillStyle = '#5C4A0E';
+            ctx.beginPath();
+            ctx.ellipse(sx, sy - bagSize * 0.25, bagSize * 0.2, bagSize * 0.15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Gold coins peeking out
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.arc(sx - bagSize * 0.15, sy - bagSize * 0.1, bagSize * 0.12, 0, Math.PI * 2);
+            ctx.arc(sx + bagSize * 0.1, sy - bagSize * 0.05, bagSize * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Value text
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px PixelAE';
+            ctx.textAlign = 'center';
+            ctx.fillText(this.val, sx, sy + bagSize * 0.55);
+            
+            return;
+        }
+        
         const sprite = isXP ? assets && assets.get('pickup_xp') : assets && assets.get('pickup_coin');
         
         if (sprite) {
@@ -2921,7 +2986,7 @@ const BUFF_TYPES = {
         color: '#4a9eff',
         effect: 'invincible',
         duration: 4,
-        dropChance: 0.008
+        dropChance: 0.004  // Reduced by 50%
     },
     clock: {
         name: 'تجميد الوقت',
@@ -2929,7 +2994,7 @@ const BUFF_TYPES = {
         color: '#9b59b6',
         effect: 'freezeTime',
         duration: 3,
-        dropChance: 0.006
+        dropChance: 0.003  // Reduced by 50%
     },
     goldBonus: {
         name: 'ذهب مضاعف',
@@ -2937,7 +3002,7 @@ const BUFF_TYPES = {
         color: '#ffd700',
         effect: 'doubleGold',
         duration: 10,
-        dropChance: 0.01
+        dropChance: 0.005  // Reduced by 50%
     },
     rage: {
         name: 'غضب',
@@ -2945,7 +3010,7 @@ const BUFF_TYPES = {
         color: '#ff4444',
         effect: 'rage',
         duration: 6,
-        dropChance: 0.008
+        dropChance: 0.004  // Reduced by 50%
     },
     magnet: {
         name: 'مغناطيس',
@@ -2953,7 +3018,7 @@ const BUFF_TYPES = {
         color: '#00ff88',
         effect: 'magnetPull',
         duration: 0, // Instant
-        dropChance: 0.012
+        dropChance: 0.006  // Reduced by 50%
     },
     nuke: {
         name: 'قنبلة',
@@ -2961,7 +3026,7 @@ const BUFF_TYPES = {
         color: '#ff6600',
         effect: 'nuke',
         duration: 0, // Instant
-        dropChance: 0.004
+        dropChance: 0.002  // Reduced by 50%
     }
 };
 
@@ -4246,16 +4311,12 @@ class Game {
                 break;
                 
             case 'magnetPull':
-                // Gradual pull: set magnet effect on all pickups
+                // Gradual pull: set magnet effect on pickups (XP and Gold ONLY, not items)
                 for (const p of this.pickups) {
                     p.magnetPull = true; // Flag for gradual pull
                     p.magnetSpeed = 800 + Math.random() * 400; // Fast pull speed
                 }
-                // Also pull items
-                for (const item of this.items) {
-                    item.magnetPull = true;
-                    item.magnetSpeed = 600 + Math.random() * 300;
-                }
+                // Items are NOT pulled by magnet anymore
                 this.texts.push(new FloatText(this.player.x, this.player.y - 40, '🧲 مغناطيس!', '#00ff88'));
                 break;
                 
@@ -4908,6 +4969,13 @@ class Game {
             }
         }
         
+        // Gold consolidation - combine nearby gold pickups into bags (every 2 seconds)
+        this.goldConsolidateTimer = (this.goldConsolidateTimer || 0) + dt;
+        if (this.goldConsolidateTimer >= 2.0) {
+            this.goldConsolidateTimer = 0;
+            this.consolidateGold();
+        }
+        
         // Item drops - collect all nearby items
         const nearbyItems = [];
         for (let i = this.items.length - 1; i >= 0; i--) {
@@ -5064,7 +5132,15 @@ class Game {
         // Enemy strength buff: base + curse effect + endless mode bonus
         // Curse makes enemies stronger (15% per curse level)
         const curseBuff = this.player.curse * 0.15;
-        const endlessBuff = this.endlessMode ? 0.25 : 0;
+        
+        // Endless mode: progressive scaling every 10 minutes
+        // Base: +25%, After 10min: +75%, After 20min: +125%, After 30min: +175%...
+        let endlessBuff = 0;
+        if (this.endlessMode) {
+            const minutes = Math.floor(this.time / 60);
+            const scalingTier = Math.floor(minutes / 10); // 0, 1, 2, 3...
+            endlessBuff = 0.25 + (scalingTier * 0.50); // +50% every 10 minutes
+        }
         const buff = this.player.enemyBuff + curseBuff + endlessBuff;
         
         this.enemies.push(new Enemy(x, y, type, this.time, buff));
@@ -5239,6 +5315,60 @@ class Game {
         }
     }
     
+    consolidateGold() {
+        // Find gold pickups and consolidate nearby ones into gold bags
+        const goldPickups = this.pickups.filter(p => p.type === 'gold' && !p.magnetPull);
+        if (goldPickups.length < 8) return; // Not enough to consolidate
+        
+        const consolidateRadius = 60; // Radius to check for nearby gold
+        const minToConsolidate = 5; // Minimum gold pickups to combine
+        
+        const processed = new Set();
+        const toRemove = [];
+        const toAdd = [];
+        
+        for (const gold of goldPickups) {
+            if (processed.has(gold)) continue;
+            
+            // Find all nearby gold pickups
+            const nearby = goldPickups.filter(g => 
+                !processed.has(g) && 
+                Math.hypot(g.x - gold.x, g.y - gold.y) < consolidateRadius
+            );
+            
+            if (nearby.length >= minToConsolidate) {
+                // Calculate center and total value
+                let totalVal = 0;
+                let centerX = 0, centerY = 0;
+                
+                for (const g of nearby) {
+                    totalVal += g.val;
+                    centerX += g.x;
+                    centerY += g.y;
+                    processed.add(g);
+                    toRemove.push(g);
+                }
+                
+                centerX /= nearby.length;
+                centerY /= nearby.length;
+                
+                // Create gold bag
+                const bag = new Pickup(centerX, centerY, 'gold', totalVal);
+                bag.isGoldBag = true;
+                toAdd.push(bag);
+            }
+        }
+        
+        // Remove old pickups and add gold bags
+        for (const gold of toRemove) {
+            const idx = this.pickups.indexOf(gold);
+            if (idx !== -1) this.pickups.splice(idx, 1);
+        }
+        for (const bag of toAdd) {
+            this.pickups.push(bag);
+        }
+    }
+    
     showItemPickup(drop) {
         this.state = 'itemPickup';
         this.pendingItem = drop;
@@ -5328,7 +5458,8 @@ class Game {
                 this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_ice', 24, 24, 5, 0.5, 2));
                 break;
             case 'revive': 
-                this.player.hasRevive = true; 
+                this.player.reviveCount++;
+                this.updateReviveUI(); 
                 this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'إحياء محفوظ!', '#ffd700')); 
                 this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.6, 2.5));
                 break;
@@ -5343,6 +5474,7 @@ class Game {
                 break;
             case 'permSpeed': 
                 this.player.speed += this.player.speed * item.val; 
+                this.player.speed = Math.min(this.player.speed, CONFIG.MAX_PLAYER_SPEED); // Cap speed
                 this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${Math.round(item.val * 100)}% سرعة`, '#8f8')); 
                 this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.4, 2));
                 break;
@@ -5628,7 +5760,10 @@ class Game {
         switch (book.stat) {
             case 'damage': this.player.dmgMult += v; break;
             case 'atkSpd': this.player.atkSpd += v; break;
-            case 'moveSpd': this.player.speed += this.player.speed * v; break;
+            case 'moveSpd': 
+                this.player.speed += this.player.speed * v; 
+                this.player.speed = Math.min(this.player.speed, CONFIG.MAX_PLAYER_SPEED); // Cap speed
+                break;
             case 'xp': this.player.xpMult += v; break;
             case 'maxHp': const inc = this.player.maxHp * v; this.player.maxHp += inc; this.player.hp += inc; break;
             case 'armor': this.player.armor += v * 6; break;
@@ -5728,6 +5863,18 @@ class Game {
         document.getElementById('killText').textContent = this.player.kills;
         const m = Math.floor(this.time / 60), s = Math.floor(this.time % 60);
         document.getElementById('timerText').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    
+    updateReviveUI() {
+        const counter = document.getElementById('reviveCounter');
+        const text = document.getElementById('reviveText');
+        if (this.player.reviveCount > 0) {
+            counter.style.display = 'flex';
+            counter.style.alignItems = 'center';
+            text.textContent = this.player.reviveCount;
+        } else {
+            counter.style.display = 'none';
+        }
     }
     
     draw() {
