@@ -2744,6 +2744,199 @@ class GroundBuff {
     }
 }
 
+// ==================== BREAKABLE POTS SYSTEM ====================
+const POT_TYPES = {
+    small: {
+        name: 'جرة صغيرة',
+        hp: 1,
+        size: 20,
+        color: '#8B4513',
+        xpDrop: [3, 8],
+        goldDrop: [2, 5],
+        goldChance: 0.3,
+        buffChance: 0.02
+    },
+    large: {
+        name: 'جرة كبيرة',
+        hp: 2,
+        size: 28,
+        color: '#A0522D',
+        xpDrop: [10, 25],
+        goldDrop: [8, 15],
+        goldChance: 0.5,
+        buffChance: 0.08
+    },
+    silver: {
+        name: 'جرة فضية',
+        hp: 2,
+        size: 24,
+        color: '#C0C0C0',
+        xpDrop: [20, 50],
+        goldDrop: [0, 0],
+        goldChance: 0,
+        buffChance: 0.1
+    },
+    gold: {
+        name: 'جرة ذهبية',
+        hp: 3,
+        size: 26,
+        color: '#FFD700',
+        xpDrop: [5, 10],
+        goldDrop: [30, 80],
+        goldChance: 1,
+        buffChance: 0.15
+    }
+};
+
+class BreakablePot {
+    constructor(x, y, type = 'small') {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.data = POT_TYPES[type];
+        this.hp = this.data.hp;
+        this.broken = false;
+        this.breakAnim = 0;
+        this.shake = 0;
+    }
+    
+    update(dt) {
+        if (this.shake > 0) this.shake -= dt * 10;
+        if (this.broken) {
+            this.breakAnim += dt * 5;
+        }
+    }
+    
+    takeDamage(dmg, game) {
+        if (this.broken) return;
+        this.hp -= dmg;
+        this.shake = 1;
+        
+        if (this.hp <= 0) {
+            this.broken = true;
+            this.onBreak(game);
+        }
+    }
+    
+    onBreak(game) {
+        // Spawn particles
+        game.particles.emit(this.x, this.y, 8, { 
+            color: this.data.color, 
+            minS: 40, maxS: 100, 
+            life: 0.4 
+        });
+        game.particles.dust(this.x, this.y);
+        
+        // Drop XP
+        const xpAmount = this.data.xpDrop[0] + Math.floor(Math.random() * (this.data.xpDrop[1] - this.data.xpDrop[0]));
+        for (let i = 0; i < 3; i++) {
+            game.pickups.push(new Pickup(
+                this.x + (Math.random() - 0.5) * 30,
+                this.y + (Math.random() - 0.5) * 30,
+                'xp',
+                Math.ceil(xpAmount / 3)
+            ));
+        }
+        
+        // Drop gold
+        if (Math.random() < this.data.goldChance) {
+            const goldAmount = this.data.goldDrop[0] + Math.floor(Math.random() * (this.data.goldDrop[1] - this.data.goldDrop[0]));
+            if (goldAmount > 0) {
+                game.pickups.push(new Pickup(
+                    this.x + (Math.random() - 0.5) * 20,
+                    this.y + (Math.random() - 0.5) * 20,
+                    'gold',
+                    goldAmount
+                ));
+                game.particles.gold(this.x, this.y);
+            }
+        }
+        
+        // Chance to drop buff
+        if (Math.random() < this.data.buffChance) {
+            const buffTypes = Object.keys(BUFF_TYPES);
+            const randomBuff = buffTypes[Math.floor(Math.random() * buffTypes.length)];
+            game.groundBuffs.push(new GroundBuff(this.x, this.y, randomBuff));
+        }
+    }
+    
+    draw(ctx, cam) {
+        if (this.broken && this.breakAnim > 1) return;
+        
+        const shakeX = this.shake > 0 ? (Math.random() - 0.5) * 3 : 0;
+        const sx = this.x - cam.x + shakeX;
+        const sy = this.y - cam.y;
+        const size = this.data.size;
+        
+        if (this.broken) {
+            ctx.globalAlpha = 1 - this.breakAnim;
+        }
+        
+        // Draw pot body (ellipse)
+        ctx.fillStyle = this.data.color;
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, size/2, size/2 * 0.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Pot neck
+        ctx.fillStyle = this.data.color;
+        ctx.fillRect(sx - size/4, sy - size/2 * 0.7 - 6, size/2, 8);
+        
+        // Pot rim
+        ctx.fillStyle = this.type === 'gold' ? '#FFA500' : (this.type === 'silver' ? '#888' : '#654321');
+        ctx.fillRect(sx - size/3, sy - size/2 * 0.7 - 8, size/1.5, 3);
+        
+        // Highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(sx - size/6, sy - size/6, size/6, size/8, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.ellipse(sx, sy + size/2 * 0.5, size/2 * 0.8, size/6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.globalAlpha = 1;
+    }
+    
+    isInRange(x, y, range) {
+        return Math.hypot(this.x - x, this.y - y) < range + this.data.size/2;
+    }
+}
+
+// Pot Manager - spawns pots on map
+const PotManager = {
+    potsPerGame: 40,
+    
+    spawnPots(worldSize) {
+        const pots = [];
+        const margin = 200;
+        const safeZone = 300;
+        
+        for (let i = 0; i < this.potsPerGame; i++) {
+            let x, y, attempts = 0;
+            do {
+                x = (Math.random() - 0.5) * (worldSize - margin * 2);
+                y = (Math.random() - 0.5) * (worldSize - margin * 2);
+                attempts++;
+            } while (Math.hypot(x, y) < safeZone && attempts < 30);
+            
+            // Random pot type with weighted distribution
+            const roll = Math.random();
+            let type;
+            if (roll < 0.5) type = 'small';
+            else if (roll < 0.8) type = 'large';
+            else if (roll < 0.95) type = 'silver';
+            else type = 'gold';
+            
+            pots.push(new BreakablePot(x, y, type));
+        }
+        return pots;
+    }
+};
+
 // Chest Manager - handles spawning and pricing
 const ChestManager = {
     basePrice: 30,
@@ -3027,6 +3220,7 @@ class Game {
         this.chests = []; // New chest system
         this.groundBuffs = []; // Ground buff drops
         this.activeBuffs = {}; // Active buff timers
+        this.pots = []; // Breakable pots
         this.texts = [];
         this.fx = [];
         this.spriteEffects = [];
@@ -3457,6 +3651,9 @@ class Game {
         ChestManager.reset();
         this.chests = ChestManager.spawnChests(CONFIG.WORLD_SIZE);
         
+        // Spawn breakable pots on map
+        this.pots = PotManager.spawnPots(CONFIG.WORLD_SIZE);
+        
         // Set character avatar in HUD
         const charIcons = {
             abuSulaiman: '👳',
@@ -3876,6 +4073,46 @@ class Game {
         }
         this.enemies = this.enemies.filter(e => e.hp > 0);
         
+        // Weapon damage to pots (orbit, aura, melee)
+        for (const pot of this.pots) {
+            if (pot.broken) continue;
+            
+            for (const w of this.player.weapons) {
+                const data = WEAPONS[w.id];
+                const range = this.player.getRange(w);
+                
+                if (data.type === 'orbit') {
+                    const orbitPositions = this.player.orbitPositions && this.player.orbitPositions[w.id];
+                    if (orbitPositions) {
+                        for (const pos of orbitPositions) {
+                            if (pos && pot.isInRange(pos.x, pos.y, 20)) {
+                                pot.takeDamage(1, this);
+                                break;
+                            }
+                        }
+                    }
+                } else if (data.type === 'aura') {
+                    if (this.player.auraDamageFrame && this.player.auraDamageFrame[w.id]) {
+                        if (pot.isInRange(this.player.x, this.player.y, range)) {
+                            pot.takeDamage(1, this);
+                        }
+                    }
+                } else if (data.type === 'melee') {
+                    const dist = Math.hypot(pot.x - this.player.x, pot.y - this.player.y);
+                    const ang = Math.atan2(pot.y - this.player.y, pot.x - this.player.x);
+                    const pAng = this.player.facing > 0 ? 0 : Math.PI;
+                    const weaponOffset = data.offset || 0;
+                    const minDist = weaponOffset > 0 ? weaponOffset * 0.5 : 0;
+                    if (dist >= minDist && dist < range && Math.abs(ang - pAng) < Math.PI / 2) {
+                        const timer = this.player.wTimers[w.id] || 0, cd = this.player.getCD(w);
+                        if (timer > cd * 0.82 && timer < cd * 0.95) {
+                            pot.takeDamage(1, this);
+                        }
+                    }
+                }
+            }
+        }
+        
         // Boss
         if (this.boss) {
             this.boss.update(dt, this.player, this);
@@ -4005,6 +4242,18 @@ class Game {
                 const hit = this.player.applyCrit(p.dmg);
                 this.boss.takeDmg(hit.dmg, this, hit.isCrit); 
                 this.proj.splice(i, 1); 
+            }
+            
+            // Check projectile hitting pots
+            for (const pot of this.pots) {
+                if (!pot.broken && pot.isInRange(p.x, p.y, p.size)) {
+                    pot.takeDamage(1, this);
+                    p.pierce = (p.pierce || 1) - 1;
+                    if (p.pierce <= 0) {
+                        this.proj.splice(i, 1);
+                        break;
+                    }
+                }
             }
         }
         
@@ -4153,6 +4402,17 @@ class Game {
                 delete this.activeBuffs[buffType];
                 // Remove buff effect
                 this.removeBuff(buffType);
+            }
+        }
+        
+        // Update breakable pots
+        for (let i = this.pots.length - 1; i >= 0; i--) {
+            const pot = this.pots[i];
+            pot.update(dt);
+            
+            // Remove broken pots after animation
+            if (pot.broken && pot.breakAnim > 1) {
+                this.pots.splice(i, 1);
             }
         }
         
@@ -4757,6 +5017,11 @@ class Game {
             chest.draw(ctx, this.cam, this.assets);
         }
         
+        // Draw breakable pots (behind items)
+        for (const pot of this.pots) {
+            pot.draw(ctx, this.cam);
+        }
+        
         // Draw ground buffs
         for (const buff of this.groundBuffs) {
             buff.draw(ctx, this.cam);
@@ -5341,6 +5606,19 @@ class Game {
             const dy = (chest.y - this.player.y) * scale;
             if (Math.abs(dx) < range * scale && Math.abs(dy) < range * scale) {
                 ctx.fillRect(cx + dx - 3, cy + dy - 3, 6, 6);
+            }
+        }
+        
+        // Draw pots (brown dots)
+        ctx.fillStyle = '#8B4513';
+        for (const pot of this.pots) {
+            if (pot.broken) continue;
+            const dx = (pot.x - this.player.x) * scale;
+            const dy = (pot.y - this.player.y) * scale;
+            if (Math.abs(dx) < range * scale && Math.abs(dy) < range * scale) {
+                ctx.beginPath();
+                ctx.arc(cx + dx, cy + dy, pot.type === 'gold' ? 3 : 2, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
         
