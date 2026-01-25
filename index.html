@@ -3523,30 +3523,38 @@ class Game {
                 const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
                 const bg = i === 0 ? '#ffd70030' : i === 1 ? '#c0c0c030' : i === 2 ? '#cd7f3230' : '#ffffff10';
                 const mode = entry.mode === 'endless' ? '♾️' : '🏜️';
-                // Get character emoji based on name
-                const charEmoji = this.getCharacterEmoji(entry.character);
-                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:${bg};border-radius:8px;border:1px solid #333">
-                    <span style="color:#ffd700;font-weight:bold;min-width:30px">${medal}</span>
-                    <span style="font-size:1.2rem;margin:0 5px" title="${entry.character || 'غير معروف'}">${charEmoji}</span>
-                    <span style="color:#fff;flex:1;margin:0 8px;text-align:right;font-size:0.85rem">${entry.name}</span>
-                    <span style="color:#ff8800;font-weight:bold;font-size:0.9rem">💀${entry.kills}</span>
-                    <span style="margin-left:5px;font-size:0.8rem">${mode}</span>
+                // Get character sprite
+                const charSprite = this.getCharacterSpriteHTML(entry.character);
+                return `<div style="display:flex;align-items:center;padding:8px 12px;background:${bg};border-radius:8px;border:1px solid #333;gap:8px">
+                    <span style="color:#ffd700;font-weight:bold;min-width:28px;text-align:center">${medal}</span>
+                    ${charSprite}
+                    <span style="color:#fff;flex:1;text-align:right;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${entry.name}</span>
+                    <span style="color:#ff8800;font-weight:bold;font-size:0.85rem;min-width:50px;text-align:right">💀${entry.kills}</span>
+                    <span style="font-size:0.75rem">${mode}</span>
                 </div>`;
             }).join('');
         }
     }
     
-    getCharacterEmoji(charName) {
-        // Map character names to emojis
-        const charEmojis = {
-            'أبو سليمان': '💰',
-            'أبو نورة': '🏃',
-            'أم فهد': '⚡',
-            'ساموراي': '⚔️',
-            'ليلى': '🔮',
-            'الأمير': '👑'
+    getCharacterSpriteHTML(charName) {
+        // Map character names to their sprite asset paths
+        const charSprites = {
+            'أبو سليمان': 'assets/characters/Elder/abusulaiman_frame1.png',
+            'أبو نورة': 'assets/characters/Jayzen/Jayzan_Idle.png',
+            'أم فهد': 'assets/characters/Water Priestess/noura_frame1.png',
+            'ساموراي': 'assets/characters/Samurai/Samurai_Idle.png',
+            'ليلى': 'assets/characters/Flame Keeper/Flame_Keeper_Idle.png',
+            'الأمير': 'assets/characters/Prince/Prince_Idle.png'
         };
-        return charEmojis[charName] || '👤';
+        
+        const spritePath = charSprites[charName];
+        if (spritePath) {
+            return `<div style="width:28px;height:28px;background:#1a1a2e;border:2px solid #444;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center">
+                <img src="${spritePath}" style="width:24px;height:24px;object-fit:contain;image-rendering:pixelated;" title="${charName}">
+            </div>`;
+        }
+        // Fallback to first letter
+        return `<div style="width:28px;height:28px;background:#1a1a2e;border:2px solid #444;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#ffd700;font-size:14px;font-weight:bold" title="${charName || 'غير معروف'}">${(charName || '?')[0]}</div>`;
     }
     
     async submitScore() {
