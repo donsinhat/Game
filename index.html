@@ -460,13 +460,13 @@ const CONFIG = {
     MAX_UPGRADE_LEVEL: 10,  // Reduced from 20 - each level more impactful
     BOSS_TIME: 600, // 10 minutes
     
-    // Enemy base stats (BALANCED)
-    ENEMY_BASE_HP: 18,      // Was 8 - now takes 3-4 hits
-    ENEMY_BASE_ATK: 8,      // Was 5 - more threatening
-    ENEMY_BASE_SPEED: 60,   // Was 55 - slightly faster
+    // Enemy base stats (BALANCED for challenge)
+    ENEMY_BASE_HP: 22,      // Takes 4-5 hits early game
+    ENEMY_BASE_ATK: 10,     // More threatening - forces dodging
+    ENEMY_BASE_SPEED: 65,   // Keeps pressure on player
     
-    // Scaling per minute (BALANCED)
-    SCALING_PER_MIN: 0.25,  // Was 0.20 - harder late game
+    // Scaling per minute (BALANCED for late game challenge)
+    SCALING_PER_MIN: 0.30,  // +30% per minute - enemies stay dangerous
     
     // Weapon base damage
     WEAPON_BASE_DMG: 5
@@ -1475,15 +1475,13 @@ class Player {
     }
     
     getProjectileCount(w) {
-        // Count upgrades add extra projectiles based on rarity
-        // COMMON: +1, UNCOMMON: +1, RARE: +2, EPIC: +2, LEGENDARY: +3
+        // Count upgrades add extra projectiles (BALANCED: +1 per upgrade, max 5 total)
+        // This makes count upgrades valuable but not game-breaking
         let count = 1;
         w.upgrades.forEach(u => {
-            if (u.type === 'count') {
-                count += 1 + Math.floor(u.rarity.bonus);
-            }
+            if (u.type === 'count') count += 1; // Always +1, rarity affects other aspects
         });
-        return Math.min(count, 8);
+        return Math.min(count, 5); // Max 5 projectiles (was 8)
     }
     
     getCD(w) { 
@@ -1552,10 +1550,9 @@ class Player {
         this.weapons.forEach(w => {
             const data = WEAPONS[w.id];
             if (data.type === 'orbit') {
-                // Start with 1, add level bonus + count upgrades
-                const baseCount = 1 + Math.floor(w.level / 2); // Start at 1, +1 every 2 levels
-                const countBonus = this.getProjectileCount(w) - 1;
-                const n = baseCount + countBonus;
+                // Orbit count: base 1 + count upgrades only (no level bonus)
+                // This makes count upgrades the way to get more orbs
+                const n = this.getProjectileCount(w);
                 const range = this.getRange(w);
                 const rotationSpeed = 2 * atkSpdMult;
                 
@@ -1996,10 +1993,8 @@ class Player {
             const weaponOffset = data.offset || 0;
             
             if (data.type === 'orbit') {
-                // Start with 1, add level bonus + count upgrades
-                const baseCount = 1 + Math.floor(w.level / 2); // Start at 1, +1 every 2 levels
-                const countBonus = this.getProjectileCount(w) - 1; // Extra from upgrades
-                const n = baseCount + countBonus;
+                // Orbit count: base 1 + count upgrades only
+                const n = this.getProjectileCount(w);
                 const frameTime = 1 / weaponFps;
                 const totalFrames = data.frames || 10;
                 const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
@@ -2227,21 +2222,33 @@ class Player {
 
 // ==================== ENEMY ====================
 class Enemy {
-    constructor(x, y, type, gameTime, buff = 0) {
+    constructor(x, y, type, gameTime, buff = 0, isElite = false) {
         this.x = x; this.y = y; this.type = type;
+        this.isElite = isElite;
         const e = ENEMIES[type];
         const scale = 1 + (gameTime / 60) * CONFIG.SCALING_PER_MIN;
         const buffScale = 1 + buff;
-        this.maxHp = Math.round(CONFIG.ENEMY_BASE_HP * e.hpM * scale * buffScale);
+        
+        // Elite enemies: 3x HP, 1.5x damage, 1.2x speed, 4x XP
+        const eliteMultHP = isElite ? 3 : 1;
+        const eliteMultATK = isElite ? 1.5 : 1;
+        const eliteMultSPD = isElite ? 1.2 : 1;
+        const eliteMultXP = isElite ? 4 : 1;
+        
+        this.maxHp = Math.round(CONFIG.ENEMY_BASE_HP * e.hpM * scale * buffScale * eliteMultHP);
         this.hp = this.maxHp;
-        this.atk = CONFIG.ENEMY_BASE_ATK * e.atkM * scale * buffScale;
-        this.spd = CONFIG.ENEMY_BASE_SPEED * e.spdM;
-        this.xp = e.xp; this.color = e.color;
+        this.atk = CONFIG.ENEMY_BASE_ATK * e.atkM * scale * buffScale * eliteMultATK;
+        this.spd = CONFIG.ENEMY_BASE_SPEED * e.spdM * eliteMultSPD;
+        this.xp = Math.round(e.xp * eliteMultXP);
+        this.color = e.color;
         this.vx = 0; this.vy = 0; this.hitFlash = 0; this.slow = 1; this.slowT = 0;
         this.zigT = 0; this.zigD = 1; this.tpT = 0; this.atkT = 0;
-        this.width = 28; this.height = 28;
+        // Elite enemies are 40% bigger
+        this.width = isElite ? 40 : 28;
+        this.height = isElite ? 40 : 28;
         this.zig = e.zig; this.ranged = e.ranged; this.tp = e.tp;
         this.animTime = Math.random() * 2; // Random start for animation variety
+        this.glowPhase = 0; // For elite glow animation
     }
     
     update(dt, player, enemies, game) {
@@ -2274,11 +2281,38 @@ class Enemy {
     
     draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y;
+        
+        // Elite glow effect - pulsing orange/red aura
+        if (this.isElite) {
+            this.glowPhase += 0.1;
+            const glowIntensity = 0.4 + Math.sin(this.glowPhase) * 0.2;
+            const glowSize = 25 + Math.sin(this.glowPhase * 2) * 5;
+            
+            // Outer glow
+            ctx.save();
+            ctx.shadowColor = '#ff4400';
+            ctx.shadowBlur = glowSize;
+            ctx.fillStyle = `rgba(255, 68, 0, ${glowIntensity * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, this.width / 2 + 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            // Elite crown/indicator above
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('👑', sx, sy - this.height / 2 - 12);
+        }
+        
         if (this.hitFlash > 0) ctx.globalAlpha = 0.55;
         
         // Try to draw sprite if available
         const spriteInfo = ENEMY_SPRITES[this.type];
         const sprite = assets && spriteInfo && assets.get(spriteInfo.sprite);
+        
+        // Elite enemies are 40% bigger
+        const eliteScale = this.isElite ? 1.4 : 1.0;
         
         if (sprite) {
             ctx.save();
@@ -2293,7 +2327,7 @@ class Enemy {
                 const currentFrame = Math.floor(this.animTime * fps) % totalFrames;
                 const frameX = currentFrame * frameW;
                 
-                const scale = 0.95; // +25% bigger (was 0.75)
+                const scale = 0.95 * eliteScale;
                 const drawW = frameW * scale;
                 const drawH = frameH * scale;
                 
@@ -2307,7 +2341,7 @@ class Enemy {
                 }
             } else {
                 // Static sprite
-                const scale = 0.75; // +25% bigger (was 0.6)
+                const scale = 0.75 * eliteScale;
                 const drawW = spriteInfo.width * scale;
                 const drawH = spriteInfo.height * scale;
                 
@@ -2323,10 +2357,11 @@ class Enemy {
             
             ctx.restore();
         } else {
-            // Fallback to colored circle
-            ctx.fillStyle = this.color;
+            // Fallback to colored circle (bigger for elite)
+            const radius = this.isElite ? 20 : 14;
+            ctx.fillStyle = this.isElite ? '#ff4400' : this.color;
             ctx.beginPath(); 
-            ctx.arc(sx, sy, 14, 0, Math.PI * 2); 
+            ctx.arc(sx, sy, radius, 0, Math.PI * 2); 
             ctx.fill();
             // Eyes
             ctx.fillStyle = '#ff0';
@@ -2336,7 +2371,7 @@ class Enemy {
         
         ctx.globalAlpha = 1;
         
-        // Health bar with better styling
+        // Health bar with better styling (wider for elite)
         if (this.hp < this.maxHp) { 
             const barWidth = 36;
             const barHeight = 5;
@@ -4111,6 +4146,33 @@ class Game {
         this.cam.y = this.player.y - this.canvas.height / 2;
         if (this.shake > 0) { this.shake -= dt; this.cam.x += (Math.random() - 0.5) * 6; this.cam.y += (Math.random() - 0.5) * 6; }
         
+        // ===== "القلهي" WAVE SYSTEM - Hard waves every 3 minutes =====
+        // Waves at 3:00, 6:00, 9:00, etc.
+        const waveInterval = 180; // Every 3 minutes
+        const currentWaveNum = Math.floor(this.time / waveInterval);
+        
+        if (!this.lastGalhiWave) this.lastGalhiWave = -1;
+        if (!this.galhiWaveActive) this.galhiWaveActive = false;
+        if (!this.galhiWaveTimer) this.galhiWaveTimer = 0;
+        
+        // Check if we should trigger a new wave
+        if (currentWaveNum > this.lastGalhiWave && this.time >= waveInterval) {
+            // Show warning 5 seconds before wave
+            const timeIntoWave = this.time - (currentWaveNum * waveInterval);
+            
+            if (timeIntoWave < 0.1 && !this.galhiWarnShown) {
+                this.galhiWarnShown = true;
+                this.showGalhiWarning(currentWaveNum);
+                
+                // Spawn the wave after 2 seconds
+                setTimeout(() => {
+                    this.spawnGalhiWave(currentWaveNum);
+                    this.lastGalhiWave = currentWaveNum;
+                    this.galhiWarnShown = false;
+                }, 2000);
+            }
+        }
+        
         // Spawn enemies
         // In endless mode, spawn continuously. In normal mode, stop when boss spawns
         // Don't spawn during boss fight in endless mode
@@ -4669,6 +4731,116 @@ class Game {
                 this.enemies.push(new Enemy(x + (Math.random() - 0.5) * 35, y + (Math.random() - 0.5) * 35, type, this.time, buff));
             }
         }
+        
+        // Chance to spawn ELITE enemy (increases over time)
+        // 2% at minute 0, +1% per minute, max 15%
+        const eliteChance = Math.min(0.02 + (this.time / 60) * 0.01, 0.15);
+        if (Math.random() < eliteChance) {
+            const eliteX = x + (Math.random() - 0.5) * 50;
+            const eliteY = y + (Math.random() - 0.5) * 50;
+            this.enemies.push(new Enemy(eliteX, eliteY, type, this.time, buff, true)); // true = elite
+        }
+    }
+    
+    // ===== القلهي WAVE SYSTEM =====
+    showGalhiWarning(waveNum) {
+        // Create or show warning element
+        let warning = document.getElementById('galhiWarning');
+        if (!warning) {
+            warning = document.createElement('div');
+            warning.id = 'galhiWarning';
+            warning.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, rgba(139, 0, 0, 0.95), rgba(60, 0, 0, 0.95));
+                border: 4px solid #ff4400; border-radius: 12px;
+                padding: 25px 50px; z-index: 1000;
+                font-family: 'PixelAE', monospace; text-align: center;
+                animation: galhiPulse 0.3s ease-in-out infinite alternate;
+                box-shadow: 0 0 50px rgba(255, 68, 0, 0.8), inset 0 0 30px rgba(255, 100, 0, 0.3);
+            `;
+            document.body.appendChild(warning);
+            
+            // Add animation keyframes
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes galhiPulse {
+                    0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 50px rgba(255, 68, 0, 0.8); }
+                    100% { transform: translate(-50%, -50%) scale(1.05); box-shadow: 0 0 80px rgba(255, 68, 0, 1); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        const waveNames = ['', 'الموجة الأولى', 'الموجة الثانية', 'الموجة الثالثة', 'الموجة الرابعة', 'الموجة الخامسة'];
+        const waveName = waveNames[Math.min(waveNum, 5)] || `موجة ${waveNum}`;
+        
+        warning.innerHTML = `
+            <div style="font-size: 2.5rem; color: #ff4400; text-shadow: 0 0 20px #ff4400; margin-bottom: 10px;">⚠️ القلهي جايك! ⚠️</div>
+            <div style="font-size: 1.2rem; color: #ffd700; text-shadow: 0 0 10px #ffd700;">${waveName}</div>
+        `;
+        warning.style.display = 'block';
+        
+        // Screen shake
+        this.shake = 1.5;
+        
+        // Warning sound
+        this.audio.play(150, 0.3, 0.2, 'sawtooth');
+        setTimeout(() => this.audio.play(100, 0.4, 0.3, 'sawtooth'), 200);
+        
+        // Hide after 2 seconds
+        setTimeout(() => { warning.style.display = 'none'; }, 2000);
+    }
+    
+    spawnGalhiWave(waveNum) {
+        // Wave intensity scales with wave number
+        const baseEnemies = 15 + waveNum * 8; // 23, 31, 39, 47...
+        const eliteCount = 1 + Math.floor(waveNum / 2); // 1, 1, 2, 2, 3...
+        
+        const avail = Object.entries(ENEMIES).filter(([, e]) => this.time >= e.time);
+        const screenW = this.canvas.width / 2 + 100;
+        const screenH = this.canvas.height / 2 + 100;
+        
+        const curseBuff = this.player.curse * 0.15;
+        const endlessBuff = this.endlessMode ? 0.25 : 0;
+        const waveBuff = waveNum * 0.1; // +10% per wave
+        const buff = this.player.enemyBuff + curseBuff + endlessBuff + waveBuff;
+        
+        // Spawn regular enemies in a circle around player
+        for (let i = 0; i < baseEnemies; i++) {
+            const angle = (i / baseEnemies) * Math.PI * 2 + Math.random() * 0.5;
+            const distance = screenW + Math.random() * 50;
+            const x = this.player.x + Math.cos(angle) * distance;
+            const y = this.player.y + Math.sin(angle) * distance;
+            
+            const typeIdx = Math.floor(Math.random() * avail.length);
+            const type = avail[typeIdx][0];
+            
+            this.enemies.push(new Enemy(x, y, type, this.time, buff));
+        }
+        
+        // Spawn elite enemies
+        for (let i = 0; i < eliteCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = screenW + Math.random() * 30;
+            const x = this.player.x + Math.cos(angle) * distance;
+            const y = this.player.y + Math.sin(angle) * distance;
+            
+            const typeIdx = Math.floor(Math.random() * avail.length);
+            const type = avail[typeIdx][0];
+            
+            this.enemies.push(new Enemy(x, y, type, this.time, buff, true)); // Elite!
+        }
+        
+        // Visual effect - particles around screen
+        for (let i = 0; i < 30; i++) {
+            const angle = (i / 30) * Math.PI * 2;
+            const px = this.player.x + Math.cos(angle) * 300;
+            const py = this.player.y + Math.sin(angle) * 300;
+            this.particles.emit(px, py, 5, { color: '#ff4400', minS: 100, maxS: 200, size: 4, life: 1.0 });
+        }
+        
+        // Floating text
+        this.texts.push(new FloatText(this.player.x, this.player.y - 60, `القلهي! +${baseEnemies + eliteCount}`, '#ff4400', 24));
     }
     
     killEnemy(enemy) {
@@ -4935,10 +5107,10 @@ class Game {
                 let types = ['damage', 'count', 'cooldown'];
                 const typeNames = { damage: '⚔️ ضرر', count: '🎯 عدد', cooldown: '⚡ سرعة' };
                 
-                // If weapon reached max count (10), remove count from upgrade options
+                // If weapon reached max count (5), remove count from upgrade options
                 if (!c.isNew && w) {
                     const currentCount = this.player.getProjectileCount(w);
-                    if (currentCount >= 10) {
+                    if (currentCount >= 5) {
                         types = types.filter(t => t !== 'count');
                     }
                 }
@@ -4961,9 +5133,8 @@ class Game {
                             <div style="font-size:0.5rem;color:#ff0">${Math.round(currentBaseDmg)} → ${Math.round(nextBaseDmg)}</div>`;
                     } else if (upgradeType === 'count') {
                         const currentCount = this.player.getProjectileCount(w);
-                        const addCount = rar.bonus; // COMMON=1, UNCOMMON=2, RARE=3, EPIC=4, LEGENDARY=5
-                        const newCount = Math.min(currentCount + addCount, 10); // Max 10 projectiles
-                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]}</div>
+                        const newCount = Math.min(currentCount + 1, 5); // +1 per upgrade, max 5
+                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]} +1</div>
                             <div style="font-size:0.5rem;color:#ff0">${currentCount} → ${newCount}</div>`;
                     } else if (upgradeType === 'cooldown') {
                         const wData = WEAPONS[w.id];
