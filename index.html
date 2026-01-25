@@ -457,7 +457,7 @@ const CONFIG = {
     PLAYER_LIGHT_RADIUS: 300,
     MAX_WEAPONS: 4,
     MAX_BOOKS: 4,
-    MAX_UPGRADE_LEVEL: 20,
+    MAX_UPGRADE_LEVEL: 10,  // Reduced from 20 - each level more impactful
     BOSS_TIME: 600, // 10 minutes
     
     // Enemy base stats (BALANCED)
@@ -661,17 +661,18 @@ const WEAPONS = {
 
 // ==================== BOOKS ====================
 const BOOKS = {
-    power: { name: 'كتاب القوة', desc: 'يزيد قوة الهجوم', stat: 'damage', val: 0.08, icon: '📕' },
-    speed: { name: 'كتاب السرعة', desc: 'يزيد سرعة الهجوم', stat: 'atkSpd', val: 0.06, icon: '📗' },
-    wind: { name: 'كتاب الريح', desc: 'يزيد سرعة الحركة', stat: 'moveSpd', val: 0.05, icon: '📘' },
-    wisdom: { name: 'كتاب الحكمة', desc: 'يزيد الخبرة المكتسبة', stat: 'xp', val: 0.10, icon: '📙' },
-    life: { name: 'كتاب الحياة', desc: 'يزيد الصحة القصوى', stat: 'maxHp', val: 0.08, icon: '📓' },
-    armor: { name: 'كتاب الدرع', desc: 'يقلل الضرر المستلم', stat: 'armor', val: 0.04, icon: '📔' },
-    magnet: { name: 'كتاب المغناطيس', desc: 'يزيد مدى جمع الأيتمات', stat: 'pickup', val: 0.12, icon: '📒' },
-    luck: { name: 'كتاب الحظ', desc: 'يزيد حظ دروب الأيتمات', stat: 'luck', val: 0.08, icon: '📚' },
-    curse: { name: 'كتاب اللعنة', desc: 'أعداء أكثر، خبرة أكثر', stat: 'curse', val: 0.15, icon: '📖' },
-    regen: { name: 'كتاب التجديد', desc: 'شفاء مستمر كل ثانية', stat: 'regen', val: 0.8, icon: '📜' },
-    critical: { name: 'كتاب الضربة الحرجة', desc: 'يزيد نسبة الضربة الحرجة', stat: 'crit', val: 0.04, icon: '💥' }
+    // BALANCED - bigger bonuses per level to feel impactful
+    power: { name: 'كتاب القوة', desc: '+15% قوة الهجوم', stat: 'damage', val: 0.15, icon: '📕' },
+    speed: { name: 'كتاب السرعة', desc: '+12% سرعة الهجوم', stat: 'atkSpd', val: 0.12, icon: '📗' },
+    wind: { name: 'كتاب الريح', desc: '+10% سرعة الحركة', stat: 'moveSpd', val: 0.10, icon: '📘' },
+    wisdom: { name: 'كتاب الحكمة', desc: '+15% الخبرة المكتسبة', stat: 'xp', val: 0.15, icon: '📙' },
+    life: { name: 'كتاب الحياة', desc: '+15% الصحة القصوى', stat: 'maxHp', val: 0.15, icon: '📓' },
+    armor: { name: 'كتاب الدرع', desc: '+8% تقليل الضرر', stat: 'armor', val: 0.08, icon: '📔' },
+    magnet: { name: 'كتاب المغناطيس', desc: '+20% مدى الجمع', stat: 'pickup', val: 0.20, icon: '📒' },
+    luck: { name: 'كتاب الحظ', desc: '+12% حظ الدروب', stat: 'luck', val: 0.12, icon: '📚' },
+    curse: { name: 'كتاب اللعنة', desc: '+20% أعداء وخبرة', stat: 'curse', val: 0.20, icon: '📖' },
+    regen: { name: 'كتاب التجديد', desc: '+1.5 شفاء/ثانية', stat: 'regen', val: 1.5, icon: '📜' },
+    critical: { name: 'كتاب الضربة الحرجة', desc: '+6% ضربة حرجة', stat: 'crit', val: 0.06, icon: '💥' }
 };
 
 // ==================== ITEMS ====================
@@ -1453,11 +1454,12 @@ class Player {
     }
     
     getDmg(w) {
-        // Base damage + level scaling (BALANCED: +1.5 per level instead of +0.5)
-        let d = CONFIG.WEAPON_BASE_DMG + (w.level - 1) * 1.5;
+        // Base damage + EXPONENTIAL level scaling (each level = +20% more damage)
+        // Level 1: 5, Level 5: 10.4, Level 10: 25.9, Level 20: 134
+        let d = CONFIG.WEAPON_BASE_DMG * Math.pow(1.18, w.level - 1);
         // Damage upgrades add bonus damage based on rarity
         w.upgrades.forEach(u => {
-            if (u.type === 'damage' || !u.type) d += u.rarity.bonus * 2;
+            if (u.type === 'damage' || !u.type) d *= (1 + u.rarity.bonus * 0.15);
         });
         d *= this.dmgMult;
         this.tempBuffs.filter(b => b.type === 'dmg').forEach(b => d *= (1 + b.val));
