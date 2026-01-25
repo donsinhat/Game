@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
     <title>ذهب أصفر أو دم أحمر - Gold or Blood</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Changa:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -30,83 +30,199 @@
         .rarity-epic { color: #a335ee; }
         .rarity-legendary { color: #ff8000; }
         
-        #mainMenu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: linear-gradient(180deg, rgba(10,10,15,0.97) 0%, rgba(26,26,46,0.98) 100%); padding: 20px; }
-        .menu-title { font-size: clamp(1.5rem, 5vw, 2.5rem); font-weight: 900; text-align: center; margin-bottom: 5px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 50%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .menu-subtitle { font-size: clamp(0.8rem, 2.5vw, 1rem); color: #888; margin-bottom: 20px; }
+        /* Safe area for mobile browsers */
+        :root {
+            --safe-top: env(safe-area-inset-top, 10px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --safe-left: env(safe-area-inset-left, 15px);
+            --safe-right: env(safe-area-inset-right, 15px);
+        }
         
-        .character-select { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        #mainMenu { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: flex-start; /* Changed from center to allow scrolling */
+            z-index: 100; background: linear-gradient(180deg, rgba(10,10,15,0.97) 0%, rgba(26,26,46,0.98) 100%); 
+            padding: 15px;
+            padding-top: max(15px, var(--safe-top));
+            padding-bottom: max(20px, var(--safe-bottom));
+            padding-left: max(10px, var(--safe-left));
+            padding-right: max(10px, var(--safe-right));
+            box-sizing: border-box;
+            overflow-y: auto; /* Allow scrolling */
+            -webkit-overflow-scrolling: touch;
+            gap: 10px;
+        }
+        .menu-title { font-size: clamp(1.3rem, 4vw, 2rem); font-weight: 900; text-align: center; margin-bottom: 2px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 50%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .menu-subtitle { font-size: clamp(0.7rem, 2vw, 0.9rem); color: #888; margin-bottom: 8px; }
+        
+        .character-select { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-shrink: 0; }
         .char-arrow { width: 50px; height: 50px; background: rgba(255, 215, 0, 0.1); border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 50%; color: #ffd700; font-size: 1.5rem; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
         .char-arrow:hover { background: rgba(255, 215, 0, 0.2); border-color: #ffd700; transform: scale(1.1); }
         
-        .character-display { width: 280px; padding: 20px; background: rgba(30, 30, 40, 0.9); border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 20px; text-align: center; }
-        .char-preview { width: 120px; height: 120px; margin: 0 auto 15px; image-rendering: pixelated; border-radius: 10px; background: rgba(0,0,0,0.3); }
-        .char-name { font-size: 1.4rem; font-weight: 900; color: #ffd700; margin-bottom: 5px; }
-        .char-title { font-size: 0.85rem; color: #888; margin-bottom: 10px; }
-        .char-desc { font-size: 0.8rem; color: #aaa; margin-bottom: 12px; line-height: 1.4; min-height: 40px; }
-        .char-stats { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-bottom: 10px; }
-        .char-stat { display: flex; justify-content: space-between; font-size: 0.8rem; margin: 4px 0; }
+        .character-display { width: 260px; padding: 12px; background: rgba(30, 30, 40, 0.9); border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 15px; text-align: center; flex-shrink: 0; }
+        .char-preview { width: 90px; height: 90px; margin: 0 auto 8px; image-rendering: pixelated; border-radius: 8px; background: rgba(0,0,0,0.3); }
+        .char-name { font-size: 1.2rem; font-weight: 900; color: #ffd700; margin-bottom: 3px; }
+        .char-title { font-size: 0.75rem; color: #888; margin-bottom: 5px; }
+        .char-desc { font-size: 0.7rem; color: #aaa; margin-bottom: 8px; line-height: 1.3; min-height: 30px; }
+        .char-stats { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; margin-bottom: 8px; }
+        .char-stat { display: flex; justify-content: space-between; font-size: 0.7rem; margin: 3px 0; }
         .char-stat-label { color: #888; }
         .char-stat-value { color: #4f4; font-weight: bold; }
         .char-stat-negative { color: #f44; }
-        .char-weapon { font-size: 0.85rem; color: #ff8888; padding: 8px; background: rgba(255,0,0,0.1); border-radius: 8px; }
+        .char-weapon { font-size: 0.7rem; color: #ff8888; padding: 6px; background: rgba(255,0,0,0.1); border-radius: 6px; }
         
-        .city-select { display: flex; gap: 15px; margin-bottom: 25px; }
-        .city-card { width: 160px; padding: 15px; background: rgba(30, 30, 40, 0.9); border: 2px solid rgba(100, 100, 100, 0.3); border-radius: 15px; cursor: pointer; transition: all 0.3s; text-align: center; }
-        .city-card:hover:not(.locked), .city-card.selected { border-color: #ffd700; background: rgba(255, 215, 0, 0.1); transform: translateY(-5px); }
+        .city-select { 
+            display: flex; gap: 8px; margin-bottom: 10px; 
+            max-width: 100%; overflow-x: auto; 
+            padding: 5px; 
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            flex-shrink: 0;
+        }
+        .city-select::-webkit-scrollbar { display: none; }
+        .city-card { 
+            min-width: 95px; width: 95px; flex-shrink: 0;
+            padding: 10px 6px; background: rgba(30, 30, 40, 0.9); 
+            border: 2px solid rgba(100, 100, 100, 0.3); border-radius: 10px; 
+            cursor: pointer; transition: all 0.2s; text-align: center; 
+        }
+        .city-card:hover:not(.locked), .city-card.selected { border-color: #ffd700; background: rgba(255, 215, 0, 0.1); }
         .city-card.locked { opacity: 0.5; cursor: not-allowed; }
-        .city-icon { font-size: 2.5rem; margin-bottom: 8px; }
-        .city-name { font-size: 1rem; font-weight: bold; color: #ffd700; margin-bottom: 5px; }
+        .city-icon { font-size: 1.8rem; margin-bottom: 4px; }
+        .city-name { font-size: 0.8rem; font-weight: bold; color: #ffd700; margin-bottom: 3px; }
         .city-desc { font-size: 0.7rem; color: #888; }
         .city-locked { font-size: 0.7rem; color: #f44; margin-top: 8px; }
         
         .btn { padding: 12px 40px; font-size: 1.1rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
-        .btn-primary { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4); }
-        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5); }
-        .high-score { margin-top: 15px; font-size: 0.8rem; color: #666; }
+        .btn-primary { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4); }
+        .btn-primary:hover { transform: scale(1.03); box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5); }
+        .high-score { margin-top: 5px; font-size: 0.75rem; color: #666; }
         
-        /* Pixel-style HUD - Retro Style */
-        #hud { position: fixed; top: 0; left: 0; width: 100%; padding: 8px 12px; display: none; justify-content: space-between; align-items: flex-start; z-index: 50; pointer-events: none; image-rendering: pixelated; }
-        .hud-left, .hud-right { display: flex; flex-direction: column; gap: 4px; }
-        
-        /* Retro-style health/xp container */
-        .hud-bars-container { 
-            background: #3d3440; 
-            border: 3px solid #5a4d55; 
-            padding: 6px 10px 6px 45px; 
-            position: relative;
-            border-radius: 4px;
-            min-width: 160px;
+        /* Bottom buttons container with safe spacing */
+        .menu-buttons { 
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            width: 100%;
+            max-width: 280px;
+            flex-shrink: 0;
+            margin-top: auto; /* Push to bottom if there's space */
+            padding-bottom: 5px;
         }
+        
+        /* Pixel-style HUD - Retro Style (Like reference image) */
+        #hud { 
+            position: fixed; 
+            top: max(6px, var(--safe-top)); 
+            left: max(6px, var(--safe-left)); 
+            display: none; z-index: 50; pointer-events: none; 
+            image-rendering: pixelated; font-family: 'PixelAE', monospace; 
+        }
+        .hud-left { display: flex; flex-direction: column; gap: 2px; }
+        .hud-right { 
+            position: fixed; 
+            top: max(6px, var(--safe-top)); 
+            right: max(6px, var(--safe-right)); 
+            display: flex; flex-direction: column; gap: 3px; align-items: flex-end; 
+        }
+        
+        /* Main HUD panel - dark solid frame like reference */
+        .hud-panel { 
+            background: #2a2530;
+            border: 3px solid #1a1518;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Character avatar box - like reference bunny icon */
         .hud-avatar {
-            position: absolute;
-            left: -5px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 44px;
-            height: 44px;
-            background: #2d2530;
-            border: 3px solid #5a4d55;
-            border-radius: 4px;
+            width: 36px;
+            height: 36px;
+            background: #1a1518;
+            border: 2px solid #3a3540;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
         }
-        .hud-bar { width: 140px; height: 14px; background: #1a1518; border: 2px solid #2d2530; overflow: hidden; position: relative; border-radius: 2px; margin: 2px 0; }
-        .hud-bar-fill { height: 100%; transition: width 0.2s ease; position: relative; }
-        .hud-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.6rem; font-weight: bold; text-shadow: 1px 1px 0 #000; white-space: nowrap; z-index: 10; color: #fff; }
-        .health-fill { background: linear-gradient(180deg, #e85a5a 0%, #c43c3c 50%, #a32828 100%); }
-        .xp-fill { background: linear-gradient(180deg, #5ae85a 0%, #3cc43c 50%, #28a328 100%); }
         
-        .hud-stat { font-size: 0.75rem; font-weight: 700; text-shadow: 1px 1px 0 #000; display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: #3d3440; border: 2px solid #5a4d55; border-radius: 3px; }
-        .hud-stat-icon { font-size: 0.85rem; }
-        .gold-text { color: #f1c40f; }
+        /* Bars container */
+        .hud-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        /* HP/XP bars - pixel style like reference */
+        .hud-bar { 
+            width: 110px; 
+            height: 10px; 
+            background: #0a0808; 
+            border: 1px solid #3a3540;
+            overflow: hidden; 
+            position: relative;
+        }
+        .hud-bar-fill { height: 100%; transition: width 0.1s linear; }
+        .hud-bar-text { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 7px; 
+            font-weight: bold; 
+            text-shadow: 1px 1px 0 #000; 
+            white-space: nowrap; 
+            z-index: 10; 
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+        /* Red HP bar like reference */
+        .health-fill { background: linear-gradient(180deg, #ff4444 0%, #cc2222 100%); }
+        /* Green XP bar like reference */
+        .xp-fill { background: linear-gradient(180deg, #44ff44 0%, #22cc22 100%); }
+        
+        /* Gold counter - separate box below */
+        .hud-gold {
+            background: #2a2530;
+            border: 3px solid #1a1518;
+            padding: 2px 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 0px;
+        }
+        .hud-gold-icon { font-size: 14px; }
+        .hud-gold-text { color: #ffd700; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 0 #000; letter-spacing: 1px; }
+        
+        /* Right side stats - compact boxes */
+        .hud-stat { 
+            font-size: 11px; 
+            font-weight: 700; 
+            text-shadow: 1px 1px 0 #000; 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            padding: 3px 8px; 
+            background: #2a2530;
+            border: 2px solid #1a1518;
+            color: #fff;
+        }
+        .hud-stat-icon { font-size: 12px; }
         .kill-text { color: #ff6666; }
-        .level-text { color: #66ff66; }
-        .timer-text { color: #66ccff; }
+        .level-text { color: #88ff88; }
+        .timer-text { color: #88ccff; }
         
         /* Equipment slots - smaller for mobile */
-        .equipment-slots { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); display: none; gap: 6px; z-index: 50; pointer-events: none; max-width: 95vw; }
+        .equipment-slots { 
+            position: fixed; 
+            bottom: max(8px, var(--safe-bottom)); 
+            left: 50%; 
+            transform: translateX(-50%); 
+            display: none; gap: 6px; z-index: 50; 
+            pointer-events: none; 
+            max-width: calc(100vw - 110px - max(16px, var(--safe-right))); /* Leave space for minimap */
+        }
         .slot-group { display: flex; gap: 4px; padding: 5px 8px; background: #3d3846; border: 2px solid #5a5060; }
         .equipment-slot { width: 32px; height: 32px; background: #2a2530; border: 2px solid #5a5060; display: flex; align-items: center; justify-content: center; position: relative; font-size: 1rem; }
         .equipment-slot:hover { border-color: #ffd700; }
@@ -147,7 +263,19 @@
         #pauseIndicator { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; color: #ffd700; display: none; z-index: 150; }
         
         /* Pause Button */
-        #pauseBtn { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; background: rgba(0,0,0,0.6); border: 2px solid rgba(255,215,0,0.5); border-radius: 50%; color: #ffd700; font-size: 1.3rem; cursor: pointer; z-index: 60; display: none; transition: all 0.2s; }
+        #pauseBtn { 
+            position: fixed; 
+            top: max(10px, var(--safe-top)); 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 44px; height: 44px; 
+            background: rgba(0,0,0,0.6); 
+            border: 2px solid rgba(255,215,0,0.5); 
+            border-radius: 50%; 
+            color: #ffd700; font-size: 1.3rem; 
+            cursor: pointer; z-index: 60; 
+            display: none; transition: all 0.2s; 
+        }
         #pauseBtn:hover { background: rgba(255,215,0,0.2); border-color: #ffd700; }
         
         /* Pause Menu - Pixel Style - Mobile Friendly */
@@ -181,26 +309,95 @@
         .pause-btn-quit:hover { background: #a05555; }
         
         /* Mini Map */
-        #miniMap { position: fixed; bottom: 55px; right: 8px; width: 80px; height: 80px; background: #2a2530; border: 2px solid #5a5060; display: none; z-index: 55; overflow: hidden; }
+        #miniMap { 
+            position: fixed; 
+            bottom: max(8px, var(--safe-bottom)); 
+            right: max(8px, var(--safe-right)); 
+            width: 90px; height: 90px; 
+            background: #2a2530; 
+            border: 2px solid #5a5060; 
+            display: none; z-index: 55; overflow: hidden; 
+            border-radius: 6px;
+        }
         #miniMapCanvas { width: 100%; height: 100%; }
         
         /* Damage numbers animation */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
         
         @media (max-width: 600px) {
-            .character-display { width: 240px; padding: 15px; }
-            .char-preview { width: 90px; height: 90px; }
-            .city-card { width: 130px; padding: 12px; }
+            #mainMenu { 
+                padding: 10px;
+                padding-top: max(10px, var(--safe-top));
+                padding-bottom: max(15px, var(--safe-bottom));
+                gap: 8px;
+            }
+            .menu-title { font-size: 1.2rem; }
+            .menu-subtitle { font-size: 0.7rem; margin-bottom: 5px; }
+            .character-select { gap: 8px; margin-bottom: 8px; }
+            .char-arrow { width: 40px; height: 40px; font-size: 1.2rem; }
+            .character-display { width: 200px; padding: 10px; }
+            .char-preview { width: 70px; height: 70px; }
+            .char-name { font-size: 1rem; }
+            .char-title { font-size: 0.65rem; }
+            .char-desc { font-size: 0.6rem; min-height: 25px; }
+            .char-stats { padding: 6px; }
+            .char-stat { font-size: 0.65rem; }
+            .char-weapon { font-size: 0.7rem; padding: 5px; }
+            .city-select { gap: 6px; margin-bottom: 8px; }
+            .city-card { min-width: 85px; width: 85px; padding: 8px 5px; }
+            .city-icon { font-size: 1.5rem; margin-bottom: 3px; }
+            .city-name { font-size: 0.7rem; }
+            .city-desc { font-size: 0.55rem; }
+            .btn { padding: 8px 25px; font-size: 0.9rem; }
+            .menu-buttons { gap: 5px; }
+            .high-score { font-size: 0.65rem; }
             .upgrade-card { width: 85px; min-width: 70px; padding: 6px; font-size: 0.75rem; }
             .upgrade-icon { font-size: 1.2rem; }
-            .hud-bars-container { min-width: 120px; padding: 4px 8px 4px 38px; }
-            .hud-avatar { width: 36px; height: 36px; font-size: 1.2rem; left: -3px; }
-            .hud-bar { width: 100px; height: 12px; }
-            .hud-bar-text { font-size: 0.5rem; }
-            .hud-stat { font-size: 0.65rem; padding: 3px 6px; }
+            .hud-panel { padding: 4px; gap: 4px; }
+            .hud-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
+            .hud-bar { width: 90px; height: 10px; }
+            .hud-bar-text { font-size: 7px; }
+            .hud-gold { margin-left: 38px; padding: 2px 6px; }
+            .hud-gold-text { font-size: 10px; }
+            .hud-stat { font-size: 0.6rem; padding: 2px 5px; }
             .pause-stats-panel, .pause-controls { width: 95%; max-width: 250px; padding: 8px; }
             .pause-stat-row { font-size: 0.65rem; }
             .equipment-slot { width: 28px; height: 28px; font-size: 0.85rem; }
+            
+            /* Minimap smaller on mobile */
+            #miniMap { width: 70px; height: 70px; }
+            .equipment-slots { max-width: calc(100vw - 90px - max(12px, var(--safe-right))); }
+        }
+        
+        /* Extra small screens (iPhone SE, etc) */
+        @media (max-width: 380px) {
+            #mainMenu { padding: 8px; gap: 6px; }
+            .menu-title { font-size: 1rem; }
+            .character-select { gap: 5px; }
+            .char-arrow { width: 35px; height: 35px; font-size: 1rem; }
+            .character-display { width: 180px; padding: 8px; }
+            .char-preview { width: 60px; height: 60px; }
+            .char-name { font-size: 0.9rem; }
+            .city-card { min-width: 75px; width: 75px; padding: 6px 4px; }
+            .city-icon { font-size: 1.3rem; }
+            .city-name { font-size: 0.6rem; }
+            .city-desc { font-size: 0.5rem; }
+            .btn { padding: 7px 20px; font-size: 0.8rem; }
+            
+            /* Even smaller minimap */
+            #miniMap { width: 60px; height: 60px; }
+            .equipment-slots { max-width: calc(100vw - 80px - max(10px, var(--safe-right))); }
+            .equipment-slot { width: 24px; height: 24px; font-size: 0.75rem; }
+        }
+        
+        /* Very small height screens (landscape or small phones) */
+        @media (max-height: 700px) {
+            .character-display { padding: 8px; }
+            .char-preview { width: 60px; height: 60px; margin-bottom: 5px; }
+            .char-desc { display: none; }
+            .char-stats { padding: 5px; margin-bottom: 5px; }
+            .city-card { padding: 6px 4px; }
+            .city-icon { font-size: 1.3rem; margin-bottom: 2px; }
         }
     </style>
 </head>
@@ -241,25 +438,34 @@
                 <div class="city-locked">🔒 اقتل ابو حلزه أولاً</div>
             </div>
         </div>
-        <button class="btn btn-primary" id="startBtn">ابدأ اللعب</button>
-        <button class="btn" id="leaderboardBtn" style="background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:#ffd700;border:2px solid #ffd700;margin-top:10px;padding:8px 25px;font-size:0.9rem">🏆 قائمة الأبطال</button>
-        <p class="high-score">أعلى نتيجة: <span id="highScore">0</span> قتيل</p>
+        <div class="menu-buttons">
+            <button class="btn btn-primary" id="startBtn">ابدأ اللعب</button>
+            <button class="btn" id="leaderboardBtn" style="background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:#ffd700;border:2px solid #ffd700;padding:8px 25px;font-size:0.9rem">🏆 قائمة الأبطال</button>
+            <p class="high-score">أعلى نتيجة: <span id="highScore">0</span> قتيل</p>
+        </div>
     </div>
     
     <div id="hud">
         <div class="hud-left">
-            <div class="hud-bars-container">
-                <div class="hud-avatar" id="hudAvatar">🐰</div>
-                <div class="hud-bar"><div class="hud-bar-fill health-fill" id="healthBar" style="width: 100%"></div><span class="hud-bar-text"><span id="healthText">100/100</span></span></div>
-                <div class="hud-bar"><div class="hud-bar-fill xp-fill" id="xpBar" style="width: 0%"></div><span class="hud-bar-text"><span id="xpText">0/10</span></span></div>
+            <!-- Main panel with avatar and bars -->
+            <div class="hud-panel">
+                <div class="hud-avatar" id="hudAvatar"><canvas id="hudAvatarCanvas" width="32" height="32"></canvas></div>
+                <div class="hud-bars">
+                    <div class="hud-bar"><div class="hud-bar-fill health-fill" id="healthBar" style="width: 100%"></div><span class="hud-bar-text"><span id="healthText">100/100</span></span></div>
+                    <div class="hud-bar"><div class="hud-bar-fill xp-fill" id="xpBar" style="width: 0%"></div><span class="hud-bar-text"><span id="xpText">0/10</span></span></div>
+                </div>
             </div>
-            <span class="hud-stat level-text"><span class="hud-stat-icon">📊</span> <span id="levelText">المستوى: 1</span></span>
+            <!-- Gold counter below -->
+            <div class="hud-gold">
+                <span class="hud-gold-icon">🪙</span>
+                <span class="hud-gold-text" id="goldText">0</span>
+            </div>
         </div>
         <div class="hud-right">
-            <span class="hud-stat gold-text"><span class="hud-stat-icon">💰</span> <span id="goldText">0</span></span>
+            <span class="hud-stat level-text"><span class="hud-stat-icon">📊</span> <span id="levelText">Lv.1</span></span>
             <span class="hud-stat kill-text"><span class="hud-stat-icon">💀</span> <span id="killText">0</span></span>
             <span class="hud-stat timer-text"><span class="hud-stat-icon">⏱️</span> <span id="timerText">00:00</span></span>
-            <span class="hud-stat" id="endlessIndicator" style="display:none;color:#ff8800;background:#ff880020;border-color:#ff8800"><span class="hud-stat-icon">♾️</span> لا نهاية</span>
+            <span class="hud-stat" id="endlessIndicator" style="display:none;color:#ff8800"><span class="hud-stat-icon">♾️</span> ∞</span>
         </div>
     </div>
     
@@ -396,16 +602,16 @@ const CONFIG = {
     PLAYER_LIGHT_RADIUS: 300,
     MAX_WEAPONS: 4,
     MAX_BOOKS: 4,
-    MAX_UPGRADE_LEVEL: 20,
+    MAX_UPGRADE_LEVEL: 10,  // Reduced from 20 - each level more impactful
     BOSS_TIME: 600, // 10 minutes
     
-    // Enemy base stats
-    ENEMY_BASE_HP: 8,
-    ENEMY_BASE_ATK: 5,
-    ENEMY_BASE_SPEED: 55,
+    // Enemy base stats (BALANCED for challenge)
+    ENEMY_BASE_HP: 22,      // Takes 4-5 hits early game
+    ENEMY_BASE_ATK: 10,     // More threatening - forces dodging
+    ENEMY_BASE_SPEED: 65,   // Keeps pressure on player
     
-    // Scaling +20% per minute
-    SCALING_PER_MIN: 0.20,
+    // Scaling per minute (BALANCED for late game challenge)
+    SCALING_PER_MIN: 0.30,  // +30% per minute - enemies stay dangerous
     
     // Weapon base damage
     WEAPON_BASE_DMG: 5
@@ -475,16 +681,16 @@ const CHARACTERS = {
         name: 'أبو سليمان', title: 'التاجر الثري',
         desc: 'اولاو يحب الدراهم',
         weapon: 'agal',
-        stats: { gold: 1.25, luck: 1.1, hp: 100, speed: 200, crit: 0, enemyBuff: 0 },
-        passiveText: ['+25% ذهب', '+10% حظ'],
+        stats: { gold: 1.5, luck: 1.2, hp: 110, speed: 200, crit: 0, enemyBuff: 0, chestDiscount: 0.3 },
+        passiveText: ['+50% ذهب', '+20% حظ', '-30% سعر الصناديق'],
         colors: { body: '#f5f5f5', head: '#cc0000', skin: '#d4a574', legs: '#2a2a2a' }
     },
     jayzen: {
         name: 'جيزن', title: 'المقاتل الشرس',
         desc: 'لحجي بس متعافي',
         weapon: 'vape',
-        stats: { gold: 1, luck: 1, hp: 115, speed: 200, dmgReduce: 0.3, crit: 0, enemyBuff: 0 },
-        passiveText: ['-30% ضرر مستلم', '+15% صحة'],
+        stats: { gold: 1, luck: 1, hp: 115, speed: 200, dmgReduce: 0.2, crit: 0, enemyBuff: 0 },
+        passiveText: ['-20% ضرر مستلم', '+15% صحة'],
         colors: { body: '#6a1b9a', head: '#cc3333', skin: '#d4a574', legs: '#333' }
     },
     noura: {
@@ -505,7 +711,7 @@ const CHARACTERS = {
     },
     hawshabi: {
         name: 'الحوشبي', title: 'صعوبة متقدمة',
-        desc: 'اذا تبي تصعب الوضع عليك العب فيه واحتسب الاجر',
+        desc: 'خليها على الله',
         weapon: 'mgma',
         stats: { gold: 1.5, luck: 1.2, hp: 80, speed: 180, crit: 0, enemyBuff: 0.20 },
         passiveText: ['+20% قوة الأعداء', '+50% ذهب', '+20% حظ'],
@@ -523,16 +729,16 @@ const CHARACTERS = {
         name: 'سيد بصله', title: 'المخيف',
         desc: 'اذا شافك وقالك تابيها ولا ماتابيها اهرب',
         weapon: 'onion',
-        stats: { gold: 1, luck: 1, hp: 95, speed: 200, atkSpd: 1.2, crit: 0, enemyBuff: 0 },
-        passiveText: ['+20% سرعة هجوم'],
+        stats: { gold: 1, luck: 1, hp: 100, speed: 200, atkSpd: 1.25, crit: 0, enemyBuff: 0, poison: 0.15 },
+        passiveText: ['+25% سرعة هجوم', '15% تسميم الأعداء'],
         colors: { body: '#9a7b4f', head: '#f5f5dc', skin: '#d4a574', legs: '#5a4a3a' }
     },
     samurai: {
         name: 'ساموراي المع', title: 'النينجا',
-        desc: 'لا غيرك الشيب تراه متعافي',
+        desc: 'لا يغرك الشيب تراه متعافي!',
         weapon: 'shuriken',
-        stats: { gold: 1, luck: 1, hp: 100, speed: 210, dmgMult: 1.2, crit: 0, enemyBuff: 0 },
-        passiveText: ['+20% ضرر'],
+        stats: { gold: 1, luck: 1, hp: 100, speed: 220, dmgMult: 1.25, crit: 0.05, enemyBuff: 0, dodge: 0.10 },
+        passiveText: ['+25% ضرر', '10% تفادي', '+5% كريت'],
         colors: { body: '#2a2a4a', head: '#1a1a2a', skin: '#d4a574', legs: '#1a1a2a' }
     }
 };
@@ -600,17 +806,18 @@ const WEAPONS = {
 
 // ==================== BOOKS ====================
 const BOOKS = {
-    power: { name: 'كتاب القوة', desc: 'يزيد قوة الهجوم', stat: 'damage', val: 0.08, icon: '📕' },
-    speed: { name: 'كتاب السرعة', desc: 'يزيد سرعة الهجوم', stat: 'atkSpd', val: 0.06, icon: '📗' },
-    wind: { name: 'كتاب الريح', desc: 'يزيد سرعة الحركة', stat: 'moveSpd', val: 0.05, icon: '📘' },
-    wisdom: { name: 'كتاب الحكمة', desc: 'يزيد الخبرة المكتسبة', stat: 'xp', val: 0.10, icon: '📙' },
-    life: { name: 'كتاب الحياة', desc: 'يزيد الصحة القصوى', stat: 'maxHp', val: 0.08, icon: '📓' },
-    armor: { name: 'كتاب الدرع', desc: 'يقلل الضرر المستلم', stat: 'armor', val: 0.04, icon: '📔' },
-    magnet: { name: 'كتاب المغناطيس', desc: 'يزيد مدى جمع الأيتمات', stat: 'pickup', val: 0.12, icon: '📒' },
-    luck: { name: 'كتاب الحظ', desc: 'يزيد حظ دروب الأيتمات', stat: 'luck', val: 0.08, icon: '📚' },
-    curse: { name: 'كتاب اللعنة', desc: 'أعداء أكثر، خبرة أكثر', stat: 'curse', val: 0.15, icon: '📖' },
-    regen: { name: 'كتاب التجديد', desc: 'شفاء مستمر كل ثانية', stat: 'regen', val: 0.8, icon: '📜' },
-    critical: { name: 'كتاب الضربة الحرجة', desc: 'يزيد نسبة الضربة الحرجة', stat: 'crit', val: 0.04, icon: '💥' }
+    // BALANCED - bigger bonuses per level to feel impactful
+    power: { name: 'كتاب القوة', desc: '+15% قوة الهجوم', stat: 'damage', val: 0.15, icon: '📕' },
+    speed: { name: 'كتاب السرعة', desc: '+12% سرعة الهجوم', stat: 'atkSpd', val: 0.12, icon: '📗' },
+    wind: { name: 'كتاب الريح', desc: '+10% سرعة الحركة', stat: 'moveSpd', val: 0.10, icon: '📘' },
+    wisdom: { name: 'كتاب الحكمة', desc: '+15% الخبرة المكتسبة', stat: 'xp', val: 0.15, icon: '📙' },
+    life: { name: 'كتاب الحياة', desc: '+15% الصحة القصوى', stat: 'maxHp', val: 0.15, icon: '📓' },
+    armor: { name: 'كتاب الدرع', desc: '+8% تقليل الضرر', stat: 'armor', val: 0.08, icon: '📔' },
+    magnet: { name: 'كتاب المغناطيس', desc: '+20% مدى الجمع', stat: 'pickup', val: 0.20, icon: '📒' },
+    luck: { name: 'كتاب الحظ', desc: '+12% حظ الدروب', stat: 'luck', val: 0.12, icon: '📚' },
+    curse: { name: 'كتاب اللعنة', desc: '+20% أعداء وخبرة', stat: 'curse', val: 0.20, icon: '📖' },
+    regen: { name: 'كتاب التجديد', desc: '+1.5 شفاء/ثانية', stat: 'regen', val: 1.5, icon: '📜' },
+    critical: { name: 'كتاب الضربة الحرجة', desc: '+6% ضربة حرجة', stat: 'crit', val: 0.06, icon: '💥' }
 };
 
 // ==================== ITEMS ====================
@@ -641,14 +848,14 @@ const ITEMS = {
 
 // ==================== ENEMIES ====================
 const ENEMIES = {
-    // New animated enemies only
-    flyingEye: { name: 'العين الطائرة', hpM: 0.8, atkM: 0.8, spdM: 1.0, xp: 2, time: 0, color: '#ff4444', ranged: true },
-    goblin: { name: 'الغوبلين', hpM: 1, atkM: 1, spdM: 0.9, xp: 2, time: 0, color: '#44aa44' },
-    mushroom: { name: 'الفطر', hpM: 1.2, atkM: 1.1, spdM: 0.7, xp: 3, time: 60, color: '#cc88ff', ranged: true },
-    skeleton: { name: 'الهيكل العظمي', hpM: 1.5, atkM: 1.3, spdM: 0.75, xp: 4, time: 120, color: '#eeeecc' }
+    // BALANCED enemy stats
+    flyingEye: { name: 'العين الطائرة', hpM: 0.7, atkM: 0.7, spdM: 1.1, xp: 3, time: 0, color: '#ff4444', ranged: true },
+    goblin: { name: 'الغوبلين', hpM: 1.0, atkM: 1.0, spdM: 1.0, xp: 4, time: 0, color: '#44aa44' },
+    mushroom: { name: 'الفطر', hpM: 1.4, atkM: 1.2, spdM: 0.8, xp: 6, time: 30, color: '#cc88ff', ranged: true },
+    skeleton: { name: 'الهيكل العظمي', hpM: 2.0, atkM: 1.5, spdM: 0.85, xp: 8, time: 60, color: '#eeeecc' }
 };
 
-const BOSS = { name: 'ابو حلزه', hp: 8000, atk: 35, spd: 55, color: '#8b0000' };
+const BOSS = { name: 'ابو حلزه', hp: 12000, atk: 40, spd: 60, color: '#8b0000' };
 
 // ==================== ASSET LOADER ====================
 class AssetLoader {
@@ -872,7 +1079,8 @@ class AssetLoader {
             ['mrbassla_walk', 'assets/characters/Mr Bassla/walk.png'],
             
             // Samurai sprites
-            ['samurai_idle', 'assets/characters/Samurai/IDLE.png'],
+            ['samurai_idle', 'assets/characters/Samurai/IDLE(1).png'],  // For menu/leaderboard/HUD
+            ['samurai_idle_anim', 'assets/characters/Samurai/IDLE.png'], // For in-game idle animation
             ['samurai_run', 'assets/characters/Samurai/RUN.png'],
             
             // Shuriken weapon
@@ -984,7 +1192,8 @@ const CHAR_SPRITES = {
     },
     samurai: {
         type: 'walk_idle',
-        idleSprite: 'samurai_idle',
+        idleSprite: 'samurai_idle_anim',  // Animated idle spritesheet for in-game
+        previewSprite: 'samurai_idle',     // Static image for menu/HUD
         walkSprites: ['samurai_run'],
         frameWidth: 96,
         frameHeight: 96,
@@ -992,10 +1201,14 @@ const CHAR_SPRITES = {
         walkFrames: 16,
         idleFps: 8,
         walkFps: 12,
-        scale: 1.6, // 160% bigger character in game
-        previewScale: 1.8 // 200% bigger preview in menu
+        scale: 1.5,
+        previewScale: 1.3,
+        yOffset: -25
     }
 };
+
+// Standard character draw size (all characters should be roughly this height)
+const CHARACTER_TARGET_HEIGHT = 75;
 
 // Enemy sprite mappings - using new animated monster sprites
 const ENEMY_SPRITES = {
@@ -1375,6 +1588,10 @@ class Player {
         this.enemyBuff = c.stats.enemyBuff || 0;
         this.extraEnemySpawn = 0;
         this.armor = 0; this.regen = 0; this.curse = 0;
+        // New passives
+        this.chestDiscount = c.stats.chestDiscount || 0; // % discount on chest prices
+        this.poison = c.stats.poison || 0; // % chance to poison enemies
+        this.dodge = c.stats.dodge || 0; // % chance to dodge attacks
         this.range = c.stats.range || 1;
         this.cdMult = c.stats.cooldown || 1;
         
@@ -1388,10 +1605,12 @@ class Player {
     }
     
     getDmg(w) {
-        let d = CONFIG.WEAPON_BASE_DMG + (w.level - 1) * 0.5;
+        // Base damage + EXPONENTIAL level scaling (each level = +20% more damage)
+        // Level 1: 5, Level 5: 10.4, Level 10: 25.9, Level 20: 134
+        let d = CONFIG.WEAPON_BASE_DMG * Math.pow(1.18, w.level - 1);
         // Damage upgrades add bonus damage based on rarity
         w.upgrades.forEach(u => {
-            if (u.type === 'damage' || !u.type) d += u.rarity.bonus * 1.5;
+            if (u.type === 'damage' || !u.type) d *= (1 + u.rarity.bonus * 0.15);
         });
         d *= this.dmgMult;
         this.tempBuffs.filter(b => b.type === 'dmg').forEach(b => d *= (1 + b.val));
@@ -1407,15 +1626,13 @@ class Player {
     }
     
     getProjectileCount(w) {
-        // Count upgrades add extra projectiles based on rarity
-        // COMMON: +1, UNCOMMON: +1, RARE: +2, EPIC: +2, LEGENDARY: +3
+        // Count upgrades add extra projectiles (BALANCED: +1 per upgrade, max 5 total)
+        // This makes count upgrades valuable but not game-breaking
         let count = 1;
         w.upgrades.forEach(u => {
-            if (u.type === 'count') {
-                count += 1 + Math.floor(u.rarity.bonus);
-            }
+            if (u.type === 'count') count += 1; // Always +1, rarity affects other aspects
         });
-        return Math.min(count, 8);
+        return Math.min(count, 5); // Max 5 projectiles (was 8)
     }
     
     getCD(w) { 
@@ -1484,10 +1701,9 @@ class Player {
         this.weapons.forEach(w => {
             const data = WEAPONS[w.id];
             if (data.type === 'orbit') {
-                // Start with 1, add level bonus + count upgrades
-                const baseCount = 1 + Math.floor(w.level / 2); // Start at 1, +1 every 2 levels
-                const countBonus = this.getProjectileCount(w) - 1;
-                const n = baseCount + countBonus;
+                // Orbit count: base 1 + count upgrades only (no level bonus)
+                // This makes count upgrades the way to get more orbs
+                const n = this.getProjectileCount(w);
                 const range = this.getRange(w);
                 const rotationSpeed = 2 * atkSpdMult;
                 
@@ -1705,6 +1921,15 @@ class Player {
     
     takeDmg(amt, game) {
         if (this.invuln > 0) return;
+        
+        // Dodge check
+        if (this.dodge > 0 && Math.random() < this.dodge) {
+            game.texts.push(new FloatText(this.x, this.y - 20, 'تفادي!', '#00ffff', 14));
+            game.particles.emit(this.x, this.y, 8, { color: '#00ffff', minS: 60, maxS: 120, size: 2, life: 0.3 });
+            this.invuln = 0.15; // Short invuln after dodge
+            return;
+        }
+        
         if (this.shield > 0) { const ab = Math.min(this.shield, amt); this.shield -= ab; amt -= ab; if (amt <= 0) return; }
         const actual = amt * (1 - this.dmgReduce) * (1 - Math.min(0.65, this.armor * 0.025));
         this.hp -= actual; this.invuln = 0.35;
@@ -1788,9 +2013,10 @@ class Player {
                     const customScale = spriteInfo.scale || 0.4;
                     const drawW = frameW * customScale;
                     const drawH = frameH * customScale;
+                    const yOffset = spriteInfo.yOffset || 0;
                     
                     ctx.save();
-                    ctx.translate(sx, sy);
+                    ctx.translate(sx, sy + yOffset);
                     // Mr Bassla sprite faces LEFT by default, flip when facing right
                     if (!facingRight) ctx.scale(-1, 1);
                     ctx.drawImage(sprite, frameX, 0, frameW, frameH, -drawW / 2, -drawH / 2, drawW, drawH);
@@ -1927,10 +2153,8 @@ class Player {
             const weaponOffset = data.offset || 0;
             
             if (data.type === 'orbit') {
-                // Start with 1, add level bonus + count upgrades
-                const baseCount = 1 + Math.floor(w.level / 2); // Start at 1, +1 every 2 levels
-                const countBonus = this.getProjectileCount(w) - 1; // Extra from upgrades
-                const n = baseCount + countBonus;
+                // Orbit count: base 1 + count upgrades only
+                const n = this.getProjectileCount(w);
                 const frameTime = 1 / weaponFps;
                 const totalFrames = data.frames || 10;
                 const currentFrame = Math.floor(this.anim / frameTime) % totalFrames;
@@ -2158,21 +2382,33 @@ class Player {
 
 // ==================== ENEMY ====================
 class Enemy {
-    constructor(x, y, type, gameTime, buff = 0) {
+    constructor(x, y, type, gameTime, buff = 0, isElite = false) {
         this.x = x; this.y = y; this.type = type;
+        this.isElite = isElite;
         const e = ENEMIES[type];
         const scale = 1 + (gameTime / 60) * CONFIG.SCALING_PER_MIN;
         const buffScale = 1 + buff;
-        this.maxHp = Math.round(CONFIG.ENEMY_BASE_HP * e.hpM * scale * buffScale);
+        
+        // Elite enemies: 3x HP, 1.5x damage, 1.2x speed, 4x XP
+        const eliteMultHP = isElite ? 3 : 1;
+        const eliteMultATK = isElite ? 1.5 : 1;
+        const eliteMultSPD = isElite ? 1.2 : 1;
+        const eliteMultXP = isElite ? 4 : 1;
+        
+        this.maxHp = Math.round(CONFIG.ENEMY_BASE_HP * e.hpM * scale * buffScale * eliteMultHP);
         this.hp = this.maxHp;
-        this.atk = CONFIG.ENEMY_BASE_ATK * e.atkM * scale * buffScale;
-        this.spd = CONFIG.ENEMY_BASE_SPEED * e.spdM;
-        this.xp = e.xp; this.color = e.color;
+        this.atk = CONFIG.ENEMY_BASE_ATK * e.atkM * scale * buffScale * eliteMultATK;
+        this.spd = CONFIG.ENEMY_BASE_SPEED * e.spdM * eliteMultSPD;
+        this.xp = Math.round(e.xp * eliteMultXP);
+        this.color = e.color;
         this.vx = 0; this.vy = 0; this.hitFlash = 0; this.slow = 1; this.slowT = 0;
         this.zigT = 0; this.zigD = 1; this.tpT = 0; this.atkT = 0;
-        this.width = 28; this.height = 28;
+        // Elite enemies are 40% bigger
+        this.width = isElite ? 40 : 28;
+        this.height = isElite ? 40 : 28;
         this.zig = e.zig; this.ranged = e.ranged; this.tp = e.tp;
         this.animTime = Math.random() * 2; // Random start for animation variety
+        this.glowPhase = 0; // For elite glow animation
     }
     
     update(dt, player, enemies, game) {
@@ -2205,11 +2441,38 @@ class Enemy {
     
     draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y;
+        
+        // Elite glow effect - pulsing orange/red aura
+        if (this.isElite) {
+            this.glowPhase += 0.1;
+            const glowIntensity = 0.4 + Math.sin(this.glowPhase) * 0.2;
+            const glowSize = 25 + Math.sin(this.glowPhase * 2) * 5;
+            
+            // Outer glow
+            ctx.save();
+            ctx.shadowColor = '#ff4400';
+            ctx.shadowBlur = glowSize;
+            ctx.fillStyle = `rgba(255, 68, 0, ${glowIntensity * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, this.width / 2 + 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            // Elite crown/indicator above
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('👑', sx, sy - this.height / 2 - 12);
+        }
+        
         if (this.hitFlash > 0) ctx.globalAlpha = 0.55;
         
         // Try to draw sprite if available
         const spriteInfo = ENEMY_SPRITES[this.type];
         const sprite = assets && spriteInfo && assets.get(spriteInfo.sprite);
+        
+        // Elite enemies are 40% bigger
+        const eliteScale = this.isElite ? 1.4 : 1.0;
         
         if (sprite) {
             ctx.save();
@@ -2224,7 +2487,7 @@ class Enemy {
                 const currentFrame = Math.floor(this.animTime * fps) % totalFrames;
                 const frameX = currentFrame * frameW;
                 
-                const scale = 0.75; // Scale up 50% for better visibility
+                const scale = 0.95 * eliteScale;
                 const drawW = frameW * scale;
                 const drawH = frameH * scale;
                 
@@ -2238,7 +2501,7 @@ class Enemy {
                 }
             } else {
                 // Static sprite
-                const scale = 0.6;
+                const scale = 0.75 * eliteScale;
                 const drawW = spriteInfo.width * scale;
                 const drawH = spriteInfo.height * scale;
                 
@@ -2254,10 +2517,11 @@ class Enemy {
             
             ctx.restore();
         } else {
-            // Fallback to colored circle
-            ctx.fillStyle = this.color;
+            // Fallback to colored circle (bigger for elite)
+            const radius = this.isElite ? 20 : 14;
+            ctx.fillStyle = this.isElite ? '#ff4400' : this.color;
             ctx.beginPath(); 
-            ctx.arc(sx, sy, 14, 0, Math.PI * 2); 
+            ctx.arc(sx, sy, radius, 0, Math.PI * 2); 
             ctx.fill();
             // Eyes
             ctx.fillStyle = '#ff0';
@@ -2267,7 +2531,7 @@ class Enemy {
         
         ctx.globalAlpha = 1;
         
-        // Health bar with better styling
+        // Health bar with better styling (wider for elite)
         if (this.hp < this.maxHp) { 
             const barWidth = 36;
             const barHeight = 5;
@@ -2948,8 +3212,8 @@ const ChestManager = {
         this.currentPrice = this.basePrice;
     },
     
-    getPrice() {
-        return Math.floor(this.currentPrice);
+    getPrice(discount = 0) {
+        return Math.floor(this.currentPrice * (1 - discount));
     },
     
     buyChest() {
@@ -3419,14 +3683,40 @@ class Game {
                 const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
                 const bg = i === 0 ? '#ffd70030' : i === 1 ? '#c0c0c030' : i === 2 ? '#cd7f3230' : '#ffffff10';
                 const mode = entry.mode === 'endless' ? '♾️' : '🏜️';
-                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:${bg};border-radius:8px;border:1px solid #333">
-                    <span style="color:#ffd700;font-weight:bold;min-width:30px">${medal}</span>
-                    <span style="color:#fff;flex:1;margin:0 10px;text-align:right">${entry.name}</span>
-                    <span style="color:#ff8800;font-weight:bold">💀 ${entry.kills}</span>
-                    <span style="margin-left:8px">${mode}</span>
+                // Get character sprite
+                const charSprite = this.getCharacterSpriteHTML(entry.character);
+                return `<div style="display:flex;align-items:center;padding:8px 12px;background:${bg};border-radius:8px;border:1px solid #333;gap:8px">
+                    <span style="color:#ffd700;font-weight:bold;min-width:28px;text-align:center">${medal}</span>
+                    ${charSprite}
+                    <span style="color:#fff;flex:1;text-align:right;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${entry.name}</span>
+                    <span style="color:#ff8800;font-weight:bold;font-size:0.85rem;min-width:50px;text-align:right">💀${entry.kills}</span>
+                    <span style="font-size:0.75rem">${mode}</span>
                 </div>`;
             }).join('');
         }
+    }
+    
+    getCharacterSpriteHTML(charName) {
+        // Map character names to their sprite asset paths (same as used in game)
+        const charSprites = {
+            'أبو سليمان': 'assets/characters/elder/elder_1.png',
+            'جيزن': 'assets/characters/Jayzan/idle.png',
+            'نورة': 'assets/characters/water_priestess/water_priestess_1.png',
+            'الاعرابي': 'assets/characters/wind_hashashin/wind_hashashin_1.png',
+            'الحوشبي': 'assets/characters/adventurer_01/adventurer_01_00.png',
+            'ليلى': 'assets/characters/Char_001_Idle.png',
+            'سيد بصله': 'assets/characters/Mr Bassla/Idle.png',
+            'ساموراي المع': 'assets/characters/Samurai/IDLE(1).png'
+        };
+        
+        const spritePath = charSprites[charName];
+        if (spritePath) {
+            return `<div style="width:32px;height:32px;background:#1a1a2e;border:2px solid #555;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <img src="${spritePath}" style="max-width:28px;max-height:28px;object-fit:contain;image-rendering:pixelated;" title="${charName}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=color:#ffd700;font-size:16px;font-weight:bold>${(charName || '?')[0]}</span>'">
+            </div>`;
+        }
+        // Fallback to first letter
+        return `<div style="width:32px;height:32px;background:#1a1a2e;border:2px solid #555;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ffd700;font-size:16px;font-weight:bold;flex-shrink:0" title="${charName || 'غير معروف'}">${(charName || '?')[0]}</div>`;
     }
     
     async submitScore() {
@@ -3486,12 +3776,20 @@ class Game {
         let drawAsFullImage = false;
         
         // Check for sprite type
-        if (spriteInfo.type === 'walk_idle' && spriteInfo.idleSprite) {
-            sprite = this.assets && this.assets.get(spriteInfo.idleSprite);
+        if (spriteInfo.type === 'walk_idle') {
+            // Use previewSprite for menu if available, otherwise idleSprite
+            const spriteKey = spriteInfo.previewSprite || spriteInfo.idleSprite;
+            sprite = this.assets && this.assets.get(spriteKey);
             if (sprite) {
                 ctx.imageSmoothingEnabled = false;
-                // Check if spritesheet
-                if (spriteInfo.frameWidth && spriteInfo.idleFrames) {
+                // Check if it's a full image (previewSprite) or spritesheet
+                if (spriteInfo.previewSprite) {
+                    // Full static image for preview
+                    const previewScale = spriteInfo.previewScale || 1;
+                    const drawW = sprite.width * previewScale;
+                    const drawH = sprite.height * previewScale;
+                    ctx.drawImage(sprite, (120 - drawW) / 2, (120 - drawH) / 2, drawW, drawH);
+                } else if (spriteInfo.frameWidth && spriteInfo.idleFrames) {
                     const frameW = spriteInfo.frameWidth;
                     const frameH = spriteInfo.frameHeight;
                     // Use previewScale if defined, otherwise calculate from target height
@@ -3560,8 +3858,6 @@ class Game {
             if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') this.input.left = true;
             if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') this.input.right = true;
             if ((e.key === 'Escape' || e.key === 'p') && this.state === 'playing') this.pause();
-            // Buy chest with E key
-            if ((e.key === 'e' || e.key === 'E') && this.state === 'playing') this.tryBuyChest();
         });
         window.addEventListener('keyup', e => {
             if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') this.input.up = false;
@@ -3575,11 +3871,6 @@ class Game {
             e.preventDefault(); 
             touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY }; 
             this.input.joy = { x: 0, y: 0 };
-            
-            // Check if tapping near a chest (for mobile)
-            if (this.nearbyChest && !this.nearbyChest.opened) {
-                this.tryBuyChest();
-            }
         }, { passive: false });
         this.canvas.addEventListener('touchmove', e => { if (this.state !== 'playing' || !touchStart) return; e.preventDefault(); const dx = e.touches[0].clientX - touchStart.x, dy = e.touches[0].clientY - touchStart.y; const d = Math.min(Math.hypot(dx, dy), 60), a = Math.atan2(dy, dx); this.input.joy = { x: Math.cos(a) * d / 60, y: Math.sin(a) * d / 60 }; }, { passive: false });
         this.canvas.addEventListener('touchend', () => { touchStart = null; this.input.joy = null; });
@@ -3647,6 +3938,10 @@ class Game {
         this.groundBuffs = []; this.activeBuffs = {};
         this.time = 0; this.spawnT = 0; this.bossSpawned = false; this.bossWarnShown = false;
         
+        // Endless mode boss tracking
+        this.endlessBossPhase = 0; // 0 = no boss yet, 1 = phase 1 killed, 2 = phase 2 killed, 3 = phase 3 killed
+        this.endlessBossActive = false;
+        
         // Spawn chests randomly on map
         ChestManager.reset();
         this.chests = ChestManager.spawnChests(CONFIG.WORLD_SIZE);
@@ -3654,18 +3949,8 @@ class Game {
         // Spawn breakable pots on map
         this.pots = PotManager.spawnPots(CONFIG.WORLD_SIZE);
         
-        // Set character avatar in HUD
-        const charIcons = {
-            abuSulaiman: '👳',
-            jayzen: '🧔',
-            noura: '👩',
-            bedouin: '🏜️',
-            hawshabi: '😈',
-            layla: '🔮',
-            mrBassla: '🧅',
-            samurai: '⚔️'
-        };
-        document.getElementById('hudAvatar').textContent = charIcons[this.charIds[this.charIdx]] || '🎮';
+        // Set character avatar in HUD - draw actual sprite
+        this.drawHudAvatar();
         
         this.setupSlots(); this.updateSlots();
     }
@@ -3771,7 +4056,7 @@ class Game {
     tryBuyChest() {
         if (!this.nearbyChest || this.nearbyChest.opened) return;
         
-        const price = ChestManager.getPrice();
+        const price = ChestManager.getPrice(this.player.chestDiscount);
         if (this.player.gold >= price) {
             this.player.gold -= price;
             ChestManager.buyChest(); // Increase price for next chest
@@ -3783,12 +4068,12 @@ class Game {
             // Effects
             this.audio.pickup();
             this.particles.spark(this.nearbyChest.x, this.nearbyChest.y, '#ffd700');
-            this.texts.push(new FloatingText(this.nearbyChest.x, this.nearbyChest.y - 20, `-${price}💰`, '#ff4444'));
+            this.texts.push(new FloatText(this.nearbyChest.x, this.nearbyChest.y - 20, `-${price}💰`, '#ff4444'));
             
             this.updateHUD();
         } else {
             // Not enough gold
-            this.texts.push(new FloatingText(this.player.x, this.player.y - 30, 'ما عندك فلوس!', '#ff4444'));
+            this.texts.push(new FloatText(this.player.x, this.player.y - 30, 'ما عندك فلوس!', '#ff4444'));
         }
     }
     
@@ -3796,7 +4081,7 @@ class Game {
         const data = buff.data;
         this.audio.pickup();
         this.particles.spark(buff.x, buff.y, data.color);
-        this.texts.push(new FloatingText(buff.x, buff.y - 20, data.name, data.color));
+        this.texts.push(new FloatText(buff.x, buff.y - 20, data.name, data.color));
         
         // Apply buff effect
         switch (data.effect) {
@@ -3826,13 +4111,17 @@ class Game {
                 break;
                 
             case 'magnetPull':
-                // Instant: pull all XP and gold
+                // Gradual pull: set magnet effect on all pickups
                 for (const p of this.pickups) {
-                    const angle = Math.atan2(this.player.y - p.y, this.player.x - p.x);
-                    p.x = this.player.x + (Math.random() - 0.5) * 50;
-                    p.y = this.player.y + (Math.random() - 0.5) * 50;
+                    p.magnetPull = true; // Flag for gradual pull
+                    p.magnetSpeed = 800 + Math.random() * 400; // Fast pull speed
                 }
-                this.texts.push(new FloatingText(this.player.x, this.player.y - 40, '🧲 مغناطيس!', '#00ff88'));
+                // Also pull items
+                for (const item of this.items) {
+                    item.magnetPull = true;
+                    item.magnetSpeed = 600 + Math.random() * 300;
+                }
+                this.texts.push(new FloatText(this.player.x, this.player.y - 40, '🧲 مغناطيس!', '#00ff88'));
                 break;
                 
             case 'nuke':
@@ -3850,7 +4139,7 @@ class Game {
                 // Big explosion effect
                 this.particles.emit(this.player.x, this.player.y, 30, { color: '#ff6600', minS: 100, maxS: 300, life: 0.8 });
                 this.shake = 0.5;
-                this.texts.push(new FloatingText(this.player.x, this.player.y - 40, `💥 ${nukeKills} قتيل!`, '#ff6600'));
+                this.texts.push(new FloatText(this.player.x, this.player.y - 40, `💥 ${nukeKills} قتيل!`, '#ff6600'));
                 break;
         }
     }
@@ -3880,64 +4169,97 @@ class Game {
         return this.activeBuffs.goldBonus && this.activeBuffs.goldBonus > 0;
     }
     
-    spawnChestReward(x, y) {
-        // Random reward: weapon, book, or item
-        const roll = Math.random();
+    onEndlessBossKilled() {
+        const bossX = this.boss.x;
+        const bossY = this.boss.y;
+        const phase = this.boss.endlessPhase || 1;
         
-        if (roll < 0.25) {
-            // Weapon (25%)
-            const weaponIds = Object.keys(WEAPONS);
-            const randomWeapon = weaponIds[Math.floor(Math.random() * weaponIds.length)];
-            // Give directly to player if slot available
-            if (this.player.weapons.length < CONFIG.MAX_WEAPONS || this.player.weapons.find(w => w.id === randomWeapon)) {
-                const existing = this.player.weapons.find(w => w.id === randomWeapon);
-                if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
-                    existing.lv++;
-                    this.texts.push(new FloatingText(x, y - 30, `${WEAPONS[randomWeapon].name} +1`, '#00ff00'));
-                } else if (!existing && this.player.weapons.length < CONFIG.MAX_WEAPONS) {
-                    this.player.weapons.push({ id: randomWeapon, lv: 1, cd: 0 });
-                    this.texts.push(new FloatingText(x, y - 30, `${WEAPONS[randomWeapon].name}!`, '#ffd700'));
-                }
-            }
-        } else if (roll < 0.5) {
-            // Book (25%)
-            const bookIds = Object.keys(BOOKS);
-            const randomBook = bookIds[Math.floor(Math.random() * bookIds.length)];
-            if (this.player.books.length < CONFIG.MAX_BOOKS || this.player.books.find(b => b.id === randomBook)) {
-                const existing = this.player.books.find(b => b.id === randomBook);
-                if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
-                    existing.lv++;
-                    this.player.applyBookStats();
-                    this.texts.push(new FloatingText(x, y - 30, `${BOOKS[randomBook].name} +1`, '#00ff00'));
-                } else if (!existing && this.player.books.length < CONFIG.MAX_BOOKS) {
-                    this.player.books.push({ id: randomBook, lv: 1 });
-                    this.player.applyBookStats();
-                    this.texts.push(new FloatingText(x, y - 30, `${BOOKS[randomBook].name}!`, '#00ffff'));
-                }
-            }
-        } else {
-            // Item drop (50%)
-            const itemIds = Object.keys(ITEMS);
-            const luck = this.player.luck || 1;
-            // Weight by rarity
-            const weightedItems = itemIds.filter(id => {
-                const item = ITEMS[id];
-                const rarityWeight = { 'COMMON': 50, 'RARE': 30 * luck, 'LEGENDARY': 20 * luck * luck };
-                return Math.random() * 100 < (rarityWeight[item.rarity] || 50);
-            });
-            if (weightedItems.length > 0) {
-                const randomItem = weightedItems[Math.floor(Math.random() * weightedItems.length)];
-                this.items.push(new ItemDrop(x + (Math.random() - 0.5) * 30, y + (Math.random() - 0.5) * 30, randomItem));
-            }
+        // Big celebration effects
+        this.particles.emit(bossX, bossY, 30, { color: '#ffd700', minS: 80, maxS: 200, life: 1 });
+        this.particles.emit(bossX, bossY, 20, { color: '#ff6600', minS: 60, maxS: 150, life: 0.8 });
+        this.shake = 0.8;
+        this.audio.victory();
+        
+        // Drop rewards based on phase
+        const xpReward = 100 * phase;
+        const goldReward = 50 * phase;
+        
+        // Drop XP
+        for (let i = 0; i < 10; i++) {
+            this.pickups.push(new Pickup(
+                bossX + (Math.random() - 0.5) * 100,
+                bossY + (Math.random() - 0.5) * 100,
+                'xp',
+                xpReward / 10
+            ));
         }
         
-        // Always drop some XP and gold
-        for (let i = 0; i < 5; i++) {
+        // Drop gold
+        this.player.gold += goldReward;
+        this.texts.push(new FloatText(bossX, bossY - 60, `+${goldReward} 🪙`, '#ffd700', 20));
+        
+        // Spawn a chest at boss location
+        this.chests.push(new Chest(bossX, bossY));
+        
+        // Show victory message
+        const phaseNames = ['', 'المرحلة الأولى!', 'المرحلة الثانية!', 'المرحلة الأخيرة!'];
+        this.texts.push(new FloatText(bossX, bossY - 90, `🎉 ${phaseNames[phase]}`, '#00ff00', 24));
+        
+        // Clear boss and prepare for next
+        this.boss = null;
+        this.endlessBossActive = false;
+        this.endlessBossPhase++;
+        
+        // Stop boss music, resume normal
+        this.audio.stopBossMusic();
+        this.audio.startBGM();
+        
+        // If all 3 phases complete, show special message
+        if (this.endlessBossPhase >= 3) {
+            this.texts.push(new FloatText(this.player.x, this.player.y - 50, '👑 أنت البطل!', '#ffd700', 28));
+        }
+    }
+    
+    spawnChestReward(x, y) {
+        // Always drop a random item - rarity based on luck
+        const itemIds = Object.keys(ITEMS);
+        const luck = this.player.luck || 1;
+        
+        // Calculate rarity chances based on luck
+        // Higher luck = better chance for rare items
+        const roll = Math.random() * 100;
+        let targetRarity;
+        
+        if (roll < 5 * luck * luck) { // Legendary: 5% * luck^2
+            targetRarity = 'LEGENDARY';
+        } else if (roll < 20 * luck) { // Rare: 20% * luck
+            targetRarity = 'RARE';
+        } else {
+            targetRarity = 'COMMON';
+        }
+        
+        // Find items of target rarity, fallback to any if none found
+        let possibleItems = itemIds.filter(id => ITEMS[id].rarity === targetRarity);
+        if (possibleItems.length === 0) {
+            possibleItems = itemIds;
+        }
+        
+        const randomItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+        this.items.push(new ItemDrop(x, y, randomItem));
+        this.texts.push(new FloatText(x, y - 30, `${ITEMS[randomItem].name}!`, RARITY[ITEMS[randomItem].rarity].color));
+        
+        // Always drop gold (guaranteed)
+        const goldAmount = 15 + Math.floor(Math.random() * 25);
+        this.player.gold += goldAmount;
+        this.texts.push(new FloatText(x, y - 50, `+${goldAmount} 🪙`, '#ffd700'));
+        
+        // Drop some XP gems
+        for (let i = 0; i < 3; i++) {
             this.pickups.push(new Pickup(
-                x + (Math.random() - 0.5) * 50,
-                y + (Math.random() - 0.5) * 50,
-                Math.random() < 0.5 ? 'xp' : 'gold',
-                Math.random() < 0.5 ? 5 : 10
+                x + (Math.random() - 0.5) * 40,
+                y + (Math.random() - 0.5) * 40,
+                'xp',
+                10 + Math.floor(Math.random() * 15)
             ));
         }
     }
@@ -3957,8 +4279,49 @@ class Game {
     update(dt) {
         this.time += dt;
         
-        // Boss spawning - disabled in endless mode
-        if (!this.endlessMode) {
+        // Level up cooldown
+        if (this.levelUpCooldown && this.levelUpCooldown > 0) {
+            this.levelUpCooldown -= dt;
+        }
+        
+        // Boss spawning
+        if (this.endlessMode) {
+            // Endless mode: Boss spawns at 5min (phase1), 10min (phase2), 15min (phase3)
+            const bossSchedule = [
+                { time: 300, phase: 1, hp: 1500, atk: 12, name: 'ابو حلزه الصغير' },   // 5 min - challenging
+                { time: 600, phase: 2, hp: 4000, atk: 20, name: 'ابو حلزه' },          // 10 min - hard
+                { time: 900, phase: 3, hp: 10000, atk: 35, name: 'ابو حلزه العظيم' }   // 15 min - very hard
+            ];
+            
+            const nextBoss = bossSchedule[this.endlessBossPhase];
+            
+            if (nextBoss && !this.endlessBossActive && !this.boss) {
+                // Show warning 30 seconds before
+                if (this.time >= nextBoss.time - 30 && !this.bossWarnShown) {
+                    this.bossWarnShown = true;
+                    document.getElementById('bossWarning').style.display = 'block';
+                    this.audio.bossWarn();
+                    setTimeout(() => document.getElementById('bossWarning').style.display = 'none', 2500);
+                }
+                
+                // Spawn boss
+                if (this.time >= nextBoss.time) {
+                    this.endlessBossActive = true;
+                    this.bossWarnShown = false;
+                    const a = Math.random() * Math.PI * 2;
+                    this.boss = new Boss(this.player.x + Math.cos(a) * 320, this.player.y + Math.sin(a) * 320, this.player.enemyBuff);
+                    // Override boss stats for endless mode
+                    this.boss.hp = nextBoss.hp;
+                    this.boss.maxHp = nextBoss.hp;
+                    this.boss.atk = nextBoss.atk;
+                    this.boss.phase = nextBoss.phase;
+                    this.boss.endlessPhase = nextBoss.phase;
+                    this.boss.name = nextBoss.name;
+                    this.audio.startBossMusic();
+                }
+            }
+        } else {
+            // Normal mode: Single boss at BOSS_TIME
             if (this.time >= CONFIG.BOSS_TIME - 30 && !this.bossWarnShown) {
                 this.bossWarnShown = true;
                 document.getElementById('bossWarning').style.display = 'block';
@@ -3982,16 +4345,54 @@ class Game {
         this.cam.y = this.player.y - this.canvas.height / 2;
         if (this.shake > 0) { this.shake -= dt; this.cam.x += (Math.random() - 0.5) * 6; this.cam.y += (Math.random() - 0.5) * 6; }
         
+        // ===== "القلهي" WAVE SYSTEM - Hard waves every 3 minutes =====
+        if (this.lastGalhiWave === undefined) this.lastGalhiWave = 0;
+        if (this.galhiWaveTimer === undefined) this.galhiWaveTimer = 0;
+        if (this.galhiWarningShown === undefined) this.galhiWarningShown = false;
+        
+        const waveInterval = 180; // Every 3 minutes
+        const currentWaveNum = Math.floor(this.time / waveInterval);
+        
+        // Check if we should trigger a new wave
+        if (currentWaveNum > this.lastGalhiWave && this.time >= waveInterval) {
+            // Show warning
+            if (!this.galhiWarningShown) {
+                this.galhiWarningShown = true;
+                this.galhiWaveTimer = 2.0; // 2 second delay before spawning
+                this.showGalhiWarning(currentWaveNum);
+            }
+            
+            // Countdown and spawn
+            if (this.galhiWaveTimer > 0) {
+                this.galhiWaveTimer -= dt;
+                if (this.galhiWaveTimer <= 0) {
+                    this.spawnGalhiWave(currentWaveNum);
+                    this.lastGalhiWave = currentWaveNum;
+                    this.galhiWarningShown = false;
+                    this.hideGalhiWarning();
+                }
+            }
+        }
+        
         // Spawn enemies
         // In endless mode, spawn continuously. In normal mode, stop when boss spawns
-        if (!this.bossSpawned || this.endlessMode) {
+        // Don't spawn during boss fight in endless mode
+        const canSpawnEnemies = this.endlessMode ? !this.endlessBossActive : !this.bossSpawned;
+        
+        if (canSpawnEnemies || this.endlessMode) {
             this.spawnT -= dt;
-            let spawnMult = 1 + this.player.curse * 0.35 + this.player.extraEnemySpawn;
             
-            // Endless mode: +20% enemies gradually based on time/level
+            // Base spawn multiplier from curse (more enemies with curse)
+            let spawnMult = 1 + this.player.curse * 0.5 + this.player.extraEnemySpawn;
+            
+            // Time-based scaling: more enemies over time
+            const timeScale = 1 + (this.time / 60) * 0.08; // +8% per minute
+            spawnMult *= timeScale;
+            
+            // Endless mode: additional scaling
             if (this.endlessMode) {
-                const endlessMult = 1 + (this.player.level * 0.02) + (this.time / 600 * 0.1); // +2% per level, +10% per 10min
-                spawnMult *= Math.min(endlessMult, 2.0); // Cap at 2x
+                const endlessMult = 1 + (this.player.level * 0.03) + (this.time / 300 * 0.15); // +3% per level, +15% per 5min
+                spawnMult *= Math.min(endlessMult, 3.0); // Cap at 3x
             }
             
             let rate = 1.2 / spawnMult;
@@ -4161,7 +4562,15 @@ class Game {
                     }
                 }
             }
-            if (this.boss.hp <= 0) this.over(true);
+            if (this.boss.hp <= 0) {
+                if (this.endlessMode) {
+                    // Endless mode: Drop rewards and prepare for next boss
+                    this.onEndlessBossKilled();
+                } else {
+                    // Normal mode: Game over (victory)
+                    this.over(true);
+                }
+            }
         }
         
         // Projectiles
@@ -4222,6 +4631,14 @@ class Game {
                     // Normal projectile handling
                     const hit = this.player.applyCrit(p.dmg);
                     if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                    
+                    // Apply poison from player passive
+                    if (this.player.poison > 0 && Math.random() < this.player.poison) {
+                        if (!e.dots) e.dots = [];
+                        e.dots.push({ dmg: 3, dur: 3, type: 'poison' }); // 3 damage/sec for 3 sec
+                        this.texts.push(new FloatText(e.x, e.y - 25, '🤢', '#00ff00', 12));
+                    }
+                    
                     // Apply DOT if projectile has it
                     if (p.dotDmg && p.dotDur && !e.dots) e.dots = [];
                     if (p.dotDmg && p.dotDur && e.dots) {
@@ -4316,11 +4733,31 @@ class Game {
             const p = this.pickups[i];
             p.update(dt);
             const d = Math.hypot(p.x - this.player.x, p.y - this.player.y);
-            if (d < this.player.pickupRange * 1.8) { const a = Math.atan2(this.player.y - p.y, this.player.x - p.x); const s = 200 * (1 - d / (this.player.pickupRange * 1.8)); p.x += Math.cos(a) * s * dt; p.y += Math.sin(a) * s * dt; }
+            
+            // Magnet pull - fast gradual movement toward player
+            if (p.magnetPull) {
+                const a = Math.atan2(this.player.y - p.y, this.player.x - p.x);
+                const speed = p.magnetSpeed || 600;
+                p.x += Math.cos(a) * speed * dt;
+                p.y += Math.sin(a) * speed * dt;
+                // Trail effect
+                if (Math.random() < 0.3) {
+                    this.particles.emit(p.x, p.y, 1, { color: p.type === 'xp' ? '#44ff44' : '#ffd700', minS: 20, maxS: 40, size: 2, life: 0.2 });
+                }
+            }
+            // Normal pickup range attraction
+            else if (d < this.player.pickupRange * 1.8) { 
+                const a = Math.atan2(this.player.y - p.y, this.player.x - p.x); 
+                const s = 200 * (1 - d / (this.player.pickupRange * 1.8)); 
+                p.x += Math.cos(a) * s * dt; 
+                p.y += Math.sin(a) * s * dt; 
+            }
+            
             if (d < this.player.pickupRange) {
                 if (p.type === 'xp') { 
                     this.player.xp += p.val * this.player.xpMult * (1 + this.player.curse * 0.4); 
-                    this.checkLevelUp(); 
+                    // Only check level up if not already in level up screen
+                    if (this.state !== 'levelup') this.checkLevelUp(); 
                     // XP pickup effect - no sound for XP/coins
                     this.particles.emit(p.x, p.y, 3, { color: '#44ff44', minS: 30, maxS: 60, size: 2, life: 0.3 });
                 } else { 
@@ -4341,6 +4778,20 @@ class Game {
         for (let i = this.items.length - 1; i >= 0; i--) {
             const item = this.items[i];
             item.update(dt);
+            
+            // Magnet pull for items
+            if (item.magnetPull) {
+                const d = Math.hypot(item.x - this.player.x, item.y - this.player.y);
+                const a = Math.atan2(this.player.y - item.y, this.player.x - item.x);
+                const speed = item.magnetSpeed || 500;
+                item.x += Math.cos(a) * speed * dt;
+                item.y += Math.sin(a) * speed * dt;
+                // Glow trail
+                if (Math.random() < 0.4) {
+                    this.particles.emit(item.x, item.y, 1, { color: '#ffd700', minS: 30, maxS: 60, size: 3, life: 0.25 });
+                }
+            }
+            
             if (Math.hypot(item.x - this.player.x, item.y - this.player.y) < 22) {
                 nearbyItems.push({ item, index: i });
             }
@@ -4374,6 +4825,14 @@ class Game {
             // Check if player is near an unopened chest
             if (!chest.opened && chest.isNearPlayer(this.player.x, this.player.y, 50)) {
                 this.nearbyChest = chest;
+                // Auto-buy timer: stand for 1.5 seconds to buy
+                chest.nearTimer = (chest.nearTimer || 0) + dt;
+                if (chest.nearTimer >= 1.5) {
+                    this.tryBuyChest();
+                    chest.nearTimer = 0;
+                }
+            } else {
+                chest.nearTimer = 0; // Reset timer when away
             }
         }
         
@@ -4413,6 +4872,12 @@ class Game {
             // Remove broken pots after animation
             if (pot.broken && pot.breakAnim > 1) {
                 this.pots.splice(i, 1);
+                continue;
+            }
+            
+            // Break pot by walking over it
+            if (!pot.broken && pot.isInRange(this.player.x, this.player.y, this.player.width / 2)) {
+                pot.takeDamage(10, this); // Instant break
             }
         }
         
@@ -4461,10 +4926,124 @@ class Game {
         let r = Math.random() * total, type = avail[0][0];
         for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { type = avail[i][0]; break; } }
         
-        // In endless mode, enemies are 1.25x stronger
-        const buff = this.player.enemyBuff + (this.endlessMode ? 0.25 : 0);
+        // Enemy strength buff: base + curse effect + endless mode bonus
+        // Curse makes enemies stronger (15% per curse level)
+        const curseBuff = this.player.curse * 0.15;
+        const endlessBuff = this.endlessMode ? 0.25 : 0;
+        const buff = this.player.enemyBuff + curseBuff + endlessBuff;
+        
         this.enemies.push(new Enemy(x, y, type, this.time, buff));
-        if (ENEMIES[type].pack) for (let i = 0; i < 2; i++) this.enemies.push(new Enemy(x + (Math.random() - 0.5) * 35, y + (Math.random() - 0.5) * 35, type, this.time, buff));
+        
+        // Pack enemies spawn together
+        if (ENEMIES[type].pack) {
+            const packSize = 2 + Math.floor(this.player.curse * 0.5); // More pack members with curse
+            for (let i = 0; i < packSize; i++) {
+                this.enemies.push(new Enemy(x + (Math.random() - 0.5) * 35, y + (Math.random() - 0.5) * 35, type, this.time, buff));
+            }
+        }
+        
+        // Chance to spawn ELITE enemy (increases over time)
+        // 2% at minute 0, +1% per minute, max 15%
+        const eliteChance = Math.min(0.02 + (this.time / 60) * 0.01, 0.15);
+        if (Math.random() < eliteChance) {
+            const eliteX = x + (Math.random() - 0.5) * 50;
+            const eliteY = y + (Math.random() - 0.5) * 50;
+            this.enemies.push(new Enemy(eliteX, eliteY, type, this.time, buff, true)); // true = elite
+        }
+    }
+    
+    // ===== القلهي WAVE SYSTEM =====
+    showGalhiWarning(waveNum) {
+        try {
+            const waveNames = ['', 'الموجة الأولى', 'الموجة الثانية', 'الموجة الثالثة', 'الموجة الرابعة', 'الموجة الخامسة'];
+            const waveName = waveNames[Math.min(waveNum, 5)] || `موجة ${waveNum}`;
+            
+            // Use floating text instead of DOM element
+            if (this.texts && this.player) {
+                this.texts.push(new FloatText(this.player.x, this.player.y - 80, '⚠️ القلهي جايك! ⚠️', '#ff4400', 28));
+                this.texts.push(new FloatText(this.player.x, this.player.y - 50, waveName, '#ffd700', 18));
+            }
+            
+            // Screen shake
+            this.shake = 1.5;
+            
+            // Warning sound
+            if (this.audio) {
+                this.audio.play(150, 0.3, 0.2, 'sawtooth');
+            }
+            
+            // Red flash particles
+            if (this.particles && this.player) {
+                this.particles.emit(this.player.x, this.player.y, 30, { color: '#ff4400', minS: 100, maxS: 200, size: 5, life: 1.5 });
+            }
+        } catch (e) {
+            console.log('Galhi warning error:', e);
+        }
+    }
+    
+    hideGalhiWarning() {
+        // No DOM to hide anymore - using floating text
+    }
+    
+    spawnGalhiWave(waveNum) {
+        try {
+            // Wave intensity scales with wave number (reduced for performance)
+            const baseEnemies = 10 + waveNum * 5; // 15, 20, 25, 30...
+            const eliteCount = Math.min(1 + Math.floor(waveNum / 2), 3); // 1, 1, 2, 2, 3 (max 3)
+            
+            const avail = Object.entries(ENEMIES).filter(([, e]) => this.time >= e.time);
+            if (avail.length === 0) return;
+            
+            const screenW = this.canvas.width / 2 + 100;
+            
+            const curseBuff = this.player.curse * 0.15;
+            const endlessBuff = this.endlessMode ? 0.25 : 0;
+            const waveBuff = waveNum * 0.1;
+            const buff = this.player.enemyBuff + curseBuff + endlessBuff + waveBuff;
+            
+            // Spawn regular enemies in a circle around player
+            for (let i = 0; i < baseEnemies; i++) {
+                const angle = (i / baseEnemies) * Math.PI * 2 + Math.random() * 0.5;
+                const distance = screenW + Math.random() * 50;
+                const x = this.player.x + Math.cos(angle) * distance;
+                const y = this.player.y + Math.sin(angle) * distance;
+                
+                const typeIdx = Math.floor(Math.random() * avail.length);
+                const type = avail[typeIdx][0];
+                
+                this.enemies.push(new Enemy(x, y, type, this.time, buff));
+            }
+            
+            // Spawn elite enemies
+            for (let i = 0; i < eliteCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = screenW + Math.random() * 30;
+                const x = this.player.x + Math.cos(angle) * distance;
+                const y = this.player.y + Math.sin(angle) * distance;
+                
+                const typeIdx = Math.floor(Math.random() * avail.length);
+                const type = avail[typeIdx][0];
+                
+                this.enemies.push(new Enemy(x, y, type, this.time, buff, true));
+            }
+            
+            // Floating text
+            if (this.texts && this.player) {
+                this.texts.push(new FloatText(this.player.x, this.player.y - 60, `+${baseEnemies + eliteCount} عدو!`, '#ff4400', 20));
+            }
+            
+            // Visual effect - particles around screen
+            if (this.particles && this.player) {
+                for (let i = 0; i < 20; i++) {
+                    const angle = (i / 20) * Math.PI * 2;
+                    const px = this.player.x + Math.cos(angle) * 300;
+                    const py = this.player.y + Math.sin(angle) * 300;
+                    this.particles.emit(px, py, 3, { color: '#ff4400', minS: 80, maxS: 150, size: 3, life: 0.8 });
+                }
+            }
+        } catch (e) {
+            console.log('Galhi spawn error:', e);
+        }
     }
     
     killEnemy(enemy) {
@@ -4672,6 +5251,10 @@ class Game {
     }
     
     checkLevelUp() {
+        // Don't trigger level up if already in level up screen or on cooldown
+        if (this.state === 'levelup') return;
+        if (this.levelUpCooldown && this.levelUpCooldown > 0) return;
+        
         // Easier scaling: lower growth rate, especially after level 10
         const level = this.player.level;
         let req;
@@ -4687,6 +5270,10 @@ class Game {
     showLevelUp() {
         this.state = 'levelup';
         const modal = document.getElementById('levelUpModal'), opts = document.getElementById('upgradeOptions');
+        
+        // Milestone levels (every 5 levels) get EPIC/LEGENDARY guaranteed!
+        const isMilestone = this.player.level % 5 === 0;
+        
         const choices = [];
         const aw = []; for (const w of this.player.weapons) { if (w.level < CONFIG.MAX_UPGRADE_LEVEL) aw.push({ type: 'weapon', id: w.id, isNew: false }); }
         if (this.player.weapons.length < CONFIG.MAX_WEAPONS) Object.keys(WEAPONS).filter(w => !this.player.weapons.find(pw => pw.id === w)).forEach(w => aw.push({ type: 'weapon', id: w, isNew: true }));
@@ -4695,8 +5282,23 @@ class Game {
         const all = [...aw, ...ab];
         while (choices.length < 3 && all.length > 0) choices.push(all.splice(Math.floor(Math.random() * all.length), 1)[0]);
         opts.innerHTML = '';
+        
+        // Show milestone banner
+        if (isMilestone) {
+            const banner = document.createElement('div');
+            banner.style.cssText = 'width:100%;text-align:center;color:#ffd700;font-size:1rem;margin-bottom:8px;text-shadow:0 0 10px #ffd700;animation:pulse 0.5s ease-in-out infinite alternate';
+            banner.innerHTML = `⭐ المستوى ${this.player.level}! ترقيات نادرة! ⭐`;
+            opts.appendChild(banner);
+        }
+        
         choices.forEach(c => {
-            const rar = getRandomRarity(this.player.luck);
+            // Milestone levels get guaranteed EPIC or LEGENDARY
+            let rar;
+            if (isMilestone) {
+                rar = Math.random() < 0.4 ? RARITY.LEGENDARY : RARITY.EPIC;
+            } else {
+                rar = getRandomRarity(this.player.luck);
+            }
             const card = document.createElement('div');
             card.className = 'upgrade-card';
             card.style.borderColor = rar.color;
@@ -4712,10 +5314,10 @@ class Game {
                 let types = ['damage', 'count', 'cooldown'];
                 const typeNames = { damage: '⚔️ ضرر', count: '🎯 عدد', cooldown: '⚡ سرعة' };
                 
-                // If weapon reached max count (10), remove count from upgrade options
+                // If weapon reached max count (5), remove count from upgrade options
                 if (!c.isNew && w) {
                     const currentCount = this.player.getProjectileCount(w);
-                    if (currentCount >= 10) {
+                    if (currentCount >= 5) {
                         types = types.filter(t => t !== 'count');
                     }
                 }
@@ -4725,20 +5327,21 @@ class Game {
                 if (c.isNew) {
                     // New weapon - show base stats
                     const baseDmg = CONFIG.WEAPON_BASE_DMG;
-                    statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">ضرر: ${baseDmg.toFixed(1)}</div>`;
+                    statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">ضرر أساسي: ${baseDmg.toFixed(0)}</div>`;
                 } else {
-                    // Existing weapon - show upgrade effect
+                    // Existing weapon - show upgrade effect with EXPONENTIAL scaling
                     if (upgradeType === 'damage') {
-                        const currentDmg = this.player.getDmg(w);
-                        const addDmg = rar.bonus * 1.5;
-                        const newDmg = currentDmg + addDmg;
-                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]}</div>
-                            <div style="font-size:0.5rem;color:#ff0">${currentDmg.toFixed(1)} → ${newDmg.toFixed(1)}</div>`;
+                        // Current damage
+                        const currentBaseDmg = CONFIG.WEAPON_BASE_DMG * Math.pow(1.18, w.level - 1);
+                        // Next level damage (exponential: +18% per level)
+                        const nextBaseDmg = CONFIG.WEAPON_BASE_DMG * Math.pow(1.18, w.level);
+                        const percentIncrease = Math.round((nextBaseDmg / currentBaseDmg - 1) * 100);
+                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]} +${percentIncrease}%</div>
+                            <div style="font-size:0.5rem;color:#ff0">${Math.round(currentBaseDmg)} → ${Math.round(nextBaseDmg)}</div>`;
                     } else if (upgradeType === 'count') {
                         const currentCount = this.player.getProjectileCount(w);
-                        const addCount = rar.bonus; // COMMON=1, UNCOMMON=2, RARE=3, EPIC=4, LEGENDARY=5
-                        const newCount = Math.min(currentCount + addCount, 10); // Max 10 projectiles
-                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]}</div>
+                        const newCount = Math.min(currentCount + 1, 5); // +1 per upgrade, max 5
+                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]} +1</div>
                             <div style="font-size:0.5rem;color:#ff0">${currentCount} → ${newCount}</div>`;
                     } else if (upgradeType === 'cooldown') {
                         const wData = WEAPONS[w.id];
@@ -4791,7 +5394,13 @@ class Game {
                 }
             }
             card.innerHTML = `<div class="upgrade-icon">${iconHtml}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? '<span style="font-size:0.75rem;font-weight:bold;color:#00ff88;text-shadow:0 0 8px #00ff88;white-space:nowrap">✨جديد!✨</span>' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
-            card.onclick = () => { this.selectUpgrade(c, rar, c.upgradeType); modal.style.display = 'none'; this.state = 'playing'; };
+            card.onclick = () => { 
+                this.selectUpgrade(c, rar, c.upgradeType); 
+                modal.style.display = 'none'; 
+                this.state = 'playing';
+                // Prevent immediate re-trigger of level up
+                this.levelUpCooldown = 0.5;
+            };
             opts.appendChild(card);
         });
         
@@ -4825,20 +5434,58 @@ class Game {
     }
     
     selectUpgrade(c, rar, upgradeType) {
-        // Keep reroll count - doesn't reset after selecting upgrade
-        
-        if (c.type === 'weapon') {
-            // Use provided upgrade type or random if new weapon
-            const type = upgradeType || ['damage', 'count', 'cooldown'][Math.floor(Math.random() * 3)];
-            const upgrade = { rarity: rar, type: type };
+        try {
+            // Apply the upgrade
+            if (c.type === 'weapon') {
+                const type = upgradeType || ['damage', 'count', 'cooldown'][Math.floor(Math.random() * 3)];
+                const upgrade = { rarity: rar, type: type };
+                
+                if (c.isNew) {
+                    this.player.weapons.push({ id: c.id, level: 1, upgrades: [upgrade] });
+                } else { 
+                    const w = this.player.weapons.find(x => x.id === c.id); 
+                    if (w) {
+                        w.level++; 
+                        w.upgrades.push(upgrade);
+                    }
+                }
+            } else {
+                if (c.isNew) { 
+                    this.player.books.push({ id: c.id, level: 1, upgrades: [{ rarity: rar }] }); 
+                    this.applyBook(c.id, 1, rar);
+                } else { 
+                    const b = this.player.books.find(x => x.id === c.id); 
+                    if (b) {
+                        b.level++; 
+                        b.upgrades.push({ rarity: rar }); 
+                        this.applyBook(c.id, b.level, rar);
+                    }
+                }
+            }
             
-            if (c.isNew) this.player.weapons.push({ id: c.id, level: 1, upgrades: [upgrade] });
-            else { const w = this.player.weapons.find(x => x.id === c.id); w.level++; w.upgrades.push(upgrade); }
-        } else {
-            if (c.isNew) { this.player.books.push({ id: c.id, level: 1, upgrades: [{ rarity: rar }] }); this.applyBook(c.id, 1, rar); }
-            else { const b = this.player.books.find(x => x.id === c.id); b.level++; b.upgrades.push({ rarity: rar }); this.applyBook(c.id, b.level, rar); }
+            // Update equipment display
+            this.updateSlots();
+            
+            // Visual effects (wrapped in try-catch to prevent crashes)
+            try {
+                const effectColor = rar.color || '#ffd700';
+                if (this.texts && this.player) {
+                    const msg = c.isNew ? (c.type === 'weapon' ? 'سلاح جديد!' : BOOKS[c.id].name + '!') : '+ترقية!';
+                    this.texts.push(new FloatText(this.player.x, this.player.y - 40, msg, effectColor, 16));
+                }
+                if (this.particles && this.player) {
+                    this.particles.emit(this.player.x, this.player.y, 15, { color: effectColor, minS: 80, maxS: 150, size: 3, life: 0.6 });
+                }
+                // Play sound
+                if (this.audio) {
+                    this.audio.play(880, 0.15, 0.1, 'sine');
+                }
+            } catch (e) {
+                console.log('Visual effect error:', e);
+            }
+        } catch (e) {
+            console.error('selectUpgrade error:', e);
         }
-        this.updateSlots();
     }
     
     applyBook(id, level, rar) {
@@ -4941,7 +5588,7 @@ class Game {
             : Math.floor(10 * Math.pow(1.25, 9) * Math.pow(1.15, level - 10));
         document.getElementById('xpBar').style.width = `${(this.player.xp / req) * 100}%`;
         document.getElementById('xpText').textContent = `${Math.floor(this.player.xp)}/${req}`;
-        document.getElementById('levelText').textContent = `المستوى: ${this.player.level}`;
+        document.getElementById('levelText').textContent = `Lv.${this.player.level}`;
         document.getElementById('goldText').textContent = this.player.gold;
         document.getElementById('killText').textContent = this.player.kills;
         const m = Math.floor(this.time / 60), s = Math.floor(this.time % 60);
@@ -5409,66 +6056,60 @@ class Game {
             ctx.fill(); 
         }
         
-        // Boss health bar
+        // Boss health bar - positioned below HUD
         if (this.boss) {
             const bw = Math.min(350, this.canvas.width * 0.8), bx = (this.canvas.width - bw) / 2;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
-            ctx.fillRect(bx - 3, 44, bw + 6, 26);
-            ctx.fillStyle = '#222'; 
-            ctx.fillRect(bx, 47, bw, 20);
+            const by = 85; // Moved down to be below HUD
+            
+            // Background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; 
+            ctx.fillRect(bx - 5, by - 5, bw + 10, 35);
+            
+            // Border
+            ctx.strokeStyle = '#ff4444';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bx - 5, by - 5, bw + 10, 35);
+            
+            // HP bar background
+            ctx.fillStyle = '#333'; 
+            ctx.fillRect(bx, by + 10, bw, 16);
+            
+            // HP fill
             const hpColor = this.boss.phase === 3 ? '#ff0000' : this.boss.phase === 2 ? '#ff6600' : '#ffcc00';
             ctx.fillStyle = hpColor;
-            ctx.fillRect(bx, 47, bw * (this.boss.hp / this.boss.maxHp), 20);
+            ctx.fillRect(bx, by + 10, bw * (this.boss.hp / this.boss.maxHp), 16);
+            
+            // Boss name
+            const bossName = this.boss.name || BOSS.name;
             ctx.fillStyle = '#fff'; 
-            ctx.font = 'bold 12px PixelAE, Cairo'; 
+            ctx.font = 'bold 11px PixelAE, Cairo'; 
             ctx.textAlign = 'center';
-            ctx.fillText(`👹 ${BOSS.name} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, 42);
+            ctx.fillText(`👹 ${bossName} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, by + 5);
         }
         
-        // Chest prompt UI when near a chest
-        if (this.nearbyChest && !this.nearbyChest.opened) {
-            const price = ChestManager.getPrice();
+        // Draw price below each chest
+        for (const chest of this.chests) {
+            if (chest.opened) continue;
+            const chestX = chest.x - this.cam.x;
+            const chestY = chest.y - this.cam.y;
+            const price = ChestManager.getPrice(this.player.chestDiscount);
             const canAfford = this.player.gold >= price;
-            const chestX = this.nearbyChest.x - this.cam.x;
-            const chestY = this.nearbyChest.y - this.cam.y - 50;
             
-            // Draw prompt box
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.strokeStyle = canAfford ? '#ffd700' : '#ff4444';
-            ctx.lineWidth = 2;
-            const boxW = 120, boxH = 45;
-            ctx.beginPath();
-            ctx.roundRect(chestX - boxW/2, chestY - boxH/2, boxW, boxH, 8);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Price text
+            // Price tag below chest
             ctx.fillStyle = canAfford ? '#ffd700' : '#ff4444';
-            ctx.font = 'bold 14px PixelAE, Cairo';
+            ctx.font = 'bold 11px PixelAE, Cairo';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`💰 ${price}`, chestX, chestY - 8);
+            ctx.textBaseline = 'top';
+            ctx.fillText(`${price}💰`, chestX, chestY + 22);
             
-            // Key hint
-            ctx.fillStyle = '#aaa';
-            ctx.font = '11px PixelAE, Cairo';
-            ctx.fillText('[E] للشراء', chestX, chestY + 12);
-        }
-        
-        // Draw current chest price in corner
-        if (this.chests.length > 0) {
-            const price = ChestManager.getPrice();
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fillRect(this.canvas.width - 110, this.canvas.height - 40, 100, 30);
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(this.canvas.width - 110, this.canvas.height - 40, 100, 30);
-            
-            ctx.fillStyle = '#ffd700';
-            ctx.font = 'bold 12px PixelAE, Cairo';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`📦 ${price}💰`, this.canvas.width - 60, this.canvas.height - 25);
+            // If player is near, show timer progress
+            if (chest.nearTimer && chest.nearTimer > 0) {
+                const progress = chest.nearTimer / 1.5;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(chestX - 20, chestY - 30, 40, 6);
+                ctx.fillStyle = canAfford ? '#00ff00' : '#ff4444';
+                ctx.fillRect(chestX - 20, chestY - 30, 40 * progress, 6);
+            }
         }
         
         // Draw active buff indicators
@@ -5554,6 +6195,73 @@ class Game {
         // Warm tint overlay
         ctx.fillStyle = 'rgba(255, 200, 100, 0.02)';
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    
+    drawHudAvatar() {
+        const canvas = document.getElementById('hudAvatarCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 32, 32);
+        ctx.imageSmoothingEnabled = false;
+        
+        const charId = this.charIds[this.charIdx];
+        const spriteInfo = CHAR_SPRITES[charId];
+        
+        if (spriteInfo) {
+            let sprite = null;
+            
+            if (spriteInfo.type === 'walk_idle') {
+                // Use previewSprite for HUD if available, otherwise idleSprite
+                const spriteKey = spriteInfo.previewSprite || spriteInfo.idleSprite;
+                sprite = this.assets.get(spriteKey);
+                if (sprite) {
+                    // Check if previewSprite (full image) or spritesheet
+                    if (spriteInfo.previewSprite) {
+                        // Full static image
+                        const scale = Math.min(30 / sprite.width, 30 / sprite.height);
+                        const drawW = sprite.width * scale;
+                        const drawH = sprite.height * scale;
+                        ctx.drawImage(sprite, (32 - drawW) / 2, (32 - drawH) / 2, drawW, drawH);
+                    } else if (spriteInfo.frameWidth) {
+                        // Spritesheet - draw first frame
+                        const frameW = spriteInfo.frameWidth;
+                        const frameH = spriteInfo.frameHeight;
+                        const scale = Math.min(30 / frameW, 30 / frameH);
+                        const drawW = frameW * scale;
+                        const drawH = frameH * scale;
+                        ctx.drawImage(sprite, 0, 0, frameW, frameH, (32 - drawW) / 2, (32 - drawH) / 2, drawW, drawH);
+                    } else {
+                        // Full image fallback
+                        const scale = Math.min(30 / sprite.width, 30 / sprite.height);
+                        const drawW = sprite.width * scale;
+                        const drawH = sprite.height * scale;
+                        ctx.drawImage(sprite, (32 - drawW) / 2, (32 - drawH) / 2, drawW, drawH);
+                    }
+                }
+            } else if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+                sprite = this.assets.get(spriteInfo.frames[0]);
+                if (sprite) {
+                    const scale = Math.min(28 / sprite.width, 28 / sprite.height) * 2;
+                    const drawW = sprite.width * scale;
+                    const drawH = sprite.height * scale;
+                    ctx.drawImage(sprite, (32 - drawW) / 2, (32 - drawH) / 2, drawW, drawH);
+                }
+            }
+        }
+        
+        // Fallback: draw colored circle with initial
+        if (!ctx.getImageData(16, 16, 1, 1).data[3]) {
+            const colors = CHARACTERS[charId]?.colors || { body: '#666' };
+            ctx.fillStyle = colors.body || '#666';
+            ctx.beginPath();
+            ctx.arc(16, 16, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(CHARACTERS[charId]?.name?.[0] || '?', 16, 16);
+        }
     }
     
     drawMiniMap() {
