@@ -65,102 +65,97 @@
         .high-score { margin-top: 15px; font-size: 0.8rem; color: #666; }
         
         /* Pixel-style HUD - Retro Style (Like reference image) */
-        #hud { position: fixed; top: 8px; left: 8px; display: none; z-index: 50; pointer-events: none; image-rendering: pixelated; }
-        .hud-left { display: flex; flex-direction: column; gap: 4px; }
-        .hud-right { position: fixed; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+        #hud { position: fixed; top: 6px; left: 6px; display: none; z-index: 50; pointer-events: none; image-rendering: pixelated; font-family: 'PixelAE', monospace; }
+        .hud-left { display: flex; flex-direction: column; gap: 2px; }
+        .hud-right { position: fixed; top: 6px; right: 6px; display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
         
-        /* Main HUD panel - dark frame like reference */
+        /* Main HUD panel - dark solid frame like reference */
         .hud-panel { 
-            background: linear-gradient(180deg, #4a4248 0%, #3d3440 50%, #2d2530 100%);
+            background: #2a2530;
             border: 3px solid #1a1518;
-            border-radius: 4px;
-            padding: 5px;
+            padding: 4px;
             display: flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: inset 0 2px 0 rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.5);
+            gap: 4px;
         }
         
-        /* Character avatar box */
+        /* Character avatar box - like reference bunny icon */
         .hud-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(180deg, #3d3440 0%, #2d2530 100%);
-            border: 2px solid #1a1518;
-            border-radius: 3px;
+            width: 36px;
+            height: 36px;
+            background: #1a1518;
+            border: 2px solid #3a3540;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 1.3rem;
         }
         
         /* Bars container */
         .hud-bars {
             display: flex;
             flex-direction: column;
-            gap: 3px;
+            gap: 2px;
         }
         
-        /* HP/XP bars */
+        /* HP/XP bars - pixel style like reference */
         .hud-bar { 
-            width: 120px; 
-            height: 12px; 
-            background: #1a1518; 
-            border: 2px solid #0a0808;
-            border-radius: 2px;
+            width: 110px; 
+            height: 10px; 
+            background: #0a0808; 
+            border: 1px solid #3a3540;
             overflow: hidden; 
             position: relative;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
         }
-        .hud-bar-fill { height: 100%; transition: width 0.15s ease; }
+        .hud-bar-fill { height: 100%; transition: width 0.1s linear; }
         .hud-bar-text { 
             position: absolute; 
             top: 50%; 
             left: 50%; 
             transform: translate(-50%, -50%); 
-            font-size: 8px; 
+            font-size: 7px; 
             font-weight: bold; 
-            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; 
+            text-shadow: 1px 1px 0 #000; 
             white-space: nowrap; 
             z-index: 10; 
-            color: #fff; 
+            color: #fff;
+            letter-spacing: 0.5px;
         }
-        .health-fill { background: linear-gradient(180deg, #ff6b6b 0%, #c0392b 50%, #8b0000 100%); }
-        .xp-fill { background: linear-gradient(180deg, #6bff6b 0%, #27ae60 50%, #006400 100%); }
+        /* Red HP bar like reference */
+        .health-fill { background: linear-gradient(180deg, #ff4444 0%, #cc2222 100%); }
+        /* Green XP bar like reference */
+        .xp-fill { background: linear-gradient(180deg, #44ff44 0%, #22cc22 100%); }
         
-        /* Gold counter - attached to main panel */
+        /* Gold counter - separate box below */
         .hud-gold {
-            background: linear-gradient(180deg, #4a4248 0%, #3d3440 100%);
-            border: 2px solid #1a1518;
-            border-radius: 3px;
-            padding: 2px 8px;
+            background: #2a2530;
+            border: 3px solid #1a1518;
+            padding: 2px 10px;
             display: flex;
             align-items: center;
             gap: 4px;
-            margin-top: -1px;
-            margin-left: 48px;
+            margin-left: 0px;
         }
-        .hud-gold-icon { font-size: 12px; }
-        .hud-gold-text { color: #ffd700; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+        .hud-gold-icon { font-size: 14px; }
+        .hud-gold-text { color: #ffd700; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 0 #000; letter-spacing: 1px; }
         
-        /* Right side stats */
+        /* Right side stats - compact boxes */
         .hud-stat { 
-            font-size: 0.7rem; 
+            font-size: 11px; 
             font-weight: 700; 
             text-shadow: 1px 1px 0 #000; 
             display: flex; 
             align-items: center; 
             gap: 4px; 
             padding: 3px 8px; 
-            background: linear-gradient(180deg, #4a4248 0%, #3d3440 100%);
+            background: #2a2530;
             border: 2px solid #1a1518;
-            border-radius: 3px;
+            color: #fff;
         }
-        .hud-stat-icon { font-size: 0.8rem; }
+        .hud-stat-icon { font-size: 12px; }
         .kill-text { color: #ff6666; }
-        .level-text { color: #66ff66; }
-        .timer-text { color: #66ccff; }
+        .level-text { color: #88ff88; }
+        .timer-text { color: #88ccff; }
         
         /* Equipment slots - smaller for mobile */
         .equipment-slots { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); display: none; gap: 6px; z-index: 50; pointer-events: none; max-width: 95vw; }
@@ -1058,8 +1053,9 @@ const CHAR_SPRITES = {
         walkFrames: 16,
         idleFps: 8,
         walkFps: 12,
-        scale: 1.6, // 160% bigger character in game
-        previewScale: 1.8 // 200% bigger preview in menu
+        scale: 0.8, // Smaller scale for better alignment
+        previewScale: 1.2,
+        yOffset: -10 // Move sprite up to align with shadow
     }
 };
 
@@ -1854,9 +1850,10 @@ class Player {
                     const customScale = spriteInfo.scale || 0.4;
                     const drawW = frameW * customScale;
                     const drawH = frameH * customScale;
+                    const yOffset = spriteInfo.yOffset || 0;
                     
                     ctx.save();
-                    ctx.translate(sx, sy);
+                    ctx.translate(sx, sy + yOffset);
                     // Mr Bassla sprite faces LEFT by default, flip when facing right
                     if (!facingRight) ctx.scale(-1, 1);
                     ctx.drawImage(sprite, frameX, 0, frameW, frameH, -drawW / 2, -drawH / 2, drawW, drawH);
@@ -3940,63 +3937,66 @@ class Game {
     }
     
     spawnChestReward(x, y) {
-        // Random reward: weapon, book, or item
+        // Always give guaranteed rewards
+        let gaveReward = false;
+        
+        // Try to give weapon or book
         const roll = Math.random();
         
-        if (roll < 0.25) {
-            // Weapon (25%)
+        if (roll < 0.3) {
+            // Try weapon (30%)
             const weaponIds = Object.keys(WEAPONS);
             const randomWeapon = weaponIds[Math.floor(Math.random() * weaponIds.length)];
-            // Give directly to player if slot available
-            if (this.player.weapons.length < CONFIG.MAX_WEAPONS || this.player.weapons.find(w => w.id === randomWeapon)) {
-                const existing = this.player.weapons.find(w => w.id === randomWeapon);
-                if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
-                    existing.lv++;
-                    this.texts.push(new FloatText(x, y - 30, `${WEAPONS[randomWeapon].name} +1`, '#00ff00'));
-                } else if (!existing && this.player.weapons.length < CONFIG.MAX_WEAPONS) {
-                    this.player.weapons.push({ id: randomWeapon, lv: 1, cd: 0 });
-                    this.texts.push(new FloatText(x, y - 30, `${WEAPONS[randomWeapon].name}!`, '#ffd700'));
-                }
+            const existing = this.player.weapons.find(w => w.id === randomWeapon);
+            
+            if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
+                existing.lv++;
+                this.texts.push(new FloatText(x, y - 30, `${WEAPONS[randomWeapon].name} +1`, '#00ff00'));
+                gaveReward = true;
+            } else if (!existing && this.player.weapons.length < CONFIG.MAX_WEAPONS) {
+                this.player.weapons.push({ id: randomWeapon, lv: 1, cd: 0 });
+                this.texts.push(new FloatText(x, y - 30, `${WEAPONS[randomWeapon].name}!`, '#ffd700'));
+                gaveReward = true;
             }
-        } else if (roll < 0.5) {
-            // Book (25%)
+        } else if (roll < 0.6) {
+            // Try book (30%)
             const bookIds = Object.keys(BOOKS);
             const randomBook = bookIds[Math.floor(Math.random() * bookIds.length)];
-            if (this.player.books.length < CONFIG.MAX_BOOKS || this.player.books.find(b => b.id === randomBook)) {
-                const existing = this.player.books.find(b => b.id === randomBook);
-                if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
-                    existing.lv++;
-                    this.player.applyBookStats();
-                    this.texts.push(new FloatText(x, y - 30, `${BOOKS[randomBook].name} +1`, '#00ff00'));
-                } else if (!existing && this.player.books.length < CONFIG.MAX_BOOKS) {
-                    this.player.books.push({ id: randomBook, lv: 1 });
-                    this.player.applyBookStats();
-                    this.texts.push(new FloatText(x, y - 30, `${BOOKS[randomBook].name}!`, '#00ffff'));
-                }
-            }
-        } else {
-            // Item drop (50%)
-            const itemIds = Object.keys(ITEMS);
-            const luck = this.player.luck || 1;
-            // Weight by rarity
-            const weightedItems = itemIds.filter(id => {
-                const item = ITEMS[id];
-                const rarityWeight = { 'COMMON': 50, 'RARE': 30 * luck, 'LEGENDARY': 20 * luck * luck };
-                return Math.random() * 100 < (rarityWeight[item.rarity] || 50);
-            });
-            if (weightedItems.length > 0) {
-                const randomItem = weightedItems[Math.floor(Math.random() * weightedItems.length)];
-                this.items.push(new ItemDrop(x + (Math.random() - 0.5) * 30, y + (Math.random() - 0.5) * 30, randomItem));
+            const existing = this.player.books.find(b => b.id === randomBook);
+            
+            if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
+                existing.lv++;
+                this.player.applyBookStats();
+                this.texts.push(new FloatText(x, y - 30, `${BOOKS[randomBook].name} +1`, '#00ff00'));
+                gaveReward = true;
+            } else if (!existing && this.player.books.length < CONFIG.MAX_BOOKS) {
+                this.player.books.push({ id: randomBook, lv: 1 });
+                this.player.applyBookStats();
+                this.texts.push(new FloatText(x, y - 30, `${BOOKS[randomBook].name}!`, '#00ffff'));
+                gaveReward = true;
             }
         }
         
-        // Always drop some XP and gold
-        for (let i = 0; i < 5; i++) {
+        // If no weapon/book given, always drop an item
+        if (!gaveReward) {
+            const itemIds = Object.keys(ITEMS);
+            const randomItem = itemIds[Math.floor(Math.random() * itemIds.length)];
+            this.items.push(new ItemDrop(x, y, randomItem));
+            this.texts.push(new FloatText(x, y - 30, `${ITEMS[randomItem].name}!`, RARITY[ITEMS[randomItem].rarity].color));
+        }
+        
+        // Always drop gold (guaranteed)
+        const goldAmount = 15 + Math.floor(Math.random() * 25);
+        this.player.gold += goldAmount;
+        this.texts.push(new FloatText(x, y - 50, `+${goldAmount} 🪙`, '#ffd700'));
+        
+        // Drop some XP gems
+        for (let i = 0; i < 3; i++) {
             this.pickups.push(new Pickup(
-                x + (Math.random() - 0.5) * 50,
-                y + (Math.random() - 0.5) * 50,
-                Math.random() < 0.5 ? 'xp' : 'gold',
-                Math.random() < 0.5 ? 5 : 10
+                x + (Math.random() - 0.5) * 40,
+                y + (Math.random() - 0.5) * 40,
+                'xp',
+                10 + Math.floor(Math.random() * 15)
             ));
         }
     }
