@@ -5583,20 +5583,46 @@ class Game {
             ctx.fill(); 
         }
         
-        // Boss health bar
+        // Boss health bar - positioned clearly below player HUD
         if (this.boss) {
-            const bw = Math.min(350, this.canvas.width * 0.8), bx = (this.canvas.width - bw) / 2;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
-            ctx.fillRect(bx - 3, 44, bw + 6, 26);
-            ctx.fillStyle = '#222'; 
-            ctx.fillRect(bx, 47, bw, 20);
-            const hpColor = this.boss.phase === 3 ? '#ff0000' : this.boss.phase === 2 ? '#ff6600' : '#ffcc00';
-            ctx.fillStyle = hpColor;
-            ctx.fillRect(bx, 47, bw * (this.boss.hp / this.boss.maxHp), 20);
+            const bw = Math.min(400, this.canvas.width * 0.85), bx = (this.canvas.width - bw) / 2;
+            const by = 85; // Position below player HUD (HP/XP bars are at top ~0-70px)
+            
+            // Boss name and phase label
             ctx.fillStyle = '#fff'; 
-            ctx.font = 'bold 12px PixelAE, Cairo'; 
+            ctx.font = 'bold 14px PixelAE, Cairo'; 
             ctx.textAlign = 'center';
-            ctx.fillText(`👹 ${BOSS.name} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, 42);
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 4;
+            ctx.fillText(`👹 ${BOSS.name} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, by - 5);
+            ctx.shadowBlur = 0;
+            
+            // Outer border (dark)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; 
+            ctx.fillRect(bx - 4, by, bw + 8, 28);
+            
+            // Inner background
+            ctx.fillStyle = '#1a1a1a'; 
+            ctx.fillRect(bx, by + 3, bw, 22);
+            
+            // HP fill with gradient based on phase
+            const hpPercent = this.boss.hp / this.boss.maxHp;
+            const hpColor = this.boss.phase === 3 ? '#ff0000' : this.boss.phase === 2 ? '#ff6600' : '#ffcc00';
+            const gradient = ctx.createLinearGradient(bx, 0, bx + bw * hpPercent, 0);
+            gradient.addColorStop(0, hpColor);
+            gradient.addColorStop(1, this.boss.phase === 3 ? '#aa0000' : this.boss.phase === 2 ? '#cc4400' : '#cc9900');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(bx, by + 3, bw * hpPercent, 22);
+            
+            // HP percentage text
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 11px PixelAE, Cairo';
+            ctx.fillText(`${Math.ceil(this.boss.hp)} / ${Math.ceil(this.boss.maxHp)}`, this.canvas.width / 2, by + 18);
+            
+            // Red border glow effect
+            ctx.strokeStyle = hpColor;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bx - 1, by + 2, bw + 2, 24);
         }
         
         // Draw price below each chest
