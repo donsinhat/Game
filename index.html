@@ -3523,14 +3523,30 @@ class Game {
                 const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
                 const bg = i === 0 ? '#ffd70030' : i === 1 ? '#c0c0c030' : i === 2 ? '#cd7f3230' : '#ffffff10';
                 const mode = entry.mode === 'endless' ? '♾️' : '🏜️';
+                // Get character emoji based on name
+                const charEmoji = this.getCharacterEmoji(entry.character);
                 return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:${bg};border-radius:8px;border:1px solid #333">
                     <span style="color:#ffd700;font-weight:bold;min-width:30px">${medal}</span>
-                    <span style="color:#fff;flex:1;margin:0 10px;text-align:right">${entry.name}</span>
-                    <span style="color:#ff8800;font-weight:bold">💀 ${entry.kills}</span>
-                    <span style="margin-left:8px">${mode}</span>
+                    <span style="font-size:1.2rem;margin:0 5px" title="${entry.character || 'غير معروف'}">${charEmoji}</span>
+                    <span style="color:#fff;flex:1;margin:0 8px;text-align:right;font-size:0.85rem">${entry.name}</span>
+                    <span style="color:#ff8800;font-weight:bold;font-size:0.9rem">💀${entry.kills}</span>
+                    <span style="margin-left:5px;font-size:0.8rem">${mode}</span>
                 </div>`;
             }).join('');
         }
+    }
+    
+    getCharacterEmoji(charName) {
+        // Map character names to emojis
+        const charEmojis = {
+            'أبو سليمان': '💰',
+            'أبو نورة': '🏃',
+            'أم فهد': '⚡',
+            'ساموراي': '⚔️',
+            'ليلى': '🔮',
+            'الأمير': '👑'
+        };
+        return charEmojis[charName] || '👤';
     }
     
     async submitScore() {
