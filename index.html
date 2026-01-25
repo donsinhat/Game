@@ -4085,6 +4085,11 @@ class Game {
     update(dt) {
         this.time += dt;
         
+        // Level up cooldown
+        if (this.levelUpCooldown && this.levelUpCooldown > 0) {
+            this.levelUpCooldown -= dt;
+        }
+        
         // Boss spawning
         if (this.endlessMode) {
             // Endless mode: Boss spawns at 5min (phase1), 10min (phase2), 15min (phase3)
@@ -5049,8 +5054,9 @@ class Game {
     }
     
     checkLevelUp() {
-        // Don't trigger level up if already in level up screen
+        // Don't trigger level up if already in level up screen or on cooldown
         if (this.state === 'levelup') return;
+        if (this.levelUpCooldown && this.levelUpCooldown > 0) return;
         
         // Easier scaling: lower growth rate, especially after level 10
         const level = this.player.level;
@@ -5191,7 +5197,13 @@ class Game {
                 }
             }
             card.innerHTML = `<div class="upgrade-icon">${iconHtml}</div><div class="upgrade-name" style="color:${rar.color}">${data.name}</div><div class="upgrade-type">${c.type === 'weapon' ? 'سلاح' : 'كتاب'}</div><div class="upgrade-level">${c.isNew ? '<span style="font-size:0.75rem;font-weight:bold;color:#00ff88;text-shadow:0 0 8px #00ff88;white-space:nowrap">✨جديد!✨</span>' : `مستوى ${lvl} → ${lvl + 1}`}</div>${statChangeText}<div class="upgrade-rarity" style="background:${rar.color}20;color:${rar.color};font-size:0.55rem;padding:2px 4px">${rar.name}</div>`;
-            card.onclick = () => { this.selectUpgrade(c, rar, c.upgradeType); modal.style.display = 'none'; this.state = 'playing'; };
+            card.onclick = () => { 
+                this.selectUpgrade(c, rar, c.upgradeType); 
+                modal.style.display = 'none'; 
+                this.state = 'playing';
+                // Prevent immediate re-trigger of level up
+                this.levelUpCooldown = 0.5;
+            };
             opts.appendChild(card);
         });
         
@@ -5225,62 +5237,58 @@ class Game {
     }
     
     selectUpgrade(c, rar, upgradeType) {
-        // Keep reroll count - doesn't reset after selecting upgrade
-        
-        // Visual power-up effect based on rarity
-        const rarityColors = {
-            'COMMON': '#aaa',
-            'UNCOMMON': '#5f5',
-            'RARE': '#55f',
-            'EPIC': '#a5f',
-            'LEGENDARY': '#ffd700'
-        };
-        const effectColor = rar.color || '#ffd700';
-        
-        if (c.type === 'weapon') {
-            // Use provided upgrade type or random if new weapon
-            const type = upgradeType || ['damage', 'count', 'cooldown'][Math.floor(Math.random() * 3)];
-            const upgrade = { rarity: rar, type: type };
+        try {
+            // Apply the upgrade
+            if (c.type === 'weapon') {
+                const type = upgradeType || ['damage', 'count', 'cooldown'][Math.floor(Math.random() * 3)];
+                const upgrade = { rarity: rar, type: type };
+                
+                if (c.isNew) {
+                    this.player.weapons.push({ id: c.id, level: 1, upgrades: [upgrade] });
+                } else { 
+                    const w = this.player.weapons.find(x => x.id === c.id); 
+                    if (w) {
+                        w.level++; 
+                        w.upgrades.push(upgrade);
+                    }
+                }
+            } else {
+                if (c.isNew) { 
+                    this.player.books.push({ id: c.id, level: 1, upgrades: [{ rarity: rar }] }); 
+                    this.applyBook(c.id, 1, rar);
+                } else { 
+                    const b = this.player.books.find(x => x.id === c.id); 
+                    if (b) {
+                        b.level++; 
+                        b.upgrades.push({ rarity: rar }); 
+                        this.applyBook(c.id, b.level, rar);
+                    }
+                }
+            }
             
-            if (c.isNew) {
-                this.player.weapons.push({ id: c.id, level: 1, upgrades: [upgrade] });
-                // New weapon acquired! Big celebration
-                this.texts.push(new FloatText(this.player.x, this.player.y - 40, `سلاح جديد!`, effectColor, 20));
-                this.particles.emit(this.player.x, this.player.y, 25, { color: effectColor, minS: 100, maxS: 200, size: 4, life: 0.8 });
-            } else { 
-                const w = this.player.weapons.find(x => x.id === c.id); 
-                w.level++; 
-                w.upgrades.push(upgrade);
-                // Level up effect
-                this.texts.push(new FloatText(this.player.x, this.player.y - 40, `+18% ضرر!`, '#ff0', 16));
-                this.particles.emit(this.player.x, this.player.y, 15, { color: effectColor, minS: 80, maxS: 150, size: 3, life: 0.6 });
+            // Update equipment display
+            this.updateSlots();
+            
+            // Visual effects (wrapped in try-catch to prevent crashes)
+            try {
+                const effectColor = rar.color || '#ffd700';
+                if (this.texts && this.player) {
+                    const msg = c.isNew ? (c.type === 'weapon' ? 'سلاح جديد!' : BOOKS[c.id].name + '!') : '+ترقية!';
+                    this.texts.push(new FloatText(this.player.x, this.player.y - 40, msg, effectColor, 16));
+                }
+                if (this.particles && this.player) {
+                    this.particles.emit(this.player.x, this.player.y, 15, { color: effectColor, minS: 80, maxS: 150, size: 3, life: 0.6 });
+                }
+                // Play sound
+                if (this.audio) {
+                    this.audio.play(880, 0.15, 0.1, 'sine');
+                }
+            } catch (e) {
+                console.log('Visual effect error:', e);
             }
-        } else {
-            const book = BOOKS[c.id];
-            if (c.isNew) { 
-                this.player.books.push({ id: c.id, level: 1, upgrades: [{ rarity: rar }] }); 
-                this.applyBook(c.id, 1, rar);
-                // New book acquired!
-                this.texts.push(new FloatText(this.player.x, this.player.y - 40, `${book.name}!`, effectColor, 18));
-                this.particles.emit(this.player.x, this.player.y, 20, { color: effectColor, minS: 80, maxS: 160, size: 3, life: 0.7 });
-            } else { 
-                const b = this.player.books.find(x => x.id === c.id); 
-                b.level++; 
-                b.upgrades.push({ rarity: rar }); 
-                this.applyBook(c.id, b.level, rar);
-                // Book upgrade effect - show the actual bonus
-                const bonusText = book.desc.replace(/[+٪%]/g, ''); // Clean description
-                this.texts.push(new FloatText(this.player.x, this.player.y - 40, book.desc, effectColor, 14));
-                this.particles.emit(this.player.x, this.player.y, 12, { color: effectColor, minS: 60, maxS: 120, size: 3, life: 0.5 });
-            }
+        } catch (e) {
+            console.error('selectUpgrade error:', e);
         }
-        
-        // Play power-up sound
-        this.audio.play(880, 0.15, 0.1, 'sine');
-        setTimeout(() => this.audio.play(1100, 0.15, 0.08, 'sine'), 50);
-        setTimeout(() => this.audio.play(1320, 0.15, 0.06, 'sine'), 100);
-        
-        this.updateSlots();
     }
     
     applyBook(id, level, rar) {
