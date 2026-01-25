@@ -3560,8 +3560,6 @@ class Game {
             if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') this.input.left = true;
             if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') this.input.right = true;
             if ((e.key === 'Escape' || e.key === 'p') && this.state === 'playing') this.pause();
-            // Buy chest with E key
-            if ((e.key === 'e' || e.key === 'E') && this.state === 'playing') this.tryBuyChest();
         });
         window.addEventListener('keyup', e => {
             if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') this.input.up = false;
@@ -3575,11 +3573,6 @@ class Game {
             e.preventDefault(); 
             touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY }; 
             this.input.joy = { x: 0, y: 0 };
-            
-            // Check if tapping near a chest (for mobile)
-            if (this.nearbyChest && !this.nearbyChest.opened) {
-                this.tryBuyChest();
-            }
         }, { passive: false });
         this.canvas.addEventListener('touchmove', e => { if (this.state !== 'playing' || !touchStart) return; e.preventDefault(); const dx = e.touches[0].clientX - touchStart.x, dy = e.touches[0].clientY - touchStart.y; const d = Math.min(Math.hypot(dx, dy), 60), a = Math.atan2(dy, dx); this.input.joy = { x: Math.cos(a) * d / 60, y: Math.sin(a) * d / 60 }; }, { passive: false });
         this.canvas.addEventListener('touchend', () => { touchStart = null; this.input.joy = null; });
@@ -3783,12 +3776,12 @@ class Game {
             // Effects
             this.audio.pickup();
             this.particles.spark(this.nearbyChest.x, this.nearbyChest.y, '#ffd700');
-            this.texts.push(new FloatingText(this.nearbyChest.x, this.nearbyChest.y - 20, `-${price}💰`, '#ff4444'));
+            this.texts.push(new FloatText(this.nearbyChest.x, this.nearbyChest.y - 20, `-${price}💰`, '#ff4444'));
             
             this.updateHUD();
         } else {
             // Not enough gold
-            this.texts.push(new FloatingText(this.player.x, this.player.y - 30, 'ما عندك فلوس!', '#ff4444'));
+            this.texts.push(new FloatText(this.player.x, this.player.y - 30, 'ما عندك فلوس!', '#ff4444'));
         }
     }
     
@@ -3796,7 +3789,7 @@ class Game {
         const data = buff.data;
         this.audio.pickup();
         this.particles.spark(buff.x, buff.y, data.color);
-        this.texts.push(new FloatingText(buff.x, buff.y - 20, data.name, data.color));
+        this.texts.push(new FloatText(buff.x, buff.y - 20, data.name, data.color));
         
         // Apply buff effect
         switch (data.effect) {
@@ -3832,7 +3825,7 @@ class Game {
                     p.x = this.player.x + (Math.random() - 0.5) * 50;
                     p.y = this.player.y + (Math.random() - 0.5) * 50;
                 }
-                this.texts.push(new FloatingText(this.player.x, this.player.y - 40, '🧲 مغناطيس!', '#00ff88'));
+                this.texts.push(new FloatText(this.player.x, this.player.y - 40, '🧲 مغناطيس!', '#00ff88'));
                 break;
                 
             case 'nuke':
@@ -3850,7 +3843,7 @@ class Game {
                 // Big explosion effect
                 this.particles.emit(this.player.x, this.player.y, 30, { color: '#ff6600', minS: 100, maxS: 300, life: 0.8 });
                 this.shake = 0.5;
-                this.texts.push(new FloatingText(this.player.x, this.player.y - 40, `💥 ${nukeKills} قتيل!`, '#ff6600'));
+                this.texts.push(new FloatText(this.player.x, this.player.y - 40, `💥 ${nukeKills} قتيل!`, '#ff6600'));
                 break;
         }
     }
@@ -3893,10 +3886,10 @@ class Game {
                 const existing = this.player.weapons.find(w => w.id === randomWeapon);
                 if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
                     existing.lv++;
-                    this.texts.push(new FloatingText(x, y - 30, `${WEAPONS[randomWeapon].name} +1`, '#00ff00'));
+                    this.texts.push(new FloatText(x, y - 30, `${WEAPONS[randomWeapon].name} +1`, '#00ff00'));
                 } else if (!existing && this.player.weapons.length < CONFIG.MAX_WEAPONS) {
                     this.player.weapons.push({ id: randomWeapon, lv: 1, cd: 0 });
-                    this.texts.push(new FloatingText(x, y - 30, `${WEAPONS[randomWeapon].name}!`, '#ffd700'));
+                    this.texts.push(new FloatText(x, y - 30, `${WEAPONS[randomWeapon].name}!`, '#ffd700'));
                 }
             }
         } else if (roll < 0.5) {
@@ -3908,11 +3901,11 @@ class Game {
                 if (existing && existing.lv < CONFIG.MAX_UPGRADE_LEVEL) {
                     existing.lv++;
                     this.player.applyBookStats();
-                    this.texts.push(new FloatingText(x, y - 30, `${BOOKS[randomBook].name} +1`, '#00ff00'));
+                    this.texts.push(new FloatText(x, y - 30, `${BOOKS[randomBook].name} +1`, '#00ff00'));
                 } else if (!existing && this.player.books.length < CONFIG.MAX_BOOKS) {
                     this.player.books.push({ id: randomBook, lv: 1 });
                     this.player.applyBookStats();
-                    this.texts.push(new FloatingText(x, y - 30, `${BOOKS[randomBook].name}!`, '#00ffff'));
+                    this.texts.push(new FloatText(x, y - 30, `${BOOKS[randomBook].name}!`, '#00ffff'));
                 }
             }
         } else {
@@ -4374,6 +4367,14 @@ class Game {
             // Check if player is near an unopened chest
             if (!chest.opened && chest.isNearPlayer(this.player.x, this.player.y, 50)) {
                 this.nearbyChest = chest;
+                // Auto-buy timer: stand for 1.5 seconds to buy
+                chest.nearTimer = (chest.nearTimer || 0) + dt;
+                if (chest.nearTimer >= 1.5) {
+                    this.tryBuyChest();
+                    chest.nearTimer = 0;
+                }
+            } else {
+                chest.nearTimer = 0; // Reset timer when away
             }
         }
         
@@ -4413,6 +4414,12 @@ class Game {
             // Remove broken pots after animation
             if (pot.broken && pot.breakAnim > 1) {
                 this.pots.splice(i, 1);
+                continue;
+            }
+            
+            // Break pot by walking over it
+            if (!pot.broken && pot.isInRange(this.player.x, this.player.y, this.player.width / 2)) {
+                pot.takeDamage(10, this); // Instant break
             }
         }
         
@@ -5425,50 +5432,29 @@ class Game {
             ctx.fillText(`👹 ${BOSS.name} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, 42);
         }
         
-        // Chest prompt UI when near a chest
-        if (this.nearbyChest && !this.nearbyChest.opened) {
+        // Draw price below each chest
+        for (const chest of this.chests) {
+            if (chest.opened) continue;
+            const chestX = chest.x - this.cam.x;
+            const chestY = chest.y - this.cam.y;
             const price = ChestManager.getPrice();
             const canAfford = this.player.gold >= price;
-            const chestX = this.nearbyChest.x - this.cam.x;
-            const chestY = this.nearbyChest.y - this.cam.y - 50;
             
-            // Draw prompt box
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.strokeStyle = canAfford ? '#ffd700' : '#ff4444';
-            ctx.lineWidth = 2;
-            const boxW = 120, boxH = 45;
-            ctx.beginPath();
-            ctx.roundRect(chestX - boxW/2, chestY - boxH/2, boxW, boxH, 8);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Price text
+            // Price tag below chest
             ctx.fillStyle = canAfford ? '#ffd700' : '#ff4444';
-            ctx.font = 'bold 14px PixelAE, Cairo';
+            ctx.font = 'bold 11px PixelAE, Cairo';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`💰 ${price}`, chestX, chestY - 8);
+            ctx.textBaseline = 'top';
+            ctx.fillText(`${price}💰`, chestX, chestY + 22);
             
-            // Key hint
-            ctx.fillStyle = '#aaa';
-            ctx.font = '11px PixelAE, Cairo';
-            ctx.fillText('[E] للشراء', chestX, chestY + 12);
-        }
-        
-        // Draw current chest price in corner
-        if (this.chests.length > 0) {
-            const price = ChestManager.getPrice();
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fillRect(this.canvas.width - 110, this.canvas.height - 40, 100, 30);
-            ctx.strokeStyle = '#ffd700';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(this.canvas.width - 110, this.canvas.height - 40, 100, 30);
-            
-            ctx.fillStyle = '#ffd700';
-            ctx.font = 'bold 12px PixelAE, Cairo';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`📦 ${price}💰`, this.canvas.width - 60, this.canvas.height - 25);
+            // If player is near, show timer progress
+            if (chest.nearTimer && chest.nearTimer > 0) {
+                const progress = chest.nearTimer / 1.5;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(chestX - 20, chestY - 30, 40, 6);
+                ctx.fillStyle = canAfford ? '#00ff00' : '#ff4444';
+                ctx.fillRect(chestX - 20, chestY - 30, 40 * progress, 6);
+            }
         }
         
         // Draw active buff indicators
