@@ -1053,11 +1053,14 @@ const CHAR_SPRITES = {
         walkFrames: 16,
         idleFps: 8,
         walkFps: 12,
-        scale: 0.8, // Smaller scale for better alignment
-        previewScale: 1.2,
-        yOffset: -10 // Move sprite up to align with shadow
+        scale: 1.0, // Match other character sizes
+        previewScale: 1.0,
+        yOffset: -15 // Align with shadow
     }
 };
+
+// Standard character draw size (all characters should be roughly this height)
+const CHARACTER_TARGET_HEIGHT = 75;
 
 // Enemy sprite mappings - using new animated monster sprites
 const ENEMY_SPRITES = {
@@ -2287,7 +2290,7 @@ class Enemy {
                 const currentFrame = Math.floor(this.animTime * fps) % totalFrames;
                 const frameX = currentFrame * frameW;
                 
-                const scale = 0.75; // Scale up 50% for better visibility
+                const scale = 0.95; // +25% bigger (was 0.75)
                 const drawW = frameW * scale;
                 const drawH = frameH * scale;
                 
@@ -2301,7 +2304,7 @@ class Enemy {
                 }
             } else {
                 // Static sprite
-                const scale = 0.6;
+                const scale = 0.75; // +25% bigger (was 0.6)
                 const drawW = spriteInfo.width * scale;
                 const drawH = spriteInfo.height * scale;
                 
