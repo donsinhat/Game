@@ -536,16 +536,16 @@ const CHARACTERS = {
         name: 'أبو سليمان', title: 'التاجر الثري',
         desc: 'اولاو يحب الدراهم',
         weapon: 'agal',
-        stats: { gold: 1.25, luck: 1.1, hp: 100, speed: 200, crit: 0, enemyBuff: 0 },
-        passiveText: ['+25% ذهب', '+10% حظ'],
+        stats: { gold: 1.5, luck: 1.2, hp: 110, speed: 200, crit: 0, enemyBuff: 0, chestDiscount: 0.3 },
+        passiveText: ['+50% ذهب', '+20% حظ', '-30% سعر الصناديق'],
         colors: { body: '#f5f5f5', head: '#cc0000', skin: '#d4a574', legs: '#2a2a2a' }
     },
     jayzen: {
         name: 'جيزن', title: 'المقاتل الشرس',
         desc: 'لحجي بس متعافي',
         weapon: 'vape',
-        stats: { gold: 1, luck: 1, hp: 115, speed: 200, dmgReduce: 0.3, crit: 0, enemyBuff: 0 },
-        passiveText: ['-30% ضرر مستلم', '+15% صحة'],
+        stats: { gold: 1, luck: 1, hp: 115, speed: 200, dmgReduce: 0.2, crit: 0, enemyBuff: 0 },
+        passiveText: ['-20% ضرر مستلم', '+15% صحة'],
         colors: { body: '#6a1b9a', head: '#cc3333', skin: '#d4a574', legs: '#333' }
     },
     noura: {
@@ -584,16 +584,16 @@ const CHARACTERS = {
         name: 'سيد بصله', title: 'المخيف',
         desc: 'اذا شافك وقالك تابيها ولا ماتابيها اهرب',
         weapon: 'onion',
-        stats: { gold: 1, luck: 1, hp: 95, speed: 200, atkSpd: 1.2, crit: 0, enemyBuff: 0 },
-        passiveText: ['+20% سرعة هجوم'],
+        stats: { gold: 1, luck: 1, hp: 100, speed: 200, atkSpd: 1.25, crit: 0, enemyBuff: 0, poison: 0.15 },
+        passiveText: ['+25% سرعة هجوم', '15% تسميم الأعداء'],
         colors: { body: '#9a7b4f', head: '#f5f5dc', skin: '#d4a574', legs: '#5a4a3a' }
     },
     samurai: {
         name: 'ساموراي المع', title: 'النينجا',
         desc: 'لا غيرك الشيب تراه متعافي',
         weapon: 'shuriken',
-        stats: { gold: 1, luck: 1, hp: 100, speed: 210, dmgMult: 1.2, crit: 0, enemyBuff: 0 },
-        passiveText: ['+20% ضرر'],
+        stats: { gold: 1, luck: 1, hp: 100, speed: 220, dmgMult: 1.25, crit: 0.05, enemyBuff: 0, dodge: 0.10 },
+        passiveText: ['+25% ضرر', '10% تفادي', '+5% كريت'],
         colors: { body: '#2a2a4a', head: '#1a1a2a', skin: '#d4a574', legs: '#1a1a2a' }
     }
 };
@@ -1441,6 +1441,10 @@ class Player {
         this.enemyBuff = c.stats.enemyBuff || 0;
         this.extraEnemySpawn = 0;
         this.armor = 0; this.regen = 0; this.curse = 0;
+        // New passives
+        this.chestDiscount = c.stats.chestDiscount || 0; // % discount on chest prices
+        this.poison = c.stats.poison || 0; // % chance to poison enemies
+        this.dodge = c.stats.dodge || 0; // % chance to dodge attacks
         this.range = c.stats.range || 1;
         this.cdMult = c.stats.cooldown || 1;
         
@@ -1770,6 +1774,15 @@ class Player {
     
     takeDmg(amt, game) {
         if (this.invuln > 0) return;
+        
+        // Dodge check
+        if (this.dodge > 0 && Math.random() < this.dodge) {
+            game.texts.push(new FloatText(this.x, this.y - 20, 'تفادي!', '#00ffff', 14));
+            game.particles.emit(this.x, this.y, 8, { color: '#00ffff', minS: 60, maxS: 120, size: 2, life: 0.3 });
+            this.invuln = 0.15; // Short invuln after dodge
+            return;
+        }
+        
         if (this.shield > 0) { const ab = Math.min(this.shield, amt); this.shield -= ab; amt -= ab; if (amt <= 0) return; }
         const actual = amt * (1 - this.dmgReduce) * (1 - Math.min(0.65, this.armor * 0.025));
         this.hp -= actual; this.invuln = 0.35;
@@ -3052,8 +3065,8 @@ const ChestManager = {
         this.currentPrice = this.basePrice;
     },
     
-    getPrice() {
-        return Math.floor(this.currentPrice);
+    getPrice(discount = 0) {
+        return Math.floor(this.currentPrice * (1 - discount));
     },
     
     buyChest() {
@@ -3888,7 +3901,7 @@ class Game {
     tryBuyChest() {
         if (!this.nearbyChest || this.nearbyChest.opened) return;
         
-        const price = ChestManager.getPrice();
+        const price = ChestManager.getPrice(this.player.chestDiscount);
         if (this.player.gold >= price) {
             this.player.gold -= price;
             ChestManager.buyChest(); // Increase price for next chest
@@ -4461,6 +4474,14 @@ class Game {
                     // Normal projectile handling
                     const hit = this.player.applyCrit(p.dmg);
                     if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
+                    
+                    // Apply poison from player passive
+                    if (this.player.poison > 0 && Math.random() < this.player.poison) {
+                        if (!e.dots) e.dots = [];
+                        e.dots.push({ dmg: 3, dur: 3, type: 'poison' }); // 3 damage/sec for 3 sec
+                        this.texts.push(new FloatText(e.x, e.y - 25, '🤢', '#00ff00', 12));
+                    }
+                    
                     // Apply DOT if projectile has it
                     if (p.dotDmg && p.dotDur && !e.dots) e.dots = [];
                     if (p.dotDmg && p.dotDur && e.dots) {
@@ -5921,7 +5942,7 @@ class Game {
             if (chest.opened) continue;
             const chestX = chest.x - this.cam.x;
             const chestY = chest.y - this.cam.y;
-            const price = ChestManager.getPrice();
+            const price = ChestManager.getPrice(this.player.chestDiscount);
             const canAfford = this.player.gold >= price;
             
             // Price tag below chest
