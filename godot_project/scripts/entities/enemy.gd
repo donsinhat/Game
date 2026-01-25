@@ -90,7 +90,7 @@ func _physics_process(delta: float) -> void:
 	# تحديث الرسوم
 	_update_animation()
 
-func _move_towards_target(delta: float) -> void:
+func _move_towards_target(_delta: float) -> void:
 	var direction = (target.global_position - global_position).normalized()
 	var speed = move_speed * slow_multiplier
 	
@@ -116,7 +116,7 @@ func _update_animation() -> void:
 
 # ==================== التعرض للضرر ====================
 
-func take_damage(amount: float, source: Node2D = null, knockback: Vector2 = Vector2.ZERO) -> void:
+func take_damage(amount: float, _source: Node2D = null, knockback: Vector2 = Vector2.ZERO) -> void:
 	if is_dead:
 		return
 	
@@ -164,7 +164,7 @@ func _play_death_effect() -> void:
 		var tween = create_tween()
 		tween.tween_property(sprite, "modulate:a", 0.0, 0.2)
 
-func _spawn_damage_number(amount: float) -> void:
+func _spawn_damage_number(_amount: float) -> void:
 	# TODO: إنشاء رقم الضرر العائم
 	pass
 

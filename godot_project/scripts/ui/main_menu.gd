@@ -44,7 +44,6 @@ func _setup_signals() -> void:
 		leaderboard_btn.pressed.connect(_on_leaderboard_pressed)
 
 func _setup_cities() -> void:
-	# إنشاء بطاقات المدن
 	var cities = [
 		{"id": "badaya", "name": "البدائع", "icon": "🏜️", "desc": "صحراء ونخيل", "locked": false},
 		{"id": "endless", "name": "لا نهاية", "icon": "♾️", "desc": "بدون بوس", "locked": false},
@@ -72,13 +71,6 @@ func _create_city_card(city: Dictionary) -> Control:
 func _select_city(city_id: String) -> void:
 	selected_city = city_id
 	is_endless = (city_id == "endless")
-	
-	# تحديث المظهر
-	for i in city_container.get_child_count():
-		var card = city_container.get_child(i)
-		if card is Button:
-			# تمييز المدينة المختارة
-			pass
 
 func _update_character_display() -> void:
 	if character_list.is_empty():
@@ -97,12 +89,10 @@ func _update_character_display() -> void:
 	if char_desc:
 		char_desc.text = char_data.get("desc", "")
 	
-	# تحديث الإحصائيات
 	if char_stats:
 		_update_stats_display(char_data)
 
 func _update_stats_display(char_data: Dictionary) -> void:
-	# مسح الإحصائيات القديمة
 	for child in char_stats.get_children():
 		child.queue_free()
 	
@@ -135,5 +125,4 @@ func _on_start_pressed() -> void:
 	GameManager.start_game(char_id, selected_city, is_endless)
 
 func _on_leaderboard_pressed() -> void:
-	# TODO: فتح شاشة قائمة الأبطال
 	pass

@@ -56,7 +56,7 @@ func _on_xp_changed(current: int, required: int) -> void:
 		xp_bar.value = current
 	if xp_text:
 		xp_text.text = "%d/%d" % [current, required]
-	if level_text:
+	if level_text and player:
 		level_text.text = "Lv.%d" % player.level
 
 func _on_gold_changed(amount: int) -> void:
@@ -68,13 +68,11 @@ func update_kills(count: int) -> void:
 		kills_text.text = str(count)
 
 func add_weapon_slot(weapon_icon: String, level: int) -> void:
-	# إضافة خانة سلاح جديدة
 	var slot = _create_slot(weapon_icon, level)
 	if weapon_slots:
 		weapon_slots.add_child(slot)
 
 func add_book_slot(book_icon: String, level: int) -> void:
-	# إضافة خانة كتاب جديدة
 	var slot = _create_slot(book_icon, level)
 	if book_slots:
 		book_slots.add_child(slot)
@@ -98,11 +96,8 @@ func _create_slot(icon: String, level: int) -> Control:
 	
 	return slot
 
-func update_weapon_level(index: int, level: int) -> void:
-	if weapon_slots and index < weapon_slots.get_child_count():
-		var slot = weapon_slots.get_child(index)
-		# تحديث مستوى السلاح
-		pass
+func update_weapon_level(_index: int, _level: int) -> void:
+	pass
 
 func _on_pause_pressed() -> void:
 	GameManager.pause_game()

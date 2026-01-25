@@ -46,7 +46,7 @@ func _spawn_projectile(target: Enemy, index: int, total: int) -> void:
 		# قذيفة مؤقتة بدون مشهد
 		_create_temp_projectile(direction, target)
 
-func _create_temp_projectile(direction: Vector2, target: Enemy) -> void:
+func _create_temp_projectile(_direction: Vector2, target: Enemy) -> void:
 	# قذيفة مبسطة - ضرر مباشر مع تأخير
 	var tween = create_tween()
 	var travel_time = player.global_position.distance_to(target.global_position) / projectile_speed

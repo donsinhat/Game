@@ -6,7 +6,7 @@ signal game_paused
 signal game_resumed
 signal game_over(victory: bool)
 signal level_up(new_level: int)
-signal boss_spawned
+signal boss_spawned()
 
 # ==================== حالة اللعبة ====================
 enum GameState { MENU, PLAYING, PAUSED, LEVEL_UP, GAME_OVER }
@@ -113,8 +113,9 @@ func add_gold(amount: int) -> void:
 	gold += amount
 
 func get_formatted_time() -> String:
-	var minutes = int(game_time) / 60
-	var seconds = int(game_time) % 60
+	var total_seconds: int = int(game_time)
+	var minutes: int = total_seconds / 60
+	var seconds: int = total_seconds % 60
 	return "%02d:%02d" % [minutes, seconds]
 
 func get_scaling_multiplier() -> float:

@@ -24,7 +24,7 @@ func _ready() -> void:
 		add_child(player)
 		sfx_players.append(player)
 
-func play_bgm(stream: AudioStream, loop: bool = true) -> void:
+func play_bgm(stream: AudioStream, _loop: bool = true) -> void:
 	bgm_player.stream = stream
 	bgm_player.play()
 

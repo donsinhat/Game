@@ -61,7 +61,7 @@ func _find_next_target(from_enemy: Enemy, exclude: Array) -> Enemy:
 	
 	return closest
 
-func _spawn_chain_effect(pos: Vector2) -> void:
+func _spawn_chain_effect(_pos: Vector2) -> void:
 	# TODO: تأثير بصري للقفزة
 	pass
 

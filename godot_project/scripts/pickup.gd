@@ -39,7 +39,7 @@ func collect(player: Player) -> void:
 	_play_collect_effect()
 	queue_free()
 
-func _collect_item(player: Player) -> void:
+func _collect_item(_player) -> void:
 	# TODO: معالجة جمع الأيتم
 	# عرض نافذة الأيتم
 	pass

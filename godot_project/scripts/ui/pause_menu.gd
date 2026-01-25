@@ -43,7 +43,7 @@ func _load_settings() -> void:
 	if sfx_slider:
 		sfx_slider.value = GameManager.sfx_volume * 100
 
-func set_player(p: Player) -> void:
+func set_player(p) -> void:
 	player = p
 
 func _update_stats() -> void:

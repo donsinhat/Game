@@ -178,7 +178,7 @@ func _clamp_to_world() -> void:
 
 # ==================== التعرض للضرر ====================
 
-func take_damage(amount: float, source: Node2D = null) -> void:
+func take_damage(amount: float, _source: Node2D = null) -> void:
 	if is_dead or hurt_timer.time_left > 0:
 		return
 	
@@ -344,7 +344,7 @@ func _on_pickup_area_entered(area: Area2D) -> void:
 	if area.is_in_group("pickup"):
 		area.collect(self)
 
-func _on_hitbox_area_entered(area: Area2D) -> void:
+func _on_hitbox_area_entered(_area: Area2D) -> void:
 	# التعامل مع ضربات الأعداء يتم في Enemy
 	pass
 
