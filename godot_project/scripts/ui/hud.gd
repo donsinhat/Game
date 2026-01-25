@@ -3,19 +3,19 @@ class_name HUD
 ## HUD - واجهة المستخدم أثناء اللعب
 
 # المراجع
-@onready var health_bar: ProgressBar = $MainPanel/Bars/HealthBar
-@onready var health_text: Label = $MainPanel/Bars/HealthBar/HealthText
-@onready var xp_bar: ProgressBar = $MainPanel/Bars/XPBar
-@onready var xp_text: Label = $MainPanel/Bars/XPBar/XPText
-@onready var gold_text: Label = $GoldPanel/GoldText
-@onready var level_text: Label = $StatsPanel/LevelText
-@onready var kills_text: Label = $StatsPanel/KillsText
-@onready var timer_text: Label = $StatsPanel/TimerText
-@onready var weapon_slots: HBoxContainer = $WeaponSlots
-@onready var book_slots: HBoxContainer = $BookSlots
-@onready var pause_btn: Button = $PauseBtn
+@onready var health_bar = $MainPanel/Bars/HealthBar
+@onready var health_text = $MainPanel/Bars/HealthBar/HealthText
+@onready var xp_bar = $MainPanel/Bars/XPBar
+@onready var xp_text = $MainPanel/Bars/XPBar/XPText
+@onready var gold_text = $GoldPanel/HBox/GoldText
+@onready var level_text = $StatsPanel/LevelText
+@onready var kills_text = $StatsPanel/KillsText
+@onready var timer_text = $StatsPanel/TimerText
+@onready var weapon_slots = $WeaponSlots
+@onready var book_slots = $BookSlots
+@onready var pause_btn = $PauseBtn
 
-var player: Player = null
+var player = null
 
 func _ready() -> void:
 	_connect_signals()
@@ -31,7 +31,7 @@ func _process(_delta: float) -> void:
 	if timer_text:
 		timer_text.text = GameManager.get_formatted_time()
 
-func set_player(p: Player) -> void:
+func set_player(p) -> void:
 	player = p
 	if player:
 		player.health_changed.connect(_on_health_changed)

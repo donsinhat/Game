@@ -2,11 +2,11 @@ extends CanvasLayer
 class_name GameOverScreen
 ## GameOverScreen - شاشة نهاية اللعبة
 
-@onready var title: Label = $Panel/VBox/Title
-@onready var stats_container: VBoxContainer = $Panel/VBox/Stats
-@onready var name_input: LineEdit = $Panel/VBox/NameInput
-@onready var submit_btn: Button = $Panel/VBox/SubmitBtn
-@onready var restart_btn: Button = $Panel/VBox/RestartBtn
+@onready var title = $Panel/VBox/Title
+@onready var stats_container = $Panel/VBox/Stats
+@onready var name_input = $Panel/VBox/NameInput
+@antml:parameter name="new_string">@onready var submit_btn = $Panel/VBox/SubmitBtn
+@onready var restart_btn = $Panel/VBox/RestartBtn
 
 var was_victory: bool = false
 

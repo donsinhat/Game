@@ -2,19 +2,19 @@ extends Control
 class_name MainMenu
 ## MainMenu - القائمة الرئيسية
 
-@onready var title: Label = $VBox/Title
-@onready var subtitle: Label = $VBox/Subtitle
-@onready var char_preview: TextureRect = $VBox/CharacterSelect/CharPreview
-@onready var char_name: Label = $VBox/CharacterSelect/CharInfo/CharName
-@onready var char_title: Label = $VBox/CharacterSelect/CharInfo/CharTitle
-@onready var char_desc: Label = $VBox/CharacterSelect/CharInfo/CharDesc
-@onready var char_stats: VBoxContainer = $VBox/CharacterSelect/CharInfo/CharStats
-@onready var prev_btn: Button = $VBox/CharacterSelect/PrevBtn
-@onready var next_btn: Button = $VBox/CharacterSelect/NextBtn
-@onready var city_container: HBoxContainer = $VBox/CitySelect
-@onready var start_btn: Button = $VBox/Buttons/StartBtn
-@onready var leaderboard_btn: Button = $VBox/Buttons/LeaderboardBtn
-@onready var high_score_label: Label = $VBox/Buttons/HighScore
+@onready var title = $VBox/Title
+@onready var subtitle = $VBox/Subtitle
+@onready var char_preview = $VBox/CharacterSelect/CharInfo/CharPreview
+@onready var char_name = $VBox/CharacterSelect/CharInfo/CharName
+@onready var char_title = $VBox/CharacterSelect/CharInfo/CharTitle
+@onready var char_desc = $VBox/CharacterSelect/CharInfo/CharDesc
+@onready var char_stats = $VBox/CharacterSelect/CharInfo/CharStats
+@onready var prev_btn = $VBox/CharacterSelect/PrevBtn
+@onready var next_btn = $VBox/CharacterSelect/NextBtn
+@onready var city_container = $VBox/CitySelect
+@onready var start_btn = $VBox/Buttons/StartBtn
+@onready var leaderboard_btn = $VBox/Buttons/LeaderboardBtn
+@onready var high_score_label = $VBox/Buttons/HighScore
 
 var character_list: Array = []
 var current_char_index: int = 0

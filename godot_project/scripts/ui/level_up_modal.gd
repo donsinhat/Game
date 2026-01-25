@@ -4,8 +4,8 @@ class_name LevelUpModal
 
 signal upgrade_selected(type: String, id: String)
 
-@onready var title: Label = $Panel/VBox/Title
-@onready var options_container: HBoxContainer = $Panel/VBox/Options
+@onready var title = $Panel/VBox/Title
+@onready var options_container = $Panel/VBox/Options
 
 var current_options: Array = []
 

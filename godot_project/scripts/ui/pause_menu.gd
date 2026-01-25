@@ -2,22 +2,22 @@ extends CanvasLayer
 class_name PauseMenu
 ## PauseMenu - قائمة الإيقاف المؤقت
 
-@onready var stats_panel: Panel = $Panel/VBox/StatsPanel
-@onready var hp_label: Label = $Panel/VBox/StatsPanel/Stats/HP
-@onready var dmg_label: Label = $Panel/VBox/StatsPanel/Stats/DMG
-@onready var def_label: Label = $Panel/VBox/StatsPanel/Stats/DEF
-@onready var luck_label: Label = $Panel/VBox/StatsPanel/Stats/LUCK
-@onready var crit_label: Label = $Panel/VBox/StatsPanel/Stats/CRIT
-@onready var speed_label: Label = $Panel/VBox/StatsPanel/Stats/SPD
-@onready var gold_label: Label = $Panel/VBox/StatsPanel/Stats/GOLD
-@onready var kills_label: Label = $Panel/VBox/StatsPanel/Stats/KILLS
+@onready var stats_panel = $Panel/VBox/StatsPanel
+@onready var hp_label = $Panel/VBox/StatsPanel/Stats/HP
+@onready var dmg_label = $Panel/VBox/StatsPanel/Stats/DMG
+@onready var def_label = $Panel/VBox/StatsPanel/Stats/DEF
+@onready var luck_label = $Panel/VBox/StatsPanel/Stats/LUCK
+@onready var crit_label = $Panel/VBox/StatsPanel/Stats/CRIT
+@onready var speed_label = $Panel/VBox/StatsPanel/Stats/SPD
+@onready var gold_label = $Panel/VBox/StatsPanel/Stats/GOLD
+@onready var kills_label = $Panel/VBox/StatsPanel/Stats/KILLS
 
-@onready var music_slider: HSlider = $Panel/VBox/Controls/MusicSlider
-@onready var sfx_slider: HSlider = $Panel/VBox/Controls/SFXSlider
-@onready var resume_btn: Button = $Panel/VBox/Buttons/ResumeBtn
-@onready var quit_btn: Button = $Panel/VBox/Buttons/QuitBtn
+@onready var music_slider = $Panel/VBox/Controls/MusicSlider
+@onready var sfx_slider = $Panel/VBox/Controls/SFXSlider
+@onready var resume_btn = $Panel/VBox/Buttons/ResumeBtn
+@onready var quit_btn = $Panel/VBox/Buttons/QuitBtn
 
-var player: Player = null
+var player = null
 
 func _ready() -> void:
 	visible = false
