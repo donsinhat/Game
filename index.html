@@ -4929,15 +4929,17 @@ class Game {
                 if (c.isNew) {
                     // New weapon - show base stats
                     const baseDmg = CONFIG.WEAPON_BASE_DMG;
-                    statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">ضرر: ${baseDmg.toFixed(1)}</div>`;
+                    statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">ضرر أساسي: ${baseDmg.toFixed(0)}</div>`;
                 } else {
-                    // Existing weapon - show upgrade effect
+                    // Existing weapon - show upgrade effect with EXPONENTIAL scaling
                     if (upgradeType === 'damage') {
-                        const currentDmg = this.player.getDmg(w);
-                        const addDmg = rar.bonus * 1.5;
-                        const newDmg = currentDmg + addDmg;
-                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]}</div>
-                            <div style="font-size:0.5rem;color:#ff0">${currentDmg.toFixed(1)} → ${newDmg.toFixed(1)}</div>`;
+                        // Current damage
+                        const currentBaseDmg = CONFIG.WEAPON_BASE_DMG * Math.pow(1.18, w.level - 1);
+                        // Next level damage (exponential: +18% per level)
+                        const nextBaseDmg = CONFIG.WEAPON_BASE_DMG * Math.pow(1.18, w.level);
+                        const percentIncrease = Math.round((nextBaseDmg / currentBaseDmg - 1) * 100);
+                        statChangeText = `<div style="font-size:0.55rem;color:#4f4;margin-top:3px">${typeNames[upgradeType]} +${percentIncrease}%</div>
+                            <div style="font-size:0.5rem;color:#ff0">${Math.round(currentBaseDmg)} → ${Math.round(nextBaseDmg)}</div>`;
                     } else if (upgradeType === 'count') {
                         const currentCount = this.player.getProjectileCount(w);
                         const addCount = rar.bonus; // COMMON=1, UNCOMMON=2, RARE=3, EPIC=4, LEGENDARY=5
@@ -5031,17 +5033,59 @@ class Game {
     selectUpgrade(c, rar, upgradeType) {
         // Keep reroll count - doesn't reset after selecting upgrade
         
+        // Visual power-up effect based on rarity
+        const rarityColors = {
+            'COMMON': '#aaa',
+            'UNCOMMON': '#5f5',
+            'RARE': '#55f',
+            'EPIC': '#a5f',
+            'LEGENDARY': '#ffd700'
+        };
+        const effectColor = rar.color || '#ffd700';
+        
         if (c.type === 'weapon') {
             // Use provided upgrade type or random if new weapon
             const type = upgradeType || ['damage', 'count', 'cooldown'][Math.floor(Math.random() * 3)];
             const upgrade = { rarity: rar, type: type };
             
-            if (c.isNew) this.player.weapons.push({ id: c.id, level: 1, upgrades: [upgrade] });
-            else { const w = this.player.weapons.find(x => x.id === c.id); w.level++; w.upgrades.push(upgrade); }
+            if (c.isNew) {
+                this.player.weapons.push({ id: c.id, level: 1, upgrades: [upgrade] });
+                // New weapon acquired! Big celebration
+                this.texts.push(new FloatText(this.player.x, this.player.y - 40, `سلاح جديد!`, effectColor, 20));
+                this.particles.emit(this.player.x, this.player.y, 25, { color: effectColor, minS: 100, maxS: 200, size: 4, life: 0.8 });
+            } else { 
+                const w = this.player.weapons.find(x => x.id === c.id); 
+                w.level++; 
+                w.upgrades.push(upgrade);
+                // Level up effect
+                this.texts.push(new FloatText(this.player.x, this.player.y - 40, `+18% ضرر!`, '#ff0', 16));
+                this.particles.emit(this.player.x, this.player.y, 15, { color: effectColor, minS: 80, maxS: 150, size: 3, life: 0.6 });
+            }
         } else {
-            if (c.isNew) { this.player.books.push({ id: c.id, level: 1, upgrades: [{ rarity: rar }] }); this.applyBook(c.id, 1, rar); }
-            else { const b = this.player.books.find(x => x.id === c.id); b.level++; b.upgrades.push({ rarity: rar }); this.applyBook(c.id, b.level, rar); }
+            const book = BOOKS[c.id];
+            if (c.isNew) { 
+                this.player.books.push({ id: c.id, level: 1, upgrades: [{ rarity: rar }] }); 
+                this.applyBook(c.id, 1, rar);
+                // New book acquired!
+                this.texts.push(new FloatText(this.player.x, this.player.y - 40, `${book.name}!`, effectColor, 18));
+                this.particles.emit(this.player.x, this.player.y, 20, { color: effectColor, minS: 80, maxS: 160, size: 3, life: 0.7 });
+            } else { 
+                const b = this.player.books.find(x => x.id === c.id); 
+                b.level++; 
+                b.upgrades.push({ rarity: rar }); 
+                this.applyBook(c.id, b.level, rar);
+                // Book upgrade effect - show the actual bonus
+                const bonusText = book.desc.replace(/[+٪%]/g, ''); // Clean description
+                this.texts.push(new FloatText(this.player.x, this.player.y - 40, book.desc, effectColor, 14));
+                this.particles.emit(this.player.x, this.player.y, 12, { color: effectColor, minS: 60, maxS: 120, size: 3, life: 0.5 });
+            }
         }
+        
+        // Play power-up sound
+        this.audio.play(880, 0.15, 0.1, 'sine');
+        setTimeout(() => this.audio.play(1100, 0.15, 0.08, 'sine'), 50);
+        setTimeout(() => this.audio.play(1320, 0.15, 0.06, 'sine'), 100);
+        
         this.updateSlots();
     }
     
