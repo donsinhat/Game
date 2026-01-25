@@ -4886,20 +4886,19 @@ class Game {
             if (this.texts && this.player) {
                 this.texts.push(new FloatText(this.player.x, this.player.y - 60, `+${baseEnemies + eliteCount} عدو!`, '#ff4400', 20));
             }
+            
+            // Visual effect - particles around screen
+            if (this.particles && this.player) {
+                for (let i = 0; i < 20; i++) {
+                    const angle = (i / 20) * Math.PI * 2;
+                    const px = this.player.x + Math.cos(angle) * 300;
+                    const py = this.player.y + Math.sin(angle) * 300;
+                    this.particles.emit(px, py, 3, { color: '#ff4400', minS: 80, maxS: 150, size: 3, life: 0.8 });
+                }
+            }
         } catch (e) {
             console.log('Galhi spawn error:', e);
         }
-        
-        // Visual effect - particles around screen
-        for (let i = 0; i < 30; i++) {
-            const angle = (i / 30) * Math.PI * 2;
-            const px = this.player.x + Math.cos(angle) * 300;
-            const py = this.player.y + Math.sin(angle) * 300;
-            this.particles.emit(px, py, 5, { color: '#ff4400', minS: 100, maxS: 200, size: 4, life: 1.0 });
-        }
-        
-        // Floating text
-        this.texts.push(new FloatText(this.player.x, this.player.y - 60, `القلهي! +${baseEnemies + eliteCount}`, '#ff4400', 24));
     }
     
     killEnemy(enemy) {
