@@ -4547,7 +4547,8 @@ class Game {
             if (d < this.player.pickupRange) {
                 if (p.type === 'xp') { 
                     this.player.xp += p.val * this.player.xpMult * (1 + this.player.curse * 0.4); 
-                    this.checkLevelUp(); 
+                    // Only check level up if not already in level up screen
+                    if (this.state !== 'levelup') this.checkLevelUp(); 
                     // XP pickup effect - no sound for XP/coins
                     this.particles.emit(p.x, p.y, 3, { color: '#44ff44', minS: 30, maxS: 60, size: 2, life: 0.3 });
                 } else { 
@@ -5048,6 +5049,9 @@ class Game {
     }
     
     checkLevelUp() {
+        // Don't trigger level up if already in level up screen
+        if (this.state === 'levelup') return;
+        
         // Easier scaling: lower growth rate, especially after level 10
         const level = this.player.level;
         let req;
