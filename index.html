@@ -2744,6 +2744,7 @@ class Pickup {
         this.bob = Math.random() * Math.PI * 2; 
         this.anim = Math.random() * 10; // Random start for animation
         this.isGoldBag = false; // For consolidated gold
+        this.isBigGem = false; // For consolidated XP
     }
     update(dt) { this.bob += dt * 3.5; this.anim += dt; }
     draw(ctx, cam, assets) {
@@ -2752,6 +2753,52 @@ class Pickup {
         // Use new animated sprites
         const isXP = this.type === 'xp';
         const isGold = this.type === 'gold';
+        
+        // Big XP Gem (consolidated XP) - draw special
+        if (isXP && this.isBigGem) {
+            const gemSize = Math.min(18 + this.val / 8, 32); // Size based on value
+            const glowIntensity = 12 + Math.sin(this.anim * 5) * 6;
+            const pulse = 1 + Math.sin(this.anim * 3) * 0.1;
+            
+            // Glow
+            ctx.shadowColor = '#44ff44';
+            ctx.shadowBlur = glowIntensity;
+            
+            // Main gem shape (diamond)
+            ctx.fillStyle = '#22dd22';
+            ctx.beginPath();
+            ctx.moveTo(sx, sy - gemSize * pulse);
+            ctx.lineTo(sx + gemSize * 0.7 * pulse, sy);
+            ctx.lineTo(sx, sy + gemSize * 0.6 * pulse);
+            ctx.lineTo(sx - gemSize * 0.7 * pulse, sy);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Inner shine
+            ctx.fillStyle = '#88ff88';
+            ctx.beginPath();
+            ctx.moveTo(sx, sy - gemSize * 0.5 * pulse);
+            ctx.lineTo(sx + gemSize * 0.25 * pulse, sy - gemSize * 0.1);
+            ctx.lineTo(sx, sy + gemSize * 0.1 * pulse);
+            ctx.lineTo(sx - gemSize * 0.25 * pulse, sy - gemSize * 0.1);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Sparkle
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(sx - gemSize * 0.2, sy - gemSize * 0.3, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Value text
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 9px PixelAE';
+            ctx.textAlign = 'center';
+            ctx.fillText(Math.round(this.val), sx, sy + gemSize * 0.9);
+            
+            return;
+        }
         
         // Gold bag (consolidated gold) - draw special
         if (isGold && this.isGoldBag) {
@@ -5316,56 +5363,59 @@ class Game {
     }
     
     consolidateGold() {
-        // Find gold pickups and consolidate nearby ones into gold bags
-        const goldPickups = this.pickups.filter(p => p.type === 'gold' && !p.magnetPull);
-        if (goldPickups.length < 8) return; // Not enough to consolidate
-        
-        const consolidateRadius = 60; // Radius to check for nearby gold
-        const minToConsolidate = 5; // Minimum gold pickups to combine
+        // Consolidate both gold and XP pickups
+        this.consolidatePickupType('gold', 'isGoldBag', 8, 5, 60);
+        this.consolidatePickupType('xp', 'isBigGem', 12, 8, 50);
+    }
+    
+    consolidatePickupType(type, flagName, minTotal, minNearby, radius) {
+        // Find pickups of this type that aren't being pulled
+        const pickups = this.pickups.filter(p => p.type === type && !p.magnetPull && !p[flagName]);
+        if (pickups.length < minTotal) return; // Not enough to consolidate
         
         const processed = new Set();
         const toRemove = [];
         const toAdd = [];
         
-        for (const gold of goldPickups) {
-            if (processed.has(gold)) continue;
+        for (const pickup of pickups) {
+            if (processed.has(pickup)) continue;
             
-            // Find all nearby gold pickups
-            const nearby = goldPickups.filter(g => 
-                !processed.has(g) && 
-                Math.hypot(g.x - gold.x, g.y - gold.y) < consolidateRadius
+            // Find all nearby pickups of same type
+            const nearby = pickups.filter(p => 
+                !processed.has(p) && 
+                Math.hypot(p.x - pickup.x, p.y - pickup.y) < radius
             );
             
-            if (nearby.length >= minToConsolidate) {
+            if (nearby.length >= minNearby) {
                 // Calculate center and total value
                 let totalVal = 0;
                 let centerX = 0, centerY = 0;
                 
-                for (const g of nearby) {
-                    totalVal += g.val;
-                    centerX += g.x;
-                    centerY += g.y;
-                    processed.add(g);
-                    toRemove.push(g);
+                for (const p of nearby) {
+                    totalVal += p.val;
+                    centerX += p.x;
+                    centerY += p.y;
+                    processed.add(p);
+                    toRemove.push(p);
                 }
                 
                 centerX /= nearby.length;
                 centerY /= nearby.length;
                 
-                // Create gold bag
-                const bag = new Pickup(centerX, centerY, 'gold', totalVal);
-                bag.isGoldBag = true;
-                toAdd.push(bag);
+                // Create consolidated pickup
+                const consolidated = new Pickup(centerX, centerY, type, totalVal);
+                consolidated[flagName] = true;
+                toAdd.push(consolidated);
             }
         }
         
-        // Remove old pickups and add gold bags
-        for (const gold of toRemove) {
-            const idx = this.pickups.indexOf(gold);
+        // Remove old pickups and add consolidated ones
+        for (const p of toRemove) {
+            const idx = this.pickups.indexOf(p);
             if (idx !== -1) this.pickups.splice(idx, 1);
         }
-        for (const bag of toAdd) {
-            this.pickups.push(bag);
+        for (const p of toAdd) {
+            this.pickups.push(p);
         }
     }
     
