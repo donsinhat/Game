@@ -304,7 +304,7 @@
         <div class="hud-left">
             <!-- Main panel with avatar and bars -->
             <div class="hud-panel">
-                <div class="hud-avatar" id="hudAvatar">🐰</div>
+                <div class="hud-avatar" id="hudAvatar"><canvas id="hudAvatarCanvas" width="32" height="32"></canvas></div>
                 <div class="hud-bars">
                     <div class="hud-bar"><div class="hud-bar-fill health-fill" id="healthBar" style="width: 100%"></div><span class="hud-bar-text"><span id="healthText">100/100</span></span></div>
                     <div class="hud-bar"><div class="hud-bar-fill xp-fill" id="xpBar" style="width: 0%"></div><span class="hud-bar-text"><span id="xpText">0/10</span></span></div>
@@ -3717,18 +3717,8 @@ class Game {
         // Spawn breakable pots on map
         this.pots = PotManager.spawnPots(CONFIG.WORLD_SIZE);
         
-        // Set character avatar in HUD
-        const charIcons = {
-            abuSulaiman: '👳',
-            jayzen: '🧔',
-            noura: '👩',
-            bedouin: '🏜️',
-            hawshabi: '😈',
-            layla: '🔮',
-            mrBassla: '🧅',
-            samurai: '⚔️'
-        };
-        document.getElementById('hudAvatar').textContent = charIcons[this.charIds[this.charIdx]] || '🎮';
+        // Set character avatar in HUD - draw actual sprite
+        this.drawHudAvatar();
         
         this.setupSlots(); this.updateSlots();
     }
@@ -5759,6 +5749,62 @@ class Game {
         // Warm tint overlay
         ctx.fillStyle = 'rgba(255, 200, 100, 0.02)';
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    
+    drawHudAvatar() {
+        const canvas = document.getElementById('hudAvatarCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, 32, 32);
+        ctx.imageSmoothingEnabled = false;
+        
+        const charId = this.charIds[this.charIdx];
+        const spriteInfo = CHAR_SPRITES[charId];
+        
+        if (spriteInfo) {
+            let sprite = null;
+            
+            if (spriteInfo.type === 'walk_idle' && spriteInfo.idleSprite) {
+                sprite = this.assets.get(spriteInfo.idleSprite);
+                if (sprite && spriteInfo.frameWidth) {
+                    // Spritesheet - draw first frame
+                    const frameW = spriteInfo.frameWidth;
+                    const frameH = spriteInfo.frameHeight;
+                    const scale = Math.min(30 / frameW, 30 / frameH);
+                    const drawW = frameW * scale;
+                    const drawH = frameH * scale;
+                    ctx.drawImage(sprite, 0, 0, frameW, frameH, (32 - drawW) / 2, (32 - drawH) / 2, drawW, drawH);
+                } else if (sprite) {
+                    // Full image
+                    const scale = Math.min(30 / sprite.width, 30 / sprite.height);
+                    const drawW = sprite.width * scale;
+                    const drawH = sprite.height * scale;
+                    ctx.drawImage(sprite, (32 - drawW) / 2, (32 - drawH) / 2, drawW, drawH);
+                }
+            } else if (spriteInfo.type === 'multiframe' && spriteInfo.frames) {
+                sprite = this.assets.get(spriteInfo.frames[0]);
+                if (sprite) {
+                    const scale = Math.min(28 / sprite.width, 28 / sprite.height) * 2;
+                    const drawW = sprite.width * scale;
+                    const drawH = sprite.height * scale;
+                    ctx.drawImage(sprite, (32 - drawW) / 2, (32 - drawH) / 2, drawW, drawH);
+                }
+            }
+        }
+        
+        // Fallback: draw colored circle with initial
+        if (!ctx.getImageData(16, 16, 1, 1).data[3]) {
+            const colors = CHARACTERS[charId]?.colors || { body: '#666' };
+            ctx.fillStyle = colors.body || '#666';
+            ctx.beginPath();
+            ctx.arc(16, 16, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(CHARACTERS[charId]?.name?.[0] || '?', 16, 16);
+        }
     }
     
     drawMiniMap() {
