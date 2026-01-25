@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
     <title>ذهب أصفر أو دم أحمر - Gold or Blood</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Changa:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -30,7 +30,25 @@
         .rarity-epic { color: #a335ee; }
         .rarity-legendary { color: #ff8000; }
         
-        #mainMenu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: linear-gradient(180deg, rgba(10,10,15,0.97) 0%, rgba(26,26,46,0.98) 100%); padding: 20px; }
+        /* Safe area for mobile browsers */
+        :root {
+            --safe-top: env(safe-area-inset-top, 10px);
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --safe-left: env(safe-area-inset-left, 15px);
+            --safe-right: env(safe-area-inset-right, 15px);
+        }
+        
+        #mainMenu { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            z-index: 100; background: linear-gradient(180deg, rgba(10,10,15,0.97) 0%, rgba(26,26,46,0.98) 100%); 
+            padding: 20px;
+            padding-top: max(20px, var(--safe-top));
+            padding-bottom: max(30px, var(--safe-bottom));
+            padding-left: max(15px, var(--safe-left));
+            padding-right: max(15px, var(--safe-right));
+            box-sizing: border-box;
+        }
         .menu-title { font-size: clamp(1.5rem, 5vw, 2.5rem); font-weight: 900; text-align: center; margin-bottom: 5px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 50%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .menu-subtitle { font-size: clamp(0.8rem, 2.5vw, 1rem); color: #888; margin-bottom: 20px; }
         
@@ -50,9 +68,21 @@
         .char-stat-negative { color: #f44; }
         .char-weapon { font-size: 0.85rem; color: #ff8888; padding: 8px; background: rgba(255,0,0,0.1); border-radius: 8px; }
         
-        .city-select { display: flex; gap: 15px; margin-bottom: 25px; }
-        .city-card { width: 160px; padding: 15px; background: rgba(30, 30, 40, 0.9); border: 2px solid rgba(100, 100, 100, 0.3); border-radius: 15px; cursor: pointer; transition: all 0.3s; text-align: center; }
-        .city-card:hover:not(.locked), .city-card.selected { border-color: #ffd700; background: rgba(255, 215, 0, 0.1); transform: translateY(-5px); }
+        .city-select { 
+            display: flex; gap: 10px; margin-bottom: 20px; 
+            max-width: 100%; overflow-x: auto; 
+            padding: 5px; 
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .city-select::-webkit-scrollbar { display: none; }
+        .city-card { 
+            min-width: 120px; width: 120px; flex-shrink: 0;
+            padding: 12px 8px; background: rgba(30, 30, 40, 0.9); 
+            border: 2px solid rgba(100, 100, 100, 0.3); border-radius: 12px; 
+            cursor: pointer; transition: all 0.3s; text-align: center; 
+        }
+        .city-card:hover:not(.locked), .city-card.selected { border-color: #ffd700; background: rgba(255, 215, 0, 0.1); transform: translateY(-3px); }
         .city-card.locked { opacity: 0.5; cursor: not-allowed; }
         .city-icon { font-size: 2.5rem; margin-bottom: 8px; }
         .city-name { font-size: 1rem; font-weight: bold; color: #ffd700; margin-bottom: 5px; }
@@ -62,7 +92,15 @@
         .btn { padding: 12px 40px; font-size: 1.1rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
         .btn-primary { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4); }
         .btn-primary:hover { transform: scale(1.05); box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5); }
-        .high-score { margin-top: 15px; font-size: 0.8rem; color: #666; }
+        .high-score { margin-top: 10px; font-size: 0.8rem; color: #666; margin-bottom: 10px; }
+        
+        /* Bottom buttons container with safe spacing */
+        .menu-buttons { 
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            margin-bottom: max(10px, var(--safe-bottom));
+            width: 100%;
+            max-width: 300px;
+        }
         
         /* Pixel-style HUD - Retro Style (Like reference image) */
         #hud { position: fixed; top: 6px; left: 6px; display: none; z-index: 50; pointer-events: none; image-rendering: pixelated; font-family: 'PixelAE', monospace; }
@@ -240,9 +278,20 @@
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
         
         @media (max-width: 600px) {
-            .character-display { width: 240px; padding: 15px; }
-            .char-preview { width: 90px; height: 90px; }
-            .city-card { width: 130px; padding: 12px; }
+            #mainMenu { 
+                padding-left: max(12px, var(--safe-left)); 
+                padding-right: max(12px, var(--safe-right));
+                padding-bottom: max(25px, var(--safe-bottom));
+            }
+            .character-display { width: 220px; padding: 12px; }
+            .char-preview { width: 80px; height: 80px; }
+            .city-select { gap: 8px; }
+            .city-card { min-width: 100px; width: 100px; padding: 10px 6px; }
+            .city-icon { font-size: 2rem; margin-bottom: 5px; }
+            .city-name { font-size: 0.85rem; }
+            .city-desc { font-size: 0.6rem; }
+            .btn { padding: 10px 30px; font-size: 1rem; }
+            .menu-buttons { gap: 6px; }
             .upgrade-card { width: 85px; min-width: 70px; padding: 6px; font-size: 0.75rem; }
             .upgrade-icon { font-size: 1.2rem; }
             .hud-panel { padding: 4px; gap: 4px; }
@@ -255,6 +304,15 @@
             .pause-stats-panel, .pause-controls { width: 95%; max-width: 250px; padding: 8px; }
             .pause-stat-row { font-size: 0.65rem; }
             .equipment-slot { width: 28px; height: 28px; font-size: 0.85rem; }
+        }
+        
+        /* Extra small screens */
+        @media (max-width: 380px) {
+            .character-display { width: 200px; padding: 10px; }
+            .city-card { min-width: 90px; width: 90px; padding: 8px 5px; }
+            .city-icon { font-size: 1.6rem; }
+            .city-name { font-size: 0.75rem; }
+            .btn { padding: 8px 25px; font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -295,9 +353,11 @@
                 <div class="city-locked">🔒 اقتل ابو حلزه أولاً</div>
             </div>
         </div>
-        <button class="btn btn-primary" id="startBtn">ابدأ اللعب</button>
-        <button class="btn" id="leaderboardBtn" style="background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:#ffd700;border:2px solid #ffd700;margin-top:10px;padding:8px 25px;font-size:0.9rem">🏆 قائمة الأبطال</button>
-        <p class="high-score">أعلى نتيجة: <span id="highScore">0</span> قتيل</p>
+        <div class="menu-buttons">
+            <button class="btn btn-primary" id="startBtn">ابدأ اللعب</button>
+            <button class="btn" id="leaderboardBtn" style="background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:#ffd700;border:2px solid #ffd700;padding:8px 25px;font-size:0.9rem">🏆 قائمة الأبطال</button>
+            <p class="high-score">أعلى نتيجة: <span id="highScore">0</span> قتيل</p>
+        </div>
     </div>
     
     <div id="hud">
