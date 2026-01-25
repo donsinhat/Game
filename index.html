@@ -64,43 +64,100 @@
         .btn-primary:hover { transform: scale(1.05); box-shadow: 0 12px 35px rgba(255, 215, 0, 0.5); }
         .high-score { margin-top: 15px; font-size: 0.8rem; color: #666; }
         
-        /* Pixel-style HUD - Retro Style */
-        #hud { position: fixed; top: 0; left: 0; width: 100%; padding: 8px 12px; display: none; justify-content: space-between; align-items: flex-start; z-index: 50; pointer-events: none; image-rendering: pixelated; }
-        .hud-left, .hud-right { display: flex; flex-direction: column; gap: 4px; }
+        /* Pixel-style HUD - Retro Style (Like reference image) */
+        #hud { position: fixed; top: 8px; left: 8px; display: none; z-index: 50; pointer-events: none; image-rendering: pixelated; }
+        .hud-left { display: flex; flex-direction: column; gap: 4px; }
+        .hud-right { position: fixed; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
         
-        /* Retro-style health/xp container */
-        .hud-bars-container { 
-            background: #3d3440; 
-            border: 3px solid #5a4d55; 
-            padding: 6px 10px 6px 45px; 
-            position: relative;
+        /* Main HUD panel - dark frame like reference */
+        .hud-panel { 
+            background: linear-gradient(180deg, #4a4248 0%, #3d3440 50%, #2d2530 100%);
+            border: 3px solid #1a1518;
             border-radius: 4px;
-            min-width: 160px;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.5);
         }
+        
+        /* Character avatar box */
         .hud-avatar {
-            position: absolute;
-            left: -5px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 44px;
-            height: 44px;
-            background: #2d2530;
-            border: 3px solid #5a4d55;
-            border-radius: 4px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(180deg, #3d3440 0%, #2d2530 100%);
+            border: 2px solid #1a1518;
+            border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
         }
-        .hud-bar { width: 140px; height: 14px; background: #1a1518; border: 2px solid #2d2530; overflow: hidden; position: relative; border-radius: 2px; margin: 2px 0; }
-        .hud-bar-fill { height: 100%; transition: width 0.2s ease; position: relative; }
-        .hud-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.6rem; font-weight: bold; text-shadow: 1px 1px 0 #000; white-space: nowrap; z-index: 10; color: #fff; }
-        .health-fill { background: linear-gradient(180deg, #e85a5a 0%, #c43c3c 50%, #a32828 100%); }
-        .xp-fill { background: linear-gradient(180deg, #5ae85a 0%, #3cc43c 50%, #28a328 100%); }
         
-        .hud-stat { font-size: 0.75rem; font-weight: 700; text-shadow: 1px 1px 0 #000; display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: #3d3440; border: 2px solid #5a4d55; border-radius: 3px; }
-        .hud-stat-icon { font-size: 0.85rem; }
-        .gold-text { color: #f1c40f; }
+        /* Bars container */
+        .hud-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        /* HP/XP bars */
+        .hud-bar { 
+            width: 120px; 
+            height: 12px; 
+            background: #1a1518; 
+            border: 2px solid #0a0808;
+            border-radius: 2px;
+            overflow: hidden; 
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+        .hud-bar-fill { height: 100%; transition: width 0.15s ease; }
+        .hud-bar-text { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 8px; 
+            font-weight: bold; 
+            text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; 
+            white-space: nowrap; 
+            z-index: 10; 
+            color: #fff; 
+        }
+        .health-fill { background: linear-gradient(180deg, #ff6b6b 0%, #c0392b 50%, #8b0000 100%); }
+        .xp-fill { background: linear-gradient(180deg, #6bff6b 0%, #27ae60 50%, #006400 100%); }
+        
+        /* Gold counter - attached to main panel */
+        .hud-gold {
+            background: linear-gradient(180deg, #4a4248 0%, #3d3440 100%);
+            border: 2px solid #1a1518;
+            border-radius: 3px;
+            padding: 2px 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: -1px;
+            margin-left: 48px;
+        }
+        .hud-gold-icon { font-size: 12px; }
+        .hud-gold-text { color: #ffd700; font-size: 11px; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+        
+        /* Right side stats */
+        .hud-stat { 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            text-shadow: 1px 1px 0 #000; 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            padding: 3px 8px; 
+            background: linear-gradient(180deg, #4a4248 0%, #3d3440 100%);
+            border: 2px solid #1a1518;
+            border-radius: 3px;
+        }
+        .hud-stat-icon { font-size: 0.8rem; }
         .kill-text { color: #ff6666; }
         .level-text { color: #66ff66; }
         .timer-text { color: #66ccff; }
@@ -193,11 +250,13 @@
             .city-card { width: 130px; padding: 12px; }
             .upgrade-card { width: 85px; min-width: 70px; padding: 6px; font-size: 0.75rem; }
             .upgrade-icon { font-size: 1.2rem; }
-            .hud-bars-container { min-width: 120px; padding: 4px 8px 4px 38px; }
-            .hud-avatar { width: 36px; height: 36px; font-size: 1.2rem; left: -3px; }
-            .hud-bar { width: 100px; height: 12px; }
-            .hud-bar-text { font-size: 0.5rem; }
-            .hud-stat { font-size: 0.65rem; padding: 3px 6px; }
+            .hud-panel { padding: 4px; gap: 4px; }
+            .hud-avatar { width: 32px; height: 32px; font-size: 1.1rem; }
+            .hud-bar { width: 90px; height: 10px; }
+            .hud-bar-text { font-size: 7px; }
+            .hud-gold { margin-left: 38px; padding: 2px 6px; }
+            .hud-gold-text { font-size: 10px; }
+            .hud-stat { font-size: 0.6rem; padding: 2px 5px; }
             .pause-stats-panel, .pause-controls { width: 95%; max-width: 250px; padding: 8px; }
             .pause-stat-row { font-size: 0.65rem; }
             .equipment-slot { width: 28px; height: 28px; font-size: 0.85rem; }
@@ -248,18 +307,25 @@
     
     <div id="hud">
         <div class="hud-left">
-            <div class="hud-bars-container">
+            <!-- Main panel with avatar and bars -->
+            <div class="hud-panel">
                 <div class="hud-avatar" id="hudAvatar">🐰</div>
-                <div class="hud-bar"><div class="hud-bar-fill health-fill" id="healthBar" style="width: 100%"></div><span class="hud-bar-text"><span id="healthText">100/100</span></span></div>
-                <div class="hud-bar"><div class="hud-bar-fill xp-fill" id="xpBar" style="width: 0%"></div><span class="hud-bar-text"><span id="xpText">0/10</span></span></div>
+                <div class="hud-bars">
+                    <div class="hud-bar"><div class="hud-bar-fill health-fill" id="healthBar" style="width: 100%"></div><span class="hud-bar-text"><span id="healthText">100/100</span></span></div>
+                    <div class="hud-bar"><div class="hud-bar-fill xp-fill" id="xpBar" style="width: 0%"></div><span class="hud-bar-text"><span id="xpText">0/10</span></span></div>
+                </div>
             </div>
-            <span class="hud-stat level-text"><span class="hud-stat-icon">📊</span> <span id="levelText">المستوى: 1</span></span>
+            <!-- Gold counter below -->
+            <div class="hud-gold">
+                <span class="hud-gold-icon">🪙</span>
+                <span class="hud-gold-text" id="goldText">0</span>
+            </div>
         </div>
         <div class="hud-right">
-            <span class="hud-stat gold-text"><span class="hud-stat-icon">💰</span> <span id="goldText">0</span></span>
+            <span class="hud-stat level-text"><span class="hud-stat-icon">📊</span> <span id="levelText">Lv.1</span></span>
             <span class="hud-stat kill-text"><span class="hud-stat-icon">💀</span> <span id="killText">0</span></span>
             <span class="hud-stat timer-text"><span class="hud-stat-icon">⏱️</span> <span id="timerText">00:00</span></span>
-            <span class="hud-stat" id="endlessIndicator" style="display:none;color:#ff8800;background:#ff880020;border-color:#ff8800"><span class="hud-stat-icon">♾️</span> لا نهاية</span>
+            <span class="hud-stat" id="endlessIndicator" style="display:none;color:#ff8800"><span class="hud-stat-icon">♾️</span> ∞</span>
         </div>
     </div>
     
@@ -4948,7 +5014,7 @@ class Game {
             : Math.floor(10 * Math.pow(1.25, 9) * Math.pow(1.15, level - 10));
         document.getElementById('xpBar').style.width = `${(this.player.xp / req) * 100}%`;
         document.getElementById('xpText').textContent = `${Math.floor(this.player.xp)}/${req}`;
-        document.getElementById('levelText').textContent = `المستوى: ${this.player.level}`;
+        document.getElementById('levelText').textContent = `Lv.${this.player.level}`;
         document.getElementById('goldText').textContent = this.player.gold;
         document.getElementById('killText').textContent = this.player.kills;
         const m = Math.floor(this.time / 60), s = Math.floor(this.time % 60);
