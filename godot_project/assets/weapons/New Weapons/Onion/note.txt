@@ -1,0 +1,2 @@
+
+1 projectile long range deal damage overtime if hit 
