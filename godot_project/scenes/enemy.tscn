@@ -1,0 +1,65 @@
+[gd_scene load_steps=7 format=3 uid="uid://enemy_scene"]
+
+[ext_resource type="Script" path="res://scripts/entities/enemy.gd" id="1_enemy"]
+[ext_resource type="Texture2D" path="res://assets/enemies_new/Flying eye/Attack3.png" id="2_flying_eye"]
+[ext_resource type="Texture2D" path="res://assets/enemies_new/Goblin/Attack3.png" id="3_goblin"]
+[ext_resource type="Texture2D" path="res://assets/enemies_new/Mushroom/Attack3.png" id="4_mushroom"]
+[ext_resource type="Texture2D" path="res://assets/enemies_new/Skeleton/Attack3.png" id="5_skeleton"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]
+radius = 16.0
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_enemy"]
+animations = [{
+"frames": [],
+"loop": true,
+"name": &"idle",
+"speed": 8.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"walk",
+"speed": 8.0
+}, {
+"frames": [],
+"loop": false,
+"name": &"attack",
+"speed": 10.0
+}, {
+"frames": [],
+"loop": false,
+"name": &"death",
+"speed": 8.0
+}]
+
+[node name="Enemy" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_enemy")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(2, 2)
+sprite_frames = SubResource("SpriteFrames_enemy")
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("CircleShape2D_hitbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_hitbox")
+
+[node name="AttackTimer" type="Timer" parent="."]
+wait_time = 1.0
+one_shot = true
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = -20.0
+offset_top = -30.0
+offset_right = 20.0
+offset_bottom = -24.0
+max_value = 100.0
+value = 100.0
+show_percentage = false

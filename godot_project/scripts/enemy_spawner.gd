@@ -18,13 +18,14 @@ var enemy_types_by_time: Array = [
 	{"time": 0, "types": ["flyingEye", "goblin"]},
 	{"time": 30, "types": ["flyingEye", "goblin", "mushroom"]},
 	{"time": 60, "types": ["goblin", "mushroom", "skeleton"]},
-	{"time": 120, "types": ["mushroom", "skeleton"]}
+	{"time": 120, "types": ["mushroom", "skeleton"]},
+	{"time": 240, "types": ["skeleton", "orc"]},
+	{"time": 360, "types": ["orc", "soldier"]}
 ]
 
 func _ready() -> void:
-	# TODO: تحميل مشهد العدو
-	# enemy_scene = preload("res://scenes/enemy.tscn")
-	pass
+	# تحميل مشهد العدو
+	enemy_scene = preload("res://scenes/enemy.tscn")
 
 func _process(delta: float) -> void:
 	if GameManager.current_state != GameManager.GameState.PLAYING:

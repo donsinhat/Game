@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://game_scene"]
+[gd_scene load_steps=15 format=3 uid="uid://game_scene"]
 
 [ext_resource type="Script" path="res://scripts/game.gd" id="1_game"]
 [ext_resource type="Script" path="res://scripts/entities/player.gd" id="2_player"]
@@ -9,6 +9,11 @@
 [ext_resource type="Script" path="res://scripts/ui/level_up_modal.gd" id="7_levelup"]
 [ext_resource type="Script" path="res://scripts/ui/game_over_screen.gd" id="8_gameover"]
 [ext_resource type="Script" path="res://scripts/ui/virtual_joystick.gd" id="9_joystick"]
+[ext_resource type="Texture2D" path="res://assets/ui/UI Elements/UI Elements/Bars/BigBar_Base.png" id="10_bar_base"]
+[ext_resource type="Texture2D" path="res://assets/ui/UI Elements/UI Elements/Bars/BigBar_Fill.png" id="11_bar_fill"]
+[ext_resource type="Texture2D" path="res://assets/ui/UI Elements/UI Elements/Banners/Banner.png" id="12_banner"]
+[ext_resource type="Texture2D" path="res://assets/characters/Char_001.png" id="13_char_sprite"]
+[ext_resource type="Texture2D" path="res://assets/maps/arabtown.png" id="14_map"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_player_hitbox"]
 radius = 15.0
@@ -16,15 +21,44 @@ radius = 15.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_pickup_area"]
 radius = 50.0
 
+[sub_resource type="SpriteFrames" id="SpriteFrames_player"]
+animations = [{
+"frames": [],
+"loop": true,
+"name": &"idle",
+"speed": 8.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"walk",
+"speed": 10.0
+}]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_health_bg"]
+texture = ExtResource("10_bar_base")
+texture_margin_left = 8.0
+texture_margin_top = 4.0
+texture_margin_right = 8.0
+texture_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_health_fill"]
+texture = ExtResource("11_bar_fill")
+
 [node name="Game" type="Node2D"]
 script = ExtResource("1_game")
 
-[node name="TileMap" type="TileMap" parent="."]
+[node name="Background" type="Sprite2D" parent="."]
+texture_repeat = 2
+texture = ExtResource("14_map")
+region_enabled = true
+region_rect = Rect2(0, 0, 4000, 4000)
 
 [node name="Player" type="CharacterBody2D" parent="."]
 script = ExtResource("2_player")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Player"]
+scale = Vector2(2, 2)
+sprite_frames = SubResource("SpriteFrames_player")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
 shape = SubResource("CircleShape2D_player_hitbox")
@@ -66,23 +100,43 @@ script = ExtResource("4_pickup")
 [node name="HUD" type="CanvasLayer" parent="UI"]
 script = ExtResource("5_hud")
 
-[node name="MainPanel" type="PanelContainer" parent="UI/HUD"]
+[node name="TopPanel" type="Control" parent="UI/HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 80.0
+grow_horizontal = 2
+
+[node name="MainPanel" type="NinePatchRect" parent="UI/HUD/TopPanel"]
 offset_left = 10.0
 offset_top = 10.0
-offset_right = 170.0
-offset_bottom = 70.0
+offset_right = 200.0
+offset_bottom = 75.0
+texture = ExtResource("12_banner")
+patch_margin_left = 20
+patch_margin_top = 20
+patch_margin_right = 20
+patch_margin_bottom = 20
 
-[node name="Bars" type="VBoxContainer" parent="UI/HUD/MainPanel"]
-layout_mode = 2
+[node name="Bars" type="VBoxContainer" parent="UI/HUD/TopPanel/MainPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = -10.0
+offset_bottom = -8.0
 
-[node name="HealthBar" type="ProgressBar" parent="UI/HUD/MainPanel/Bars"]
-custom_minimum_size = Vector2(150, 20)
+[node name="HealthBar" type="ProgressBar" parent="UI/HUD/TopPanel/MainPanel/Bars"]
+custom_minimum_size = Vector2(0, 22)
 layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxTexture_health_bg")
+theme_override_styles/fill = SubResource("StyleBoxTexture_health_fill")
 max_value = 100.0
 value = 100.0
 show_percentage = false
 
-[node name="HealthText" type="Label" parent="UI/HUD/MainPanel/Bars/HealthBar"]
+[node name="HealthText" type="Label" parent="UI/HUD/TopPanel/MainPanel/Bars/HealthBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -91,13 +145,13 @@ text = "100/100"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="XPBar" type="ProgressBar" parent="UI/HUD/MainPanel/Bars"]
-custom_minimum_size = Vector2(150, 15)
+[node name="XPBar" type="ProgressBar" parent="UI/HUD/TopPanel/MainPanel/Bars"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 max_value = 10.0
 show_percentage = false
 
-[node name="XPText" type="Label" parent="UI/HUD/MainPanel/Bars/XPBar"]
+[node name="XPText" type="Label" parent="UI/HUD/TopPanel/MainPanel/Bars/XPBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -106,47 +160,73 @@ text = "0/10"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="GoldPanel" type="PanelContainer" parent="UI/HUD"]
+[node name="GoldPanel" type="NinePatchRect" parent="UI/HUD/TopPanel"]
 offset_left = 10.0
 offset_top = 80.0
-offset_right = 100.0
-offset_bottom = 110.0
+offset_right = 110.0
+offset_bottom = 115.0
+texture = ExtResource("12_banner")
+patch_margin_left = 16
+patch_margin_top = 12
+patch_margin_right = 16
+patch_margin_bottom = 12
 
-[node name="HBox" type="HBoxContainer" parent="UI/HUD/GoldPanel"]
+[node name="HBox" type="HBoxContainer" parent="UI/HUD/TopPanel/GoldPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_right = -8.0
+alignment = 1
+
+[node name="GoldIcon" type="TextureRect" parent="UI/HUD/TopPanel/GoldPanel/HBox"]
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
+size_flags_vertical = 4
 
-[node name="GoldIcon" type="Label" parent="UI/HUD/GoldPanel/HBox"]
-layout_mode = 2
-text = "🪙"
-
-[node name="GoldText" type="Label" parent="UI/HUD/GoldPanel/HBox"]
+[node name="GoldText" type="Label" parent="UI/HUD/TopPanel/GoldPanel/HBox"]
 layout_mode = 2
 text = "0"
 
-[node name="StatsPanel" type="VBoxContainer" parent="UI/HUD"]
+[node name="StatsPanel" type="NinePatchRect" parent="UI/HUD"]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -100.0
+offset_left = -120.0
 offset_top = 10.0
 offset_right = -10.0
-offset_bottom = 100.0
+offset_bottom = 85.0
 grow_horizontal = 0
-alignment = 2
+texture = ExtResource("12_banner")
+patch_margin_left = 16
+patch_margin_top = 12
+patch_margin_right = 16
+patch_margin_bottom = 12
 
-[node name="LevelText" type="Label" parent="UI/HUD/StatsPanel"]
+[node name="VBox" type="VBoxContainer" parent="UI/HUD/StatsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 5.0
+offset_right = -8.0
+offset_bottom = -5.0
+
+[node name="LevelText" type="Label" parent="UI/HUD/StatsPanel/VBox"]
 layout_mode = 2
 text = "Lv.1"
 horizontal_alignment = 2
 
-[node name="KillsText" type="Label" parent="UI/HUD/StatsPanel"]
+[node name="KillsText" type="Label" parent="UI/HUD/StatsPanel/VBox"]
 layout_mode = 2
-text = "💀 0"
+text = "Kills: 0"
 horizontal_alignment = 2
 
-[node name="TimerText" type="Label" parent="UI/HUD/StatsPanel"]
+[node name="TimerText" type="Label" parent="UI/HUD/StatsPanel/VBox"]
 layout_mode = 2
-text = "⏱️ 00:00"
+text = "00:00"
 horizontal_alignment = 2
 
 [node name="WeaponSlots" type="HBoxContainer" parent="UI/HUD"]
@@ -175,16 +255,15 @@ offset_bottom = -70.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="PauseBtn" type="Button" parent="UI/HUD"]
+[node name="PauseBtn" type="TextureButton" parent="UI/HUD"]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -25.0
 offset_top = 10.0
 offset_right = 25.0
-offset_bottom = 50.0
+offset_bottom = 60.0
 grow_horizontal = 2
-text = "⏸️"
 
 [node name="PauseMenu" type="CanvasLayer" parent="UI"]
 layer = 10

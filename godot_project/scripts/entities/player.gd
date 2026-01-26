@@ -50,11 +50,62 @@ var has_revive: bool = false
 var touch_input: Vector2 = Vector2.ZERO
 var joystick_active: bool = false
 
+const CHARACTER_SPRITES = {
+	"abuSulaiman": "res://assets/characters/Char_003.png",
+	"jayzen": "res://assets/characters/Char_006.png",
+	"noura": "res://assets/characters/Char_005.png",
+	"bedouin": "res://assets/characters/Char_002.png",
+	"hawshabi": "res://assets/characters/Char_004.png",
+	"layla": "res://assets/characters/Char_001.png"
+}
+
 func _ready() -> void:
 	_load_character_stats()
+	_setup_character_sprite()
 	_setup_signals()
 	current_hp = max_hp
 	emit_signal("health_changed", current_hp, max_hp)
+
+func _setup_character_sprite() -> void:
+	if not sprite:
+		return
+	
+	var sprite_path = CHARACTER_SPRITES.get(character_id, CHARACTER_SPRITES["abuSulaiman"])
+	var texture = load(sprite_path)
+	if not texture:
+		return
+	
+	# حجم الإطار للشخصيات (4x4 sprite sheet = 16 إطار)
+	var frame_width = texture.get_width() / 4
+	var frame_height = texture.get_height() / 4
+	
+	# إنشاء SpriteFrames
+	var frames = SpriteFrames.new()
+	
+	# أنيميشن idle (الصف الأول - 4 إطارات)
+	frames.add_animation("idle")
+	frames.set_animation_loop("idle", true)
+	frames.set_animation_speed("idle", 6.0)
+	
+	for i in range(4):
+		var atlas = AtlasTexture.new()
+		atlas.atlas = texture
+		atlas.region = Rect2(i * frame_width, 0, frame_width, frame_height)
+		frames.add_frame("idle", atlas)
+	
+	# أنيميشن walk (الصف الثاني - 4 إطارات)
+	frames.add_animation("walk")
+	frames.set_animation_loop("walk", true)
+	frames.set_animation_speed("walk", 10.0)
+	
+	for i in range(4):
+		var atlas = AtlasTexture.new()
+		atlas.atlas = texture
+		atlas.region = Rect2(i * frame_width, frame_height, frame_width, frame_height)
+		frames.add_frame("walk", atlas)
+	
+	sprite.sprite_frames = frames
+	sprite.play("idle")
 
 func _load_character_stats() -> void:
 	var char_data = GameData.get_character(character_id)

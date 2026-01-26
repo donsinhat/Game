@@ -2,15 +2,15 @@ extends CanvasLayer
 class_name HUD
 ## HUD - واجهة المستخدم أثناء اللعب
 
-# المراجع
-@onready var health_bar = $MainPanel/Bars/HealthBar
-@onready var health_text = $MainPanel/Bars/HealthBar/HealthText
-@onready var xp_bar = $MainPanel/Bars/XPBar
-@onready var xp_text = $MainPanel/Bars/XPBar/XPText
-@onready var gold_text = $GoldPanel/HBox/GoldText
-@onready var level_text = $StatsPanel/LevelText
-@onready var kills_text = $StatsPanel/KillsText
-@onready var timer_text = $StatsPanel/TimerText
+# المراجع - مسارات محدثة للتصميم الجديد
+@onready var health_bar = $TopPanel/MainPanel/Bars/HealthBar
+@onready var health_text = $TopPanel/MainPanel/Bars/HealthBar/HealthText
+@onready var xp_bar = $TopPanel/MainPanel/Bars/XPBar
+@onready var xp_text = $TopPanel/MainPanel/Bars/XPBar/XPText
+@onready var gold_text = $TopPanel/GoldPanel/HBox/GoldText
+@onready var level_text = $StatsPanel/VBox/LevelText
+@onready var kills_text = $StatsPanel/VBox/KillsText
+@onready var timer_text = $StatsPanel/VBox/TimerText
 @onready var weapon_slots = $WeaponSlots
 @onready var book_slots = $BookSlots
 @onready var pause_btn = $PauseBtn

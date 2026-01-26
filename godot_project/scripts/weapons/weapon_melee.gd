@@ -4,13 +4,38 @@ class_name WeaponMelee
 
 @export var arc_angle: float = 90.0  # زاوية القوس بالدرجات
 
-@onready var visual: Sprite2D = $Visual
-@onready var attack_area: Area2D = $AttackArea
+var visual: AnimatedSprite2D = null
+var attack_area: Area2D = null
 
 var swing_direction: float = 1.0  # 1 أو -1 لتبديل اتجاه الضربة
 
 func _ready() -> void:
 	super._ready()
+	_setup_visual()
+
+func _setup_visual() -> void:
+	# إنشاء تأثير بصري للسيف
+	visual = AnimatedSprite2D.new()
+	visual.visible = false
+	visual.scale = Vector2(2, 2)
+	add_child(visual)
+	
+	var texture = load("res://assets/weapons/New Weapons/sword/effect.png")
+	if texture:
+		var frames = SpriteFrames.new()
+		frames.add_animation("swing")
+		frames.set_animation_loop("swing", false)
+		frames.set_animation_speed("swing", 15.0)
+		
+		var frame_width = 64
+		var frame_count = texture.get_width() / frame_width
+		for i in range(frame_count):
+			var atlas = AtlasTexture.new()
+			atlas.atlas = texture
+			atlas.region = Rect2(i * frame_width, 0, frame_width, texture.get_height())
+			frames.add_frame("swing", atlas)
+		
+		visual.sprite_frames = frames
 
 func _perform_attack() -> void:
 	if not player:
@@ -44,11 +69,15 @@ func _perform_attack() -> void:
 func _play_swing_effect(angle: float) -> void:
 	if visual:
 		visual.visible = true
-		visual.rotation = angle
+		visual.rotation = angle + (swing_direction * PI / 4)
+		visual.flip_h = swing_direction < 0
 		
-		var tween = create_tween()
-		tween.tween_property(visual, "rotation", angle + (swing_direction * deg_to_rad(arc_angle)), 0.15)
-		tween.tween_callback(func(): visual.visible = false)
+		# تشغيل الأنيميشن
+		visual.play("swing")
+		
+		# إخفاء بعد انتهاء الأنيميشن
+		await get_tree().create_timer(0.2).timeout
+		visual.visible = false
 
 func upgrade() -> void:
 	super.upgrade()

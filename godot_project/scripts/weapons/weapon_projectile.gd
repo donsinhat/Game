@@ -9,10 +9,22 @@ var projectile_scene: PackedScene
 
 const PROJECTILES_PER_LEVEL: Array = [1, 1, 2, 2, 3, 3, 4, 4, 5, 6]
 
+# ربط أنواع الأسلحة بأنواع القذائف
+const WEAPON_TO_PROJECTILE_TYPE = {
+	"rock": "rock",
+	"mgma": "mgma",
+	"meteor": "meteor",
+	"spear": "rock",
+	"flame": "mgma",
+	"onion": "onion",
+	"brain": "brain",
+	"shuriken": "shuriken"
+}
+
 func _ready() -> void:
 	super._ready()
-	# TODO: تحميل مشهد القذيفة
-	# projectile_scene = preload("res://scenes/projectile.tscn")
+	# تحميل مشهد القذيفة
+	projectile_scene = preload("res://scenes/projectile.tscn")
 
 func _perform_attack() -> void:
 	var target = get_closest_enemy()
@@ -36,11 +48,14 @@ func _spawn_projectile(target: Enemy, index: int, total: int) -> void:
 		var offset = (index - (total - 1) / 2.0) * spread_angle
 		direction = direction.rotated(offset)
 	
+	# الحصول على نوع القذيفة
+	var proj_type = WEAPON_TO_PROJECTILE_TYPE.get(weapon_id, "rock")
+	
 	# إنشاء القذيفة
 	if projectile_scene:
 		var proj = projectile_scene.instantiate()
 		proj.global_position = player.global_position
-		proj.initialize(direction, current_damage * player.get_damage(), projectile_speed, current_range)
+		proj.initialize(direction, current_damage * player.get_damage(), projectile_speed, current_range, proj_type)
 		get_tree().current_scene.add_child(proj)
 	else:
 		# قذيفة مؤقتة بدون مشهد

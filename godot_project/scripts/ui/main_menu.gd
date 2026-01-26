@@ -2,8 +2,8 @@ extends Control
 class_name MainMenu
 ## MainMenu - القائمة الرئيسية
 
-@onready var title = $VBox/Title
-@onready var subtitle = $VBox/Subtitle
+@onready var title = $VBox/TitleBanner/Title
+@onready var subtitle = $VBox/TitleBanner/Subtitle
 @onready var char_preview = $VBox/CharacterSelect/CharInfo/CharPreview
 @onready var char_name = $VBox/CharacterSelect/CharInfo/CharName
 @onready var char_title = $VBox/CharacterSelect/CharInfo/CharTitle
@@ -20,6 +20,16 @@ var character_list: Array = []
 var current_char_index: int = 0
 var selected_city: String = "badaya"
 var is_endless: bool = false
+
+# صور الشخصيات
+const CHARACTER_SPRITES = {
+	"abuSulaiman": "res://assets/characters/Char_003.png",
+	"jayzen": "res://assets/characters/Char_006.png",
+	"noura": "res://assets/characters/Char_005.png",
+	"bedouin": "res://assets/characters/Char_002.png",
+	"hawshabi": "res://assets/characters/Char_004.png",
+	"layla": "res://assets/characters/Char_001.png"
+}
 
 func _ready() -> void:
 	_load_characters()
@@ -88,6 +98,20 @@ func _update_character_display() -> void:
 		char_title.text = char_data.get("title", "")
 	if char_desc:
 		char_desc.text = char_data.get("desc", "")
+	
+	# تحميل صورة الشخصية
+	if char_preview:
+		var sprite_path = CHARACTER_SPRITES.get(char_id, CHARACTER_SPRITES["abuSulaiman"])
+		var texture = load(sprite_path)
+		if texture:
+			# استخراج الإطار الأول من sprite sheet
+			var atlas = AtlasTexture.new()
+			atlas.atlas = texture
+			var frame_width = texture.get_width() / 4
+			var frame_height = texture.get_height() / 4
+			atlas.region = Rect2(0, 0, frame_width, frame_height)
+			char_preview.texture = atlas
+			char_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	
 	if char_stats:
 		_update_stats_display(char_data)

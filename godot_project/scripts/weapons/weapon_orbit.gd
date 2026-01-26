@@ -24,12 +24,36 @@ func _update_orbit_count() -> void:
 		sprite.queue_free()
 	orbit_sprites.clear()
 	
+	# تحميل تكستشر السلاح
+	var texture = load("res://assets/weapons/New Weapons/agal/effect.png")
+	
 	# إنشاء السبرايتات الجديدة
 	orbit_count = new_count
 	for i in orbit_count:
-		var sprite = Sprite2D.new()
-		# TODO: تحميل تكستشر السلاح
-		sprite.modulate = Color.GOLD
+		var sprite = AnimatedSprite2D.new()
+		
+		if texture:
+			# إنشاء SpriteFrames من sprite sheet
+			var frames = SpriteFrames.new()
+			frames.add_animation("spin")
+			frames.set_animation_loop("spin", true)
+			frames.set_animation_speed("spin", 8.0)
+			
+			# تقسيم sprite sheet إلى إطارات (64x64 لكل إطار)
+			var frame_count = texture.get_width() / 64
+			for f in range(frame_count):
+				var atlas = AtlasTexture.new()
+				atlas.atlas = texture
+				atlas.region = Rect2(f * 64, 0, 64, 64)
+				frames.add_frame("spin", atlas)
+			
+			sprite.sprite_frames = frames
+			sprite.play("spin")
+		else:
+			# fallback
+			sprite.modulate = Color.GOLD
+		
+		sprite.scale = Vector2(1.5, 1.5)
 		add_child(sprite)
 		orbit_sprites.append(sprite)
 

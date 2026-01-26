@@ -32,15 +32,77 @@ var poison_timer: float = 0.0
 # للتأثيرات
 var damage_numbers_scene: PackedScene
 
+# مسارات صور الأعداء
+const ENEMY_SPRITES = {
+	"flyingEye": "res://assets/enemies_new/Flying eye/Attack3.png",
+	"goblin": "res://assets/enemies_new/Goblin/Attack3.png",
+	"mushroom": "res://assets/enemies_new/Mushroom/Attack3.png",
+	"skeleton": "res://assets/enemies_new/Skeleton/Attack3.png",
+	"orc": "res://assets/enemies_new/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Orc/Orc/Orc-Idle.png",
+	"soldier": "res://assets/enemies_new/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier/Soldier-Idle.png"
+}
+
+# أحجام الإطارات لكل عدو
+const ENEMY_FRAME_DATA = {
+	"flyingEye": {"columns": 8, "rows": 1, "frame_width": 150, "frame_height": 150, "frame_count": 8},
+	"goblin": {"columns": 8, "rows": 1, "frame_width": 150, "frame_height": 150, "frame_count": 8},
+	"mushroom": {"columns": 8, "rows": 1, "frame_width": 150, "frame_height": 150, "frame_count": 8},
+	"skeleton": {"columns": 8, "rows": 1, "frame_width": 150, "frame_height": 150, "frame_count": 8},
+	"orc": {"columns": 6, "rows": 1, "frame_width": 100, "frame_height": 100, "frame_count": 6},
+	"soldier": {"columns": 6, "rows": 1, "frame_width": 100, "frame_height": 100, "frame_count": 6}
+}
+
 func _ready() -> void:
 	_load_enemy_stats()
 	_setup_signals()
+	_setup_enemy_sprite()
 	current_hp = max_hp
 	_update_health_bar()
 	
 	# إخفاء شريط الصحة في البداية
 	if health_bar:
 		health_bar.visible = false
+
+func _setup_enemy_sprite() -> void:
+	if not sprite:
+		return
+	
+	var sprite_path = ENEMY_SPRITES.get(enemy_type, ENEMY_SPRITES["goblin"])
+	var frame_data = ENEMY_FRAME_DATA.get(enemy_type, ENEMY_FRAME_DATA["goblin"])
+	
+	# تحميل الصورة
+	var texture = load(sprite_path)
+	if not texture:
+		return
+	
+	# إنشاء SpriteFrames
+	var frames = SpriteFrames.new()
+	
+	# إنشاء أنيميشن idle/walk
+	frames.add_animation("idle")
+	frames.add_animation("walk")
+	frames.set_animation_loop("idle", true)
+	frames.set_animation_loop("walk", true)
+	frames.set_animation_speed("idle", 8.0)
+	frames.set_animation_speed("walk", 10.0)
+	
+	# استخراج الإطارات من الـ sprite sheet
+	var atlas_textures: Array[AtlasTexture] = []
+	for i in range(frame_data.frame_count):
+		var atlas = AtlasTexture.new()
+		atlas.atlas = texture
+		atlas.region = Rect2(
+			i * frame_data.frame_width, 
+			0, 
+			frame_data.frame_width, 
+			frame_data.frame_height
+		)
+		atlas_textures.append(atlas)
+		frames.add_frame("idle", atlas)
+		frames.add_frame("walk", atlas)
+	
+	sprite.sprite_frames = frames
+	sprite.play("idle")
 
 func _load_enemy_stats() -> void:
 	var enemy_data = GameData.get_enemy(enemy_type)
