@@ -11,65 +11,60 @@ var current_options: Array = []
 
 func _ready() -> void:
 	visible = false
+	_apply_ui_theme()
 	GameManager.level_up.connect(_on_level_up)
 
-func _on_level_up(_new_level: int) -> void:
-	_generate_options()
-	visible = true
+func _apply_ui_theme() -> void:
+	# Helper to create StyleBoxTexture
+	var create_style = func(path: String, margin: int) -> StyleBoxTexture:
+		if not FileAccess.file_exists(path): return null
+		var texture = load(path)
+		if not texture: return null
+		var style = StyleBoxTexture.new()
+		style.texture = texture
+		style.texture_margin_left = margin
+		style.texture_margin_right = margin
+		style.texture_margin_top = margin
+		style.texture_margin_bottom = margin
+		return style
 
-func _generate_options() -> void:
-	# مسح الخيارات القديمة
-	for child in options_container.get_children():
-		child.queue_free()
-	
-	current_options.clear()
-	
-	# توليد 3-4 خيارات عشوائية
-	var num_options = 3
-	var available_weapons = GameData.get_weapon_list()
-	var available_books = GameData.get_book_list()
-	
-	for i in num_options:
-		var option = _get_random_option(available_weapons, available_books)
-		if option:
-			current_options.append(option)
-			var card = _create_option_card(option)
-			options_container.add_child(card)
-
-func _get_random_option(weapons: Array, books: Array) -> Dictionary:
-	# 50% سلاح، 50% كتاب
-	var is_weapon = randf() < 0.5
-	
-	if is_weapon and not weapons.is_empty():
-		var weapon_id = weapons[randi() % weapons.size()]
-		var weapon_data = GameData.get_weapon(weapon_id)
-		var rarity = GameData.get_random_rarity()
-		return {
-			"type": "weapon",
-			"id": weapon_id,
-			"name": weapon_data.get("name", ""),
-			"desc": weapon_data.get("desc", ""),
-			"icon": weapon_data.get("icon", ""),
-			"rarity": rarity
-		}
-	elif not books.is_empty():
-		var book_id = books[randi() % books.size()]
-		var book_data = GameData.get_book(book_id)
-		var rarity = GameData.get_random_rarity()
-		return {
-			"type": "book",
-			"id": book_id,
-			"name": book_data.get("name", ""),
-			"desc": book_data.get("desc", ""),
-			"icon": book_data.get("icon", ""),
-			"rarity": rarity
-		}
-	
-	return {}
+	# Panel Background (Ribbon or Banner)
+	var panel_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Banners/Banner.png", 32)
+	if panel_style and has_node("Panel"):
+		$Panel.add_theme_stylebox_override("panel", panel_style)
+		# Add padding
+		$Panel.add_theme_constant_override("margin_left", 30)
+		$Panel.add_theme_constant_override("margin_right", 30)
+		$Panel.add_theme_constant_override("margin_top", 25)
+		$Panel.add_theme_constant_override("margin_bottom", 25)
 
 func _create_option_card(option: Dictionary) -> Control:
 	var card = Button.new()
 	card.custom_minimum_size = Vector2(120, 180)
+	
+	# Theme the card button
+	var create_style = func(path, margin):
+		var texture = load(path)
+		if not texture: return null
+		var style = StyleBoxTexture.new()
+		style.texture = texture
+		style.texture_margin_left = margin
+		style.texture_margin_right = margin
+		style.texture_margin_top = margin
+		style.texture_margin_bottom = margin
+		return style
+	
+	var card_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/BigBlueButton_Regular.png", 10)
+	var card_pressed = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/BigBlueButton_Pressed.png", 10)
+	
+	if card_style:
+		card.add_theme_stylebox_override("normal", card_style)
+		card.add_theme_stylebox_override("hover", card_style)
+		if card_pressed:
+			card.add_theme_stylebox_override("pressed", card_pressed)
+		else:
+			card.add_theme_stylebox_override("pressed", card_style)
+
 	
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER

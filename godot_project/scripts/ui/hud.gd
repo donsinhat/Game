@@ -18,9 +18,55 @@ class_name HUD
 var player = null
 
 func _ready() -> void:
+	_apply_ui_theme()
 	_connect_signals()
 	if pause_btn:
 		pause_btn.pressed.connect(_on_pause_pressed)
+
+func _apply_ui_theme() -> void:
+	# Helper to create StyleBoxTexture
+	var create_style = func(path: String, margin: int) -> StyleBoxTexture:
+		if not FileAccess.file_exists(path): return null
+		var texture = load(path)
+		if not texture: return null
+		var style = StyleBoxTexture.new()
+		style.texture = texture
+		style.texture_margin_left = margin
+		style.texture_margin_right = margin
+		style.texture_margin_top = margin
+		style.texture_margin_bottom = margin
+		return style
+
+	# Main Panel (Banner)
+	var main_panel_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Banners/Banner.png", 32)
+	if main_panel_style and has_node("MainPanel"):
+		$MainPanel.add_theme_stylebox_override("panel", main_panel_style)
+		# Adjust margins for content
+		$MainPanel.add_theme_constant_override("margin_left", 20)
+		$MainPanel.add_theme_constant_override("margin_right", 20)
+		$MainPanel.add_theme_constant_override("margin_top", 15)
+		$MainPanel.add_theme_constant_override("margin_bottom", 15)
+
+	# Gold Panel
+	var gold_panel_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Banners/Banner_Slots.png", 16)
+	if gold_panel_style and has_node("GoldPanel"):
+		$GoldPanel.add_theme_stylebox_override("panel", gold_panel_style)
+		
+	# Pause Button
+	var pause_texture_normal = load("res://assets/ui/UI Elements/UI Elements/Buttons/TinySquareRedButton.png")
+	# We don't have pressed version handy in the list, reusing or using modulation
+	
+	if pause_texture_normal and pause_btn:
+		# Use a stylebox texture for the button to keep it stretchable or just set icon?
+		# For tiny buttons, icon might be better if size matches.
+		# But let's use StyleBox for the button background
+		var btn_style_normal = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/TinySquareRedButton.png", 10)
+		if btn_style_normal:
+			pause_btn.add_theme_stylebox_override("normal", btn_style_normal)
+			pause_btn.add_theme_stylebox_override("hover", btn_style_normal)
+			pause_btn.add_theme_stylebox_override("pressed", btn_style_normal)
+			pause_btn.text = "||" # Use simple text
+
 
 func _connect_signals() -> void:
 	GameManager.game_paused.connect(_on_game_paused)

@@ -62,6 +62,53 @@ func _load_enemy_stats() -> void:
 	xp_value = enemy_data.get("xp", 4)
 	is_ranged = enemy_data.get("ranged", false)
 
+	# تحميل الصور
+	if enemy_data.has("sprite_config"):
+		_load_sprite_frames(enemy_data["sprite_config"])
+	elif enemy_data.has("color"):
+		# Fallback to modulation if no sprite config
+		if sprite:
+			sprite.modulate = Color(enemy_data["color"])
+
+func _load_sprite_frames(config: Dictionary) -> void:
+	if not sprite: return
+	
+	var frames = SpriteFrames.new()
+	var base_path = config.get("base_path", "")
+	var anims = config.get("animations", {})
+	
+	for anim_name in anims.keys():
+		var filename = anims[anim_name]
+		var full_path = base_path.path_join(filename)
+		if not FileAccess.file_exists(full_path):
+			push_warning("Sprite file not found: " + full_path)
+			continue
+			
+		var texture = load(full_path)
+		if not texture:
+			continue
+			
+		frames.add_animation(anim_name)
+		frames.set_animation_loop(anim_name, anim_name != "death" and anim_name != "hurt" and anim_name != "attack")
+		frames.set_animation_speed(anim_name, 10.0)
+		
+		# Assuming horizontal strip and square frames based on height
+		# or infer from texture dimensions
+		var frame_height = texture.get_height()
+		var h_frames = int(texture.get_width() / frame_height)
+		if h_frames < 1: h_frames = 1
+		
+		var frame_width = texture.get_width() / h_frames
+		
+		for i in range(h_frames):
+			var atlas = AtlasTexture.new()
+			atlas.atlas = texture
+			atlas.region = Rect2(i * frame_width, 0, frame_width, frame_height)
+			frames.add_frame(anim_name, atlas)
+			
+	sprite.frames = frames
+	sprite.play("idle")
+
 func _setup_signals() -> void:
 	if hitbox:
 		hitbox.body_entered.connect(_on_body_entered)
@@ -142,10 +189,13 @@ func _die() -> void:
 	GameManager.add_kill()
 	
 	# تأثير الموت
-	_play_death_effect()
+	if sprite and sprite.sprite_frames and sprite.sprite_frames.has_animation("death"):
+		sprite.play("death")
+		await sprite.animation_finished
+	else:
+		_play_death_effect()
+		await get_tree().create_timer(0.2).timeout
 	
-	# تأخير قبل الحذف
-	await get_tree().create_timer(0.2).timeout
 	queue_free()
 
 func _update_health_bar() -> void:

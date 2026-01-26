@@ -21,8 +21,51 @@ var player = null
 
 func _ready() -> void:
 	visible = false
+	_apply_ui_theme()
 	_setup_signals()
 	_load_settings()
+
+func _apply_ui_theme() -> void:
+	# Helper to create StyleBoxTexture
+	var create_style = func(path: String, margin: int) -> StyleBoxTexture:
+		if not FileAccess.file_exists(path): return null
+		var texture = load(path)
+		if not texture: return null
+		var style = StyleBoxTexture.new()
+		style.texture = texture
+		style.texture_margin_left = margin
+		style.texture_margin_right = margin
+		style.texture_margin_top = margin
+		style.texture_margin_bottom = margin
+		return style
+
+	# Panel Background (Wood Table)
+	var panel_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Wood Table/WoodTable.png", 32)
+	if panel_style and has_node("Panel"):
+		$Panel.add_theme_stylebox_override("panel", panel_style)
+		$Panel.add_theme_constant_override("margin_left", 20)
+		$Panel.add_theme_constant_override("margin_right", 20)
+		$Panel.add_theme_constant_override("margin_top", 20)
+		$Panel.add_theme_constant_override("margin_bottom", 20)
+
+	# Stats Panel (Paper)
+	var paper_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Papers/RegularPaper.png", 20)
+	if paper_style and stats_panel:
+		stats_panel.add_theme_stylebox_override("panel", paper_style)
+
+	# Buttons
+	var btn_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/BigBlueButton_Regular.png", 10)
+	var btn_pressed = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/BigBlueButton_Pressed.png", 10)
+	
+	for btn in [resume_btn, quit_btn]:
+		if btn and btn_style:
+			btn.add_theme_stylebox_override("normal", btn_style)
+			btn.add_theme_stylebox_override("hover", btn_style)
+			if btn_pressed:
+				btn.add_theme_stylebox_override("pressed", btn_pressed)
+			else:
+				btn.add_theme_stylebox_override("pressed", btn_style)
+
 
 func _setup_signals() -> void:
 	GameManager.game_paused.connect(_on_game_paused)

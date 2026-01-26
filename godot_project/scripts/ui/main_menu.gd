@@ -22,44 +22,81 @@ var selected_city: String = "badaya"
 var is_endless: bool = false
 
 func _ready() -> void:
+	_apply_ui_theme()
 	_load_characters()
 	_setup_signals()
 	_update_character_display()
 	_update_high_score()
 	_setup_cities()
 
-func _load_characters() -> void:
-	character_list = GameData.get_character_list()
-	if character_list.is_empty():
-		character_list = ["abuSulaiman", "jayzen", "noura", "bedouin", "hawshabi", "layla"]
+func _apply_ui_theme() -> void:
+	# Helper to create StyleBoxTexture
+	var create_style = func(path: String, margin: int) -> StyleBoxTexture:
+		if not FileAccess.file_exists(path): return null
+		var texture = load(path)
+		if not texture: return null
+		var style = StyleBoxTexture.new()
+		style.texture = texture
+		style.texture_margin_left = margin
+		style.texture_margin_right = margin
+		style.texture_margin_top = margin
+		style.texture_margin_bottom = margin
+		return style
 
-func _setup_signals() -> void:
-	if prev_btn:
-		prev_btn.pressed.connect(_on_prev_pressed)
-	if next_btn:
-		next_btn.pressed.connect(_on_next_pressed)
-	if start_btn:
-		start_btn.pressed.connect(_on_start_pressed)
-	if leaderboard_btn:
-		leaderboard_btn.pressed.connect(_on_leaderboard_pressed)
-
-func _setup_cities() -> void:
-	var cities = [
-		{"id": "badaya", "name": "البدائع", "icon": "🏜️", "desc": "صحراء ونخيل", "locked": false},
-		{"id": "endless", "name": "لا نهاية", "icon": "♾️", "desc": "بدون بوس", "locked": false},
-		{"id": "baghdad", "name": "بغداد", "icon": "🏛️", "desc": "مدينة حضارية", "locked": true}
-	]
+	# Buttons
+	var btn_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/BigBlueButton_Regular.png", 10)
+	var btn_pressed = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/BigBlueButton_Pressed.png", 10)
 	
-	for city in cities:
-		var card = _create_city_card(city)
-		if city_container:
-			city_container.add_child(card)
+	for btn in [start_btn, leaderboard_btn]:
+		if btn and btn_style:
+			btn.add_theme_stylebox_override("normal", btn_style)
+			btn.add_theme_stylebox_override("hover", btn_style)
+			if btn_pressed:
+				btn.add_theme_stylebox_override("pressed", btn_pressed)
+			else:
+				btn.add_theme_stylebox_override("pressed", btn_style)
+
+	# Arrow Buttons
+	var arrow_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/SmallBlueSquareButton_Regular.png", 6)
+	var arrow_pressed = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/SmallBlueSquareButton_Pressed.png", 6)
+	
+	for btn in [prev_btn, next_btn]:
+		if btn and arrow_style:
+			btn.add_theme_stylebox_override("normal", arrow_style)
+			btn.add_theme_stylebox_override("hover", arrow_style)
+			if arrow_pressed:
+				btn.add_theme_stylebox_override("pressed", arrow_pressed)
+			else:
+				btn.add_theme_stylebox_override("pressed", arrow_style)
 
 func _create_city_card(city: Dictionary) -> Control:
 	var card = Button.new()
 	card.custom_minimum_size = Vector2(100, 80)
 	card.text = "%s\n%s\n%s" % [city.icon, city.name, city.desc]
 	
+	# Theme City Card
+	var create_style = func(path, margin):
+		var texture = load(path)
+		if not texture: return null
+		var style = StyleBoxTexture.new()
+		style.texture = texture
+		style.texture_margin_left = margin
+		style.texture_margin_right = margin
+		style.texture_margin_top = margin
+		style.texture_margin_bottom = margin
+		return style
+	
+	var card_style = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/BigRedButton_Regular.png", 10)
+	var card_pressed = create_style.call("res://assets/ui/UI Elements/UI Elements/Buttons/BigRedButton_Pressed.png", 10)
+	
+	if card_style:
+		card.add_theme_stylebox_override("normal", card_style)
+		card.add_theme_stylebox_override("hover", card_style)
+		if card_pressed:
+			card.add_theme_stylebox_override("pressed", card_pressed)
+		else:
+			card.add_theme_stylebox_override("pressed", card_style)
+
 	if city.locked:
 		card.disabled = true
 		card.modulate = Color(0.5, 0.5, 0.5)

@@ -396,6 +396,72 @@
   },
 
   "ENEMIES": {
+    "flyingEye": {
+      "name": "العين الطائرة",
+      "hpM": 0.7,
+      "atkM": 0.7,
+      "spdM": 1.1,
+      "xp": 3,
+      "ranged": true,
+      "sprite_config": {
+          "base_path": "res://assets/enemies_new/Flying eye/",
+          "animations": {
+             "idle": "Attack3.png",
+             "walk": "Attack3.png",
+             "attack": "Attack3.png"
+          }
+      }
+    },
+    "goblin": {
+      "name": "الغوبلين",
+      "hpM": 1.0,
+      "atkM": 1.0,
+      "spdM": 1.0,
+      "xp": 4,
+       "sprite_config": {
+          "base_path": "res://assets/enemies_new/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Orc/Orc",
+          "animations": {
+             "idle": "Orc-Idle.png",
+             "walk": "Orc-Walk.png",
+             "attack": "Orc-Attack01.png",
+             "death": "Orc-Death.png",
+             "hurt": "Orc-Hurt.png"
+          }
+      }
+    },
+    "mushroom": {
+      "name": "الفطر",
+      "hpM": 1.4,
+      "atkM": 1.2,
+      "spdM": 0.8,
+      "xp": 6,
+      "ranged": true,
+      "sprite_config": {
+          "base_path": "res://assets/enemies_new/Mushroom/",
+          "animations": {
+             "idle": "Attack3.png",
+             "walk": "Attack3.png",
+             "attack": "Attack3.png"
+          }
+      }
+    },
+    "skeleton": {
+      "name": "الهيكل العظمي",
+      "hpM": 2.0,
+      "atkM": 1.5,
+      "spdM": 0.85,
+      "xp": 8,
+       "sprite_config": {
+          "base_path": "res://assets/enemies_new/Tiny RPG Character Asset Pack v1.03 -Free Soldier&Orc/Characters(100x100)/Soldier/Soldier",
+          "animations": {
+             "idle": "Soldier-Idle.png",
+             "walk": "Soldier-Walk.png",
+             "attack": "Soldier-Attack01.png",
+             "death": "Soldier-Death.png",
+             "hurt": "Soldier-Hurt.png"
+          }
+      }
+    },
     "wolf": {
       "name": "ذئب",
       "hpMultiplier": 1,
