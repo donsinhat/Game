@@ -36,6 +36,20 @@
             --safe-bottom: env(safe-area-inset-bottom, 20px);
             --safe-left: env(safe-area-inset-left, 15px);
             --safe-right: env(safe-area-inset-right, 15px);
+            --ui-bar-base: url("assets/UI Elements/UI Elements/Bars/BigBar_Base.png");
+            --ui-bar-fill: url("assets/UI Elements/UI Elements/Bars/BigBar_Fill.png");
+            --ui-bar-fill-xp: url("assets/UI Elements/UI Elements/Bars/SmallBar_Fill.png");
+            --ui-panel: url("assets/UI Elements/UI Elements/Wood Table/WoodTable.png");
+            --ui-panel-slots: url("assets/UI Elements/UI Elements/Wood Table/WoodTable_Slots.png");
+            --ui-paper: url("assets/UI Elements/UI Elements/Papers/RegularPaper.png");
+            --ui-button-round: url("assets/UI Elements/UI Elements/Buttons/SmallBlueRoundButton_Regular.png");
+            --ui-button-round-pressed: url("assets/UI Elements/UI Elements/Buttons/SmallBlueRoundButton_Pressed.png");
+            --ui-button-primary: url("assets/UI Elements/UI Elements/Buttons/BigBlueButton_Regular.png");
+            --ui-button-primary-pressed: url("assets/UI Elements/UI Elements/Buttons/BigBlueButton_Pressed.png");
+            --ui-button-danger: url("assets/UI Elements/UI Elements/Buttons/BigRedButton_Regular.png");
+            --ui-button-danger-pressed: url("assets/UI Elements/UI Elements/Buttons/BigRedButton_Pressed.png");
+            --ui-slot: url("assets/UI Elements/UI Elements/Buttons/SmallBlueSquareButton_Regular.png");
+            --ui-slot-pressed: url("assets/UI Elements/UI Elements/Buttons/SmallBlueSquareButton_Pressed.png");
         }
         
         #mainMenu { 
@@ -95,8 +109,19 @@
         .city-locked { font-size: 0.7rem; color: #f44; margin-top: 8px; }
         
         .btn { padding: 12px 40px; font-size: 1.1rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: none; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; }
-        .btn-primary { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4); }
-        .btn-primary:hover { transform: scale(1.03); box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5); }
+        .btn-primary { 
+            background: transparent; 
+            background-image: var(--ui-button-primary);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            color: #fff; 
+            text-shadow: 1px 1px 0 #000;
+            box-shadow: none; 
+        }
+        .btn-primary:hover { 
+            transform: scale(1.03); 
+            background-image: var(--ui-button-primary-pressed);
+        }
         .high-score { margin-top: 5px; font-size: 0.75rem; color: #666; }
         
         /* Bottom buttons container with safe spacing */
@@ -127,24 +152,32 @@
         
         /* Main HUD panel - dark solid frame like reference */
         .hud-panel { 
-            background: #2a2530;
-            border: 3px solid #1a1518;
-            padding: 4px;
+            background: transparent;
+            background-image: var(--ui-panel);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
+            padding: 6px 8px;
             display: flex;
             align-items: center;
             gap: 4px;
+            image-rendering: pixelated;
         }
         
         /* Character avatar box - like reference bunny icon */
         .hud-avatar {
             width: 36px;
             height: 36px;
-            background: #1a1518;
-            border: 2px solid #3a3540;
+            background: transparent;
+            background-image: var(--ui-slot);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.3rem;
+            image-rendering: pixelated;
         }
         
         /* Bars container */
@@ -158,12 +191,22 @@
         .hud-bar { 
             width: 110px; 
             height: 10px; 
-            background: #0a0808; 
-            border: 1px solid #3a3540;
+            background: transparent; 
+            background-image: var(--ui-bar-base);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
             overflow: hidden; 
             position: relative;
+            image-rendering: pixelated;
         }
-        .hud-bar-fill { height: 100%; transition: width 0.1s linear; }
+        .hud-bar-fill { 
+            height: 100%; 
+            transition: width 0.1s linear; 
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            image-rendering: pixelated;
+        }
         .hud-bar-text { 
             position: absolute; 
             top: 50%; 
@@ -178,21 +221,25 @@
             letter-spacing: 0.5px;
         }
         /* Red HP bar like reference */
-        .health-fill { background: linear-gradient(180deg, #ff4444 0%, #cc2222 100%); }
+        .health-fill { background-image: var(--ui-bar-fill); }
         /* Green XP bar like reference */
-        .xp-fill { background: linear-gradient(180deg, #44ff44 0%, #22cc22 100%); }
+        .xp-fill { background-image: var(--ui-bar-fill-xp); filter: hue-rotate(90deg) saturate(1.2); }
         
         /* Gold counter - separate box below */
         .hud-gold {
-            background: #2a2530;
-            border: 3px solid #1a1518;
-            padding: 2px 10px;
+            background: transparent;
+            background-image: var(--ui-paper);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
+            padding: 4px 10px;
             display: flex;
             align-items: center;
             gap: 4px;
             margin-left: 0px;
+            image-rendering: pixelated;
         }
-        .hud-gold-icon { font-size: 14px; }
+        .hud-gold-icon { width: 16px; height: 16px; image-rendering: pixelated; }
         .hud-gold-text { color: #ffd700; font-size: 12px; font-weight: bold; text-shadow: 1px 1px 0 #000; letter-spacing: 1px; }
         
         /* Right side stats - compact boxes */
@@ -203,10 +250,14 @@
             display: flex; 
             align-items: center; 
             gap: 4px; 
-            padding: 3px 8px; 
-            background: #2a2530;
-            border: 2px solid #1a1518;
+            padding: 4px 10px; 
+            background: transparent;
+            background-image: var(--ui-paper);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
             color: #fff;
+            image-rendering: pixelated;
         }
         .hud-stat-icon { font-size: 12px; }
         .kill-text { color: #ff6666; }
@@ -223,9 +274,33 @@
             pointer-events: none; 
             max-width: calc(100vw - 110px - max(16px, var(--safe-right))); /* Leave space for minimap */
         }
-        .slot-group { display: flex; gap: 4px; padding: 5px 8px; background: #3d3846; border: 2px solid #5a5060; }
-        .equipment-slot { width: 32px; height: 32px; background: #2a2530; border: 2px solid #5a5060; display: flex; align-items: center; justify-content: center; position: relative; font-size: 1rem; }
-        .equipment-slot:hover { border-color: #ffd700; }
+        .slot-group { 
+            display: flex; 
+            gap: 4px; 
+            padding: 6px 10px; 
+            background: transparent; 
+            background-image: var(--ui-panel-slots);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none;
+            image-rendering: pixelated;
+        }
+        .equipment-slot { 
+            width: 32px; 
+            height: 32px; 
+            background: transparent; 
+            background-image: var(--ui-slot);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+            font-size: 1rem; 
+            image-rendering: pixelated;
+        }
+        .equipment-slot:hover { background-image: var(--ui-slot-pressed); }
         .slot-level { position: absolute; bottom: -2px; right: -2px; background: #ffd700; color: #000; font-size: 0.5rem; padding: 1px 3px; font-weight: bold; }
         
         #levelUpModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: none; justify-content: center; align-items: center; z-index: 200; }
@@ -248,7 +323,21 @@
         .item-pickup-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 8px; }
         .item-pickup-rarity { font-size: 0.85rem; margin-bottom: 12px; padding: 4px 12px; border-radius: 10px; display: inline-block; }
         .item-pickup-desc { font-size: 0.95rem; color: #ccc; margin-bottom: 20px; line-height: 1.5; }
-        .item-pickup-btn { padding: 10px 30px; font-size: 1rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: none; border-radius: 25px; cursor: pointer; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
+        .item-pickup-btn { 
+            padding: 10px 30px; 
+            font-size: 1rem; 
+            font-family: 'PixelAE', sans-serif; 
+            font-weight: 700; 
+            border: none; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            background: transparent; 
+            background-image: var(--ui-button-primary);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            color: #fff; 
+            text-shadow: 1px 1px 0 #000;
+        }
         
         #gameOverScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 300; }
         .game-over-title { font-size: 2rem; color: #ff0000; margin-bottom: 15px; text-shadow: 0 0 20px rgba(255, 0, 0, 0.8); }
@@ -269,14 +358,19 @@
             left: 50%; 
             transform: translateX(-50%); 
             width: 44px; height: 44px; 
-            background: rgba(0,0,0,0.6); 
-            border: 2px solid rgba(255,215,0,0.5); 
+            background: transparent; 
+            background-image: var(--ui-button-round);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            border: none; 
             border-radius: 50%; 
-            color: #ffd700; font-size: 1.3rem; 
+            color: #0a0a0f; font-size: 1.2rem; 
+            text-shadow: 1px 1px 0 #fff;
             cursor: pointer; z-index: 60; 
             display: none; transition: all 0.2s; 
+            image-rendering: pixelated;
         }
-        #pauseBtn:hover { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+        #pauseBtn:hover { background-image: var(--ui-button-round-pressed); }
         
         /* Pause Menu - Pixel Style - Mobile Friendly */
         #pauseMenu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; gap: 10px; z-index: 200; image-rendering: pixelated; overflow-y: auto; padding: 10px; box-sizing: border-box; }
@@ -302,11 +396,24 @@
         .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #ffd700; cursor: pointer; border: 1px solid #000; }
         .volume-slider::-moz-range-thumb { width: 12px; height: 12px; background: #ffd700; cursor: pointer; border: 1px solid #000; }
         .pause-buttons { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
-        .pause-btn { padding: 8px 15px; font-size: 0.8rem; font-family: 'PixelAE', sans-serif; font-weight: 700; border: 2px solid #000; cursor: pointer; transition: all 0.1s; }
-        .pause-btn-resume { background: #c9a66b; color: #000; border-color: #8b7355; }
-        .pause-btn-resume:hover { background: #dab77c; }
-        .pause-btn-quit { background: #8b4444; color: #fff; border-color: #5a2020; }
-        .pause-btn-quit:hover { background: #a05555; }
+        .pause-btn { 
+            padding: 8px 15px; 
+            font-size: 0.8rem; 
+            font-family: 'PixelAE', sans-serif; 
+            font-weight: 700; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.1s; 
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+            image-rendering: pixelated;
+        }
+        .pause-btn-resume { background-image: var(--ui-button-primary); }
+        .pause-btn-resume:hover { background-image: var(--ui-button-primary-pressed); }
+        .pause-btn-quit { background-image: var(--ui-button-danger); }
+        .pause-btn-quit:hover { background-image: var(--ui-button-danger-pressed); }
         
         /* Mini Map */
         #miniMap { 
@@ -457,7 +564,7 @@
             </div>
             <!-- Gold counter below -->
             <div class="hud-gold">
-                <span class="hud-gold-icon">🪙</span>
+                <img class="hud-gold-icon" src="assets/pickups/gold_coin.png" alt="Gold" />
                 <span class="hud-gold-text" id="goldText">0</span>
             </div>
         </div>
