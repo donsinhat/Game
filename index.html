@@ -2738,13 +2738,6 @@ class Boss {
 }
 
 // ==================== PICKUPS ====================
-// Auto-collect config for performance in endless mode
-const PICKUP_AUTO_COLLECT = {
-    MAX_PICKUPS: 100,           // Max pickups on screen before forced consolidation
-    AUTO_COLLECT_AGE: 5,        // Seconds before pickups start auto-collecting
-    AUTO_COLLECT_RANGE: 500     // Range for auto-collect to kick in
-};
-
 class Pickup {
     constructor(x, y, type, val) { 
         this.x = x; this.y = y; this.type = type; this.val = val; 
@@ -2752,14 +2745,8 @@ class Pickup {
         this.anim = Math.random() * 10; // Random start for animation
         this.isGoldBag = false; // For consolidated gold
         this.isBigGem = false; // For consolidated XP
-        this.age = 0; // Track pickup age for auto-collect
-        this.autoCollecting = false;
     }
-    update(dt) { 
-        this.bob += dt * 3.5; 
-        this.anim += dt; 
-        this.age += dt;
-    }
+    update(dt) { this.bob += dt * 3.5; this.anim += dt; }
     draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y + Math.sin(this.bob) * 3;
         
@@ -5004,24 +4991,14 @@ class Game {
             }
         }
         
-        // Pickups with auto-collect for old pickups
+        // Pickups
         for (let i = this.pickups.length - 1; i >= 0; i--) {
             const p = this.pickups[i];
             p.update(dt);
             const d = Math.hypot(p.x - this.player.x, p.y - this.player.y);
             
-            // Auto-collect: old pickups start moving toward player automatically
-            if (p.age > PICKUP_AUTO_COLLECT.AUTO_COLLECT_AGE && d < PICKUP_AUTO_COLLECT.AUTO_COLLECT_RANGE && !p.magnetPull) {
-                p.autoCollecting = true;
-                const a = Math.atan2(this.player.y - p.y, this.player.x - p.x);
-                // Speed increases the older the pickup is
-                const ageBonus = Math.min((p.age - PICKUP_AUTO_COLLECT.AUTO_COLLECT_AGE) * 40, 200);
-                const speed = 120 + ageBonus;
-                p.x += Math.cos(a) * speed * dt;
-                p.y += Math.sin(a) * speed * dt;
-            }
             // Magnet pull - fast gradual movement toward player
-            else if (p.magnetPull) {
+            if (p.magnetPull) {
                 const a = Math.atan2(this.player.y - p.y, this.player.x - p.x);
                 const speed = p.magnetSpeed || 600;
                 p.x += Math.cos(a) * speed * dt;
@@ -5059,16 +5036,11 @@ class Game {
             }
         }
         
-        // Pickup consolidation - combine nearby pickups (every 2 seconds)
+        // Gold consolidation - combine nearby gold pickups into bags (every 2 seconds)
         this.goldConsolidateTimer = (this.goldConsolidateTimer || 0) + dt;
         if (this.goldConsolidateTimer >= 2.0) {
             this.goldConsolidateTimer = 0;
             this.consolidateGold();
-            
-            // Force collect old distant pickups if over limit
-            if (this.pickups.length > PICKUP_AUTO_COLLECT.MAX_PICKUPS) {
-                this.forceCollectOldPickups();
-            }
         }
         
         // Item drops - collect all nearby items
@@ -5473,47 +5445,6 @@ class Game {
         }
         for (const p of toAdd) {
             this.pickups.push(p);
-        }
-    }
-    
-    // Force collect oldest/farthest pickups when over limit to prevent lag
-    forceCollectOldPickups() {
-        const playerX = this.player.x, playerY = this.player.y;
-        
-        // Sort by age (oldest first) then by distance (farthest first)
-        const sorted = [...this.pickups].sort((a, b) => {
-            const ageDiff = b.age - a.age;
-            if (Math.abs(ageDiff) > 2) return ageDiff; // Prioritize much older
-            const distA = Math.hypot(a.x - playerX, a.y - playerY);
-            const distB = Math.hypot(b.x - playerX, b.y - playerY);
-            return distB - distA;
-        });
-        
-        // Collect the oldest/farthest until under limit
-        const toCollect = sorted.slice(0, this.pickups.length - PICKUP_AUTO_COLLECT.MAX_PICKUPS + 20);
-        
-        let totalXP = 0, totalGold = 0;
-        
-        for (const p of toCollect) {
-            if (p.type === 'xp') {
-                totalXP += p.val * this.player.xpMult * (1 + this.player.curse * 0.4);
-            } else {
-                const goldMultiplier = this.hasGoldBuff() ? 2 : 1;
-                totalGold += Math.round(p.val * this.player.goldMult * goldMultiplier);
-            }
-            const idx = this.pickups.indexOf(p);
-            if (idx !== -1) this.pickups.splice(idx, 1);
-        }
-        
-        // Apply collected values
-        if (totalXP > 0) {
-            this.player.xp += totalXP;
-            if (this.state !== 'levelup') this.checkLevelUp();
-            this.texts.push(new FloatText(playerX, playerY - 30, `+${Math.floor(totalXP)} XP`, '#44ff44', 14));
-        }
-        if (totalGold > 0) {
-            this.player.gold += totalGold;
-            this.texts.push(new FloatText(playerX, playerY - 50, `+${totalGold} 🪙`, '#ffd700', 14));
         }
     }
     
