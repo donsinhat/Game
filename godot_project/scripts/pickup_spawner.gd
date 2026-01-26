@@ -9,9 +9,14 @@ var xp_scene: PackedScene
 var gold_scene: PackedScene
 var item_scene: PackedScene
 
+# تكستشرات الملتقطات
+var xp_texture: Texture2D
+var gold_texture: Texture2D
+
 func _ready() -> void:
-	# TODO: تحميل المشاهد
-	pass
+	# تحميل تكستشرات الملتقطات
+	xp_texture = load("res://assets/pickups/xp_gem.png")
+	gold_texture = load("res://assets/pickups/gold_coin.png")
 
 func spawn_xp(pos: Vector2, value: int) -> void:
 	var pickup = _create_pickup("xp", pos)
@@ -37,6 +42,8 @@ func _create_pickup(type: String, pos: Vector2) -> Area2D:
 	var pickup = Area2D.new()
 	pickup.global_position = pos
 	pickup.add_to_group("pickup")
+	pickup.collision_layer = 4
+	pickup.collision_mask = 1
 	
 	# إضافة الشكل
 	var collision = CollisionShape2D.new()
@@ -47,13 +54,21 @@ func _create_pickup(type: String, pos: Vector2) -> Area2D:
 	
 	# إضافة السبرايت
 	var sprite = Sprite2D.new()
+	sprite.scale = Vector2(1.5, 1.5)
 	match type:
 		"xp":
-			sprite.modulate = Color.GREEN
+			if xp_texture:
+				sprite.texture = xp_texture
+			else:
+				sprite.modulate = Color.GREEN
 		"gold":
-			sprite.modulate = Color.GOLD
+			if gold_texture:
+				sprite.texture = gold_texture
+			else:
+				sprite.modulate = Color.GOLD
 		"item":
 			sprite.modulate = Color.PURPLE
+			sprite.scale = Vector2(2, 2)
 	pickup.add_child(sprite)
 	
 	# إضافة السكربت
