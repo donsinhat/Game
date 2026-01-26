@@ -61,9 +61,32 @@ func _find_next_target(from_enemy: Enemy, exclude: Array) -> Enemy:
 	
 	return closest
 
-func _spawn_chain_effect(_pos: Vector2) -> void:
-	# TODO: تأثير بصري للقفزة
-	pass
+func _spawn_chain_effect(pos: Vector2) -> void:
+	# تأثير بصري للقفزة
+	var effect = AnimatedSprite2D.new()
+	effect.global_position = pos
+	effect.scale = Vector2(1.5, 1.5)
+	
+	var texture = load("res://assets/weapons/New Weapons/brain/effect.png")
+	if texture:
+		var frames = SpriteFrames.new()
+		frames.add_animation("hit")
+		frames.set_animation_loop("hit", false)
+		frames.set_animation_speed("hit", 15.0)
+		
+		var frame_width = 64
+		var frame_count = texture.get_width() / frame_width
+		for i in range(frame_count):
+			var atlas = AtlasTexture.new()
+			atlas.atlas = texture
+			atlas.region = Rect2(i * frame_width, 0, frame_width, texture.get_height())
+			frames.add_frame("hit", atlas)
+		
+		effect.sprite_frames = frames
+		effect.play("hit")
+		effect.animation_finished.connect(func(): effect.queue_free())
+	
+	get_tree().current_scene.add_child(effect)
 
 func upgrade() -> void:
 	super.upgrade()
