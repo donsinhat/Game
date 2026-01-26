@@ -221,7 +221,7 @@
             transform: translateX(-50%); 
             display: none; gap: 6px; z-index: 50; 
             pointer-events: none; 
-            max-width: calc(100vw - 110px - max(16px, var(--safe-right))); /* Leave space for minimap */
+            max-width: calc(100vw - 30px); /* Full width now that minimap is in pause menu */
         }
         .slot-group { display: flex; gap: 4px; padding: 5px 8px; background: #3d3846; border: 2px solid #5a5060; }
         .equipment-slot { width: 32px; height: 32px; background: #2a2530; border: 2px solid #5a5060; display: flex; align-items: center; justify-content: center; position: relative; font-size: 1rem; }
@@ -308,18 +308,26 @@
         .pause-btn-quit { background: #8b4444; color: #fff; border-color: #5a2020; }
         .pause-btn-quit:hover { background: #a05555; }
         
-        /* Mini Map */
-        #miniMap { 
-            position: fixed; 
-            bottom: max(8px, var(--safe-bottom)); 
-            right: max(8px, var(--safe-right)); 
-            width: 90px; height: 90px; 
+        /* Mini Map - Now inside pause menu only */
+        #pauseMiniMap { 
+            width: 180px; height: 180px; 
             background: #2a2530; 
-            border: 2px solid #5a5060; 
-            display: none; z-index: 55; overflow: hidden; 
+            border: 3px solid #8b7355; 
+            overflow: hidden; 
             border-radius: 6px;
+            margin: 10px auto;
         }
-        #miniMapCanvas { width: 100%; height: 100%; }
+        #pauseMiniMapCanvas { width: 100%; height: 100%; }
+        .minimap-legend { 
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; 
+            font-size: 0.6rem; color: #ccc; margin-top: 5px; 
+        }
+        .legend-item { display: flex; align-items: center; gap: 3px; }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .legend-player { background: #4488ff; }
+        .legend-item-dot { background: #ffff00; }
+        .legend-chest { background: #ffd700; }
+        .legend-enemy { background: #ff4444; }
         
         /* Damage numbers animation */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
@@ -364,9 +372,9 @@
             .pause-stat-row { font-size: 0.65rem; }
             .equipment-slot { width: 28px; height: 28px; font-size: 0.85rem; }
             
-            /* Minimap smaller on mobile */
-            #miniMap { width: 70px; height: 70px; }
-            .equipment-slots { max-width: calc(100vw - 90px - max(12px, var(--safe-right))); }
+            /* Minimap in pause menu - smaller on mobile */
+            #pauseMiniMap { width: 140px; height: 140px; }
+            .equipment-slots { max-width: calc(100vw - 20px); }
         }
         
         /* Extra small screens (iPhone SE, etc) */
@@ -384,9 +392,9 @@
             .city-desc { font-size: 0.5rem; }
             .btn { padding: 7px 20px; font-size: 0.8rem; }
             
-            /* Even smaller minimap */
-            #miniMap { width: 60px; height: 60px; }
-            .equipment-slots { max-width: calc(100vw - 80px - max(10px, var(--safe-right))); }
+            /* Even smaller minimap in pause */
+            #pauseMiniMap { width: 120px; height: 120px; }
+            .equipment-slots { max-width: calc(100vw - 15px); }
             .equipment-slot { width: 24px; height: 24px; font-size: 0.75rem; }
         }
         
@@ -479,9 +487,6 @@
         <div class="slot-group" id="bookSlots"></div>
     </div>
     
-    <div id="miniMap">
-        <canvas id="miniMapCanvas" width="110" height="110"></canvas>
-    </div>
     
     <div id="levelUpModal">
         <div class="level-up-content">
@@ -553,6 +558,20 @@
     <button id="pauseBtn">⏸️</button>
     
     <div id="pauseMenu">
+        <!-- Mini Map Panel -->
+        <div class="pause-stats-panel">
+            <div class="pause-stats-title">🗺️ الخريطة</div>
+            <div id="pauseMiniMap">
+                <canvas id="pauseMiniMapCanvas" width="180" height="180"></canvas>
+            </div>
+            <div class="minimap-legend">
+                <div class="legend-item"><div class="legend-dot legend-player"></div> أنت</div>
+                <div class="legend-item"><div class="legend-dot legend-item-dot"></div> آيتم</div>
+                <div class="legend-item"><div class="legend-dot legend-chest"></div> صندوق</div>
+                <div class="legend-item"><div class="legend-dot legend-enemy"></div> عدو</div>
+            </div>
+        </div>
+        
         <!-- Stats Panel -->
         <div class="pause-stats-panel">
             <div class="pause-stats-title">📊 إحصائيات</div>
@@ -4058,7 +4077,7 @@ class Game {
         document.getElementById('mainMenu').style.display = 'none';
         document.getElementById('hud').style.display = 'flex';
         document.getElementById('equipmentSlots').style.display = 'flex';
-        document.getElementById('miniMap').style.display = 'block';
+        // Minimap is now in pause menu only
         document.getElementById('pauseBtn').style.display = 'block';
         document.getElementById('pauseBtn').textContent = '⏸️';
         
@@ -4129,6 +4148,9 @@ class Game {
         if (!this.player) return;
         const p = this.player;
         const c = CHARACTERS[p.charId];
+        
+        // Draw minimap in pause menu
+        this.drawMiniMap();
         
         // Update character name
         document.getElementById('pauseCharName').textContent = c.name;
@@ -4294,7 +4316,6 @@ class Game {
         document.getElementById('pauseBtn').style.display = 'none';
         document.getElementById('hud').style.display = 'none';
         document.getElementById('equipmentSlots').style.display = 'none';
-        document.getElementById('miniMap').style.display = 'none';
         document.getElementById('quitConfirmModal').style.display = 'none';
         document.getElementById('mainMenu').style.display = 'flex';
         if (this.baghdadUnlocked) { 
@@ -5168,7 +5189,7 @@ class Game {
         
         this.updateHUD();
         this.updateSlots();
-        this.drawMiniMap();
+        // Minimap is now drawn only in pause menu
     }
     
     spawnEnemy() {
@@ -5366,16 +5387,26 @@ class Game {
         // Item drop rate: 3.5% base (reduced 30% from 5%) * luck multiplier
         if (Math.random() < 0.035 * Math.pow(this.player.luck, 1.5)) this.dropItem(clampX, clampY);
         
-        // Buff drop chance - check each buff type
-        for (const [buffType, buffData] of Object.entries(BUFF_TYPES)) {
-            if (Math.random() < buffData.dropChance * this.player.luck) {
-                this.groundBuffs.push(new GroundBuff(clampX + (Math.random() - 0.5) * 20, clampY + (Math.random() - 0.5) * 20, buffType));
-                break; // Only one buff per kill
+        // Buff drop chance - check each buff type (also limited by MAX_ITEMS)
+        const totalOnGround = this.items.length + this.chests.filter(c => !c.opened).length + this.groundBuffs.length;
+        if (totalOnGround < 10) { // MAX_ITEMS_ON_GROUND
+            for (const [buffType, buffData] of Object.entries(BUFF_TYPES)) {
+                if (Math.random() < buffData.dropChance * this.player.luck) {
+                    this.groundBuffs.push(new GroundBuff(clampX + (Math.random() - 0.5) * 20, clampY + (Math.random() - 0.5) * 20, buffType));
+                    break; // Only one buff per kill
+                }
             }
         }
     }
     
     dropItem(x, y) {
+        // Limit items on ground to prevent lag (max 10 items + chests + buffs)
+        const MAX_ITEMS_ON_GROUND = 10;
+        const totalItemsOnGround = this.items.length + this.chests.filter(c => !c.opened).length + this.groundBuffs.length;
+        if (totalItemsOnGround >= MAX_ITEMS_ON_GROUND) {
+            return; // Don't drop more items until player picks some up
+        }
+        
         // Clamp position to within world bounds (prevent items outside map)
         const halfWorld = CONFIG.WORLD_SIZE / 2 - 50; // 50px margin from edge
         const clampedX = Math.max(-halfWorld, Math.min(halfWorld, x));
@@ -5862,7 +5893,6 @@ class Game {
         this.audio.stopBossMusic();
         document.getElementById('hud').style.display = 'none';
         document.getElementById('equipmentSlots').style.display = 'none';
-        document.getElementById('miniMap').style.display = 'none';
         document.getElementById('pauseBtn').style.display = 'none';
         
         const title = document.getElementById('gameOverTitle'), unlock = document.getElementById('unlockMessage');
@@ -6628,9 +6658,8 @@ class Game {
     }
     
     drawMiniMap() {
-        const miniMapEl = document.getElementById('miniMap');
-        const canvas = document.getElementById('miniMapCanvas');
-        if (!canvas || !miniMapEl) return;
+        const canvas = document.getElementById('pauseMiniMapCanvas');
+        if (!canvas) return;
         
         const ctx = canvas.getContext('2d');
         const w = canvas.width, h = canvas.height;
