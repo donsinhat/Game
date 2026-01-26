@@ -2692,51 +2692,98 @@ class Boss {
 }
 
 // ==================== PICKUPS ====================
+// Pickup system with auto-collect and consolidation for performance
+const PICKUP_CONFIG = {
+    MAX_PICKUPS: 120,           // Max pickups on screen
+    AUTO_COLLECT_AGE: 4,        // Seconds before auto-pull starts
+    AUTO_COLLECT_RANGE: 600,    // Range for auto-collect
+    CONSOLIDATE_RANGE: 60,      // Range to merge pickups
+    BIG_THRESHOLD: 30,          // Value threshold for "big" pickup
+    MEGA_THRESHOLD: 100         // Value threshold for "mega" pickup
+};
+
 class Pickup {
     constructor(x, y, type, val) { 
         this.x = x; this.y = y; this.type = type; this.val = val; 
         this.bob = Math.random() * Math.PI * 2; 
-        this.anim = Math.random() * 10; // Random start for animation
+        this.anim = Math.random() * 10;
+        this.age = 0; // Track how long pickup has existed
+        this.autoCollecting = false; // Flag for auto-collection
     }
-    update(dt) { this.bob += dt * 3.5; this.anim += dt; }
+    
+    update(dt) { 
+        this.bob += dt * 3.5; 
+        this.anim += dt; 
+        this.age += dt;
+    }
+    
+    // Get size based on value
+    getSize() {
+        if (this.val >= PICKUP_CONFIG.MEGA_THRESHOLD) return 'mega';
+        if (this.val >= PICKUP_CONFIG.BIG_THRESHOLD) return 'big';
+        return 'normal';
+    }
+    
     draw(ctx, cam, assets) {
         const sx = this.x - cam.x, sy = this.y - cam.y + Math.sin(this.bob) * 3;
-        
-        // Use new animated sprites
         const isXP = this.type === 'xp';
         const sprite = isXP ? assets && assets.get('pickup_xp') : assets && assets.get('pickup_coin');
         
+        // Size multiplier based on value
+        const sizeType = this.getSize();
+        const sizeMult = sizeType === 'mega' ? 2.2 : sizeType === 'big' ? 1.5 : 1;
+        
+        // Glow effect for big/mega pickups
+        if (sizeType !== 'normal') {
+            const glowColor = isXP ? 'rgba(68, 255, 68, 0.4)' : 'rgba(255, 215, 0, 0.4)';
+            const glowSize = (sizeType === 'mega' ? 20 : 14) + Math.sin(this.anim * 4) * 3;
+            ctx.fillStyle = glowColor;
+            ctx.beginPath();
+            ctx.arc(sx, sy, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Auto-collect indicator (subtle pulse)
+        if (this.autoCollecting) {
+            ctx.strokeStyle = isXP ? 'rgba(68, 255, 68, 0.6)' : 'rgba(255, 215, 0, 0.6)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 8 + Math.sin(this.age * 8) * 3, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
         if (sprite) {
             ctx.imageSmoothingEnabled = false;
-            // XP: 4 frames 16x16 at 5fps, Coin: 5 frames 16x16 at 8fps
             const frameW = 16, frameH = 16;
             const fps = isXP ? 5 : 8;
             const totalFrames = isXP ? 4 : 5;
             const currentFrame = Math.floor(this.anim * fps) % totalFrames;
             const frameX = currentFrame * frameW;
             
-            const size = isXP ? 10 : 9; // 50% smaller
+            const baseSize = isXP ? 10 : 9;
+            const size = baseSize * sizeMult;
             ctx.drawImage(sprite, frameX, 0, frameW, frameH, sx - size / 2, sy - size / 2, size, size);
         } else {
-            // Fallback to old sprites
             const oldSprite = isXP ? assets && assets.get('xp_gem') : assets && assets.get('gold_coin');
             if (oldSprite) {
-                const size = isXP ? 9 : 8; // 50% smaller
+                const baseSize = isXP ? 9 : 8;
+                const size = baseSize * sizeMult;
                 ctx.drawImage(oldSprite, sx - size / 2, sy - size / 2, size, size);
             } else {
-                // Shape fallback
+                const baseRadius = isXP ? 6 : 5;
+                const radius = baseRadius * sizeMult;
                 if (isXP) { 
-                    ctx.fillStyle = '#0f0'; 
+                    ctx.fillStyle = sizeType === 'mega' ? '#00ff88' : sizeType === 'big' ? '#22ff22' : '#0f0'; 
                     ctx.beginPath(); 
-                    ctx.moveTo(sx, sy - 6); 
-                    ctx.lineTo(sx + 6, sy); 
-                    ctx.lineTo(sx, sy + 6); 
-                    ctx.lineTo(sx - 6, sy); 
+                    ctx.moveTo(sx, sy - radius); 
+                    ctx.lineTo(sx + radius, sy); 
+                    ctx.lineTo(sx, sy + radius); 
+                    ctx.lineTo(sx - radius, sy); 
                     ctx.fill(); 
                 } else { 
-                    ctx.fillStyle = '#ffd700'; 
+                    ctx.fillStyle = sizeType === 'mega' ? '#ffee00' : sizeType === 'big' ? '#ffe066' : '#ffd700'; 
                     ctx.beginPath(); 
-                    ctx.arc(sx, sy, 5, 0, Math.PI * 2); 
+                    ctx.arc(sx, sy, radius, 0, Math.PI * 2); 
                     ctx.fill(); 
                 }
             }
@@ -3091,27 +3138,15 @@ class BreakablePot {
         });
         game.particles.dust(this.x, this.y);
         
-        // Drop XP
+        // Drop XP - single consolidated pickup
         const xpAmount = this.data.xpDrop[0] + Math.floor(Math.random() * (this.data.xpDrop[1] - this.data.xpDrop[0]));
-        for (let i = 0; i < 3; i++) {
-            game.pickups.push(new Pickup(
-                this.x + (Math.random() - 0.5) * 30,
-                this.y + (Math.random() - 0.5) * 30,
-                'xp',
-                Math.ceil(xpAmount / 3)
-            ));
-        }
+        game.spawnPickupSmart(this.x, this.y, 'xp', xpAmount);
         
         // Drop gold
         if (Math.random() < this.data.goldChance) {
             const goldAmount = this.data.goldDrop[0] + Math.floor(Math.random() * (this.data.goldDrop[1] - this.data.goldDrop[0]));
             if (goldAmount > 0) {
-                game.pickups.push(new Pickup(
-                    this.x + (Math.random() - 0.5) * 20,
-                    this.y + (Math.random() - 0.5) * 20,
-                    'gold',
-                    goldAmount
-                ));
+                game.spawnPickupSmart(this.x + (Math.random() - 0.5) * 15, this.y + (Math.random() - 0.5) * 15, 'gold', goldAmount);
                 game.particles.gold(this.x, this.y);
             }
         }
@@ -4184,14 +4219,15 @@ class Game {
         const xpReward = 100 * phase;
         const goldReward = 50 * phase;
         
-        // Drop XP
-        for (let i = 0; i < 10; i++) {
-            this.pickups.push(new Pickup(
-                bossX + (Math.random() - 0.5) * 100,
-                bossY + (Math.random() - 0.5) * 100,
+        // Drop XP - fewer but bigger pickups
+        const xpPerPickup = Math.ceil(xpReward / 4);
+        for (let i = 0; i < 4; i++) {
+            this.spawnPickupSmart(
+                bossX + (Math.random() - 0.5) * 80,
+                bossY + (Math.random() - 0.5) * 80,
                 'xp',
-                xpReward / 10
-            ));
+                xpPerPickup
+            );
         }
         
         // Drop gold
@@ -4253,15 +4289,9 @@ class Game {
         this.player.gold += goldAmount;
         this.texts.push(new FloatText(x, y - 50, `+${goldAmount} 🪙`, '#ffd700'));
         
-        // Drop some XP gems
-        for (let i = 0; i < 3; i++) {
-            this.pickups.push(new Pickup(
-                x + (Math.random() - 0.5) * 40,
-                y + (Math.random() - 0.5) * 40,
-                'xp',
-                10 + Math.floor(Math.random() * 15)
-            ));
-        }
+        // Drop XP - single consolidated pickup
+        const xpAmount = 30 + Math.floor(Math.random() * 30);
+        this.spawnPickupSmart(x, y, 'xp', xpAmount);
     }
     
     loop(t) {
@@ -4728,14 +4758,24 @@ class Game {
             }
         }
         
-        // Pickups
+        // Pickups with auto-collect system
         for (let i = this.pickups.length - 1; i >= 0; i--) {
             const p = this.pickups[i];
             p.update(dt);
             const d = Math.hypot(p.x - this.player.x, p.y - this.player.y);
             
+            // Auto-collect: old pickups start moving toward player
+            if (p.age > PICKUP_CONFIG.AUTO_COLLECT_AGE && d < PICKUP_CONFIG.AUTO_COLLECT_RANGE && !p.magnetPull) {
+                p.autoCollecting = true;
+                const a = Math.atan2(this.player.y - p.y, this.player.x - p.x);
+                // Speed increases the older the pickup is
+                const ageBonus = Math.min((p.age - PICKUP_CONFIG.AUTO_COLLECT_AGE) * 50, 200);
+                const speed = 150 + ageBonus;
+                p.x += Math.cos(a) * speed * dt;
+                p.y += Math.sin(a) * speed * dt;
+            }
             // Magnet pull - fast gradual movement toward player
-            if (p.magnetPull) {
+            else if (p.magnetPull) {
                 const a = Math.atan2(this.player.y - p.y, this.player.x - p.x);
                 const speed = p.magnetSpeed || 600;
                 p.x += Math.cos(a) * speed * dt;
@@ -4771,6 +4811,14 @@ class Game {
                 }
                 this.pickups.splice(i, 1);
             }
+        }
+        
+        // Periodically consolidate pickups to prevent lag (every 3 seconds)
+        if (!this.lastConsolidateTime) this.lastConsolidateTime = 0;
+        this.lastConsolidateTime += dt;
+        if (this.lastConsolidateTime > 3) {
+            this.lastConsolidateTime = 0;
+            this.consolidatePickups();
         }
         
         // Item drops - collect all nearby items
@@ -5070,10 +5118,12 @@ class Game {
         const clampX = Math.max(-halfWorld + margin, Math.min(halfWorld - margin, enemy.x));
         const clampY = Math.max(-halfWorld + margin, Math.min(halfWorld - margin, enemy.y));
         
-        this.pickups.push(new Pickup(clampX, clampY, 'xp', xpReward));
-        // Gold drop rate reduced by 50% (from 0.18 to 0.09), fixed value of 5
-        if (Math.random() < 0.09) {
-            this.pickups.push(new Pickup(clampX + (Math.random() - 0.5) * 12, clampY + (Math.random() - 0.5) * 12, 'gold', 5));
+        // Use smart spawn that consolidates when over limit
+        this.spawnPickupSmart(clampX, clampY, 'xp', xpReward);
+        
+        // Gold drop rate reduced (6% chance), fixed value of 5
+        if (Math.random() < 0.06) {
+            this.spawnPickupSmart(clampX + (Math.random() - 0.5) * 12, clampY + (Math.random() - 0.5) * 12, 'gold', 5);
             this.particles.gold(clampX, clampY);
         }
         // Item drop rate: 3.5% base (reduced 30% from 5%) * luck multiplier
@@ -5101,6 +5151,97 @@ class Game {
             const [id] = pool[Math.floor(Math.random() * pool.length)]; 
             this.items.push(new ItemDrop(clampedX, clampedY, id)); 
             this.audio.itemDrop(); // Play item drop sound
+        }
+    }
+    
+    // Smart pickup spawning with consolidation to prevent lag
+    spawnPickupSmart(x, y, type, val) {
+        // If under limit, just spawn normally
+        if (this.pickups.length < PICKUP_CONFIG.MAX_PICKUPS) {
+            this.pickups.push(new Pickup(x, y, type, val));
+            return;
+        }
+        
+        // Over limit - try to consolidate with nearby pickup of same type
+        let nearestDist = PICKUP_CONFIG.CONSOLIDATE_RANGE;
+        let nearestPickup = null;
+        
+        for (const p of this.pickups) {
+            if (p.type !== type) continue;
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < nearestDist) {
+                nearestDist = d;
+                nearestPickup = p;
+            }
+        }
+        
+        if (nearestPickup) {
+            // Merge with existing pickup
+            nearestPickup.val += val;
+            // Move it slightly toward the new position
+            nearestPickup.x = (nearestPickup.x + x) / 2;
+            nearestPickup.y = (nearestPickup.y + y) / 2;
+        } else {
+            // No nearby pickup to merge - find oldest pickup of same type and merge
+            let oldestPickup = null;
+            let oldestAge = 0;
+            
+            for (const p of this.pickups) {
+                if (p.type === type && p.age > oldestAge) {
+                    oldestAge = p.age;
+                    oldestPickup = p;
+                }
+            }
+            
+            if (oldestPickup) {
+                oldestPickup.val += val;
+                oldestPickup.x = x;
+                oldestPickup.y = y;
+                oldestPickup.age = 0; // Reset age
+            } else {
+                // Fallback - just add it (shouldn't happen often)
+                this.pickups.push(new Pickup(x, y, type, val));
+            }
+        }
+    }
+    
+    // Consolidate distant pickups periodically (call in update)
+    consolidatePickups() {
+        if (this.pickups.length < PICKUP_CONFIG.MAX_PICKUPS * 0.7) return;
+        
+        // Find pickups far from player and merge them
+        const playerX = this.player.x, playerY = this.player.y;
+        const farPickups = { xp: [], gold: [] };
+        
+        for (const p of this.pickups) {
+            const d = Math.hypot(p.x - playerX, p.y - playerY);
+            if (d > 400) { // Far from player
+                farPickups[p.type]?.push(p);
+            }
+        }
+        
+        // Merge far pickups into mega pickups
+        for (const type of ['xp', 'gold']) {
+            const pList = farPickups[type];
+            if (pList.length < 5) continue;
+            
+            // Sum up values and remove all but one
+            let totalVal = 0;
+            let avgX = 0, avgY = 0;
+            
+            for (const p of pList) {
+                totalVal += p.val;
+                avgX += p.x;
+                avgY += p.y;
+            }
+            avgX /= pList.length;
+            avgY /= pList.length;
+            
+            // Remove all far pickups of this type
+            this.pickups = this.pickups.filter(p => !pList.includes(p));
+            
+            // Add one mega pickup with total value
+            this.pickups.push(new Pickup(avgX, avgY, type, totalVal));
         }
     }
     
