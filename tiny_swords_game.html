@@ -406,12 +406,12 @@
     <script>
     // ==================== GAME CONFIGURATION ====================
     const CONFIG = {
-        // Paths
+        // Paths - Updated to match actual folder structure
         ASSETS_PATH: 'assets/',
-        CHARACTERS_PATH: 'assets/Tiny Swords Free Pack/Tiny Swords (Free Pack)/Units/',
+        CHARACTERS_PATH: 'assets/Tiny Swords/Tiny Swords (Update 010)/Factions/Knights/Troops/',
         ENEMIES_PATH: 'assets/New enemy/Tiny Swords Enemy Pack/Tiny Swords (Enemy Pack)/Enemy Pack/',
-        TERRAIN_PATH: 'assets/Tiny Swords Free Pack/Tiny Swords (Free Pack)/Terrain/',
-        UI_PATH: 'assets/Tiny Swords Free Pack/Tiny Swords (Free Pack)/UI Elements/',
+        TERRAIN_PATH: 'assets/Tiny Swords/Tiny Swords (Update 010)/Terrain/',
+        UI_PATH: 'assets/Tiny Swords/Tiny Swords (Update 010)/UI/',
         
         // Game settings
         GAME_DURATION: 600, // 10 minutes in seconds
@@ -433,6 +433,9 @@
     };
     
     // ==================== CHARACTER DEFINITIONS ====================
+    // Using Tiny Swords sprite sheets - composite sheets with all animations
+    // Layout: 6 columns x 8 rows, 192x192 per frame
+    // Row order: Idle (down/up/right/left), Run (down/up/right/left), Attack...
     const CHARACTERS = {
         warrior: {
             name: 'المحارب',
@@ -443,11 +446,12 @@
             speed: 200,
             attackSpeed: 1.0,
             attackRange: 60,
-            idleSprite: 'Warrior_Idle',
-            runSprite: 'Warrior_Run',
-            attackSprite: 'Warrior_Attack1',
             frameSize: 192,
-            idleFrames: 8,
+            framesPerRow: 6,
+            idleRow: 0,  // First row is idle (facing down)
+            runRow: 1,   // Second row is run
+            attackRow: 4, // Attack row
+            idleFrames: 6,
             runFrames: 6,
             attackFrames: 6,
             passive: '+20% صحة، هجوم قوي'
@@ -461,32 +465,16 @@
             speed: 220,
             attackSpeed: 0.8,
             attackRange: 300,
-            idleSprite: 'Archer_Idle',
-            runSprite: 'Archer_Run',
-            attackSprite: 'Archer_Shoot',
             frameSize: 192,
-            idleFrames: 6,
-            runFrames: 6,
-            attackFrames: 8,
-            passive: 'هجوم بعيد المدى'
-        },
-        lancer: {
-            name: 'الرمّاح',
-            title: 'Lancer',
-            color: 'Yellow',
-            hp: 100,
-            damage: 14,
-            speed: 210,
-            attackSpeed: 0.9,
-            attackRange: 80,
-            idleSprite: 'Lancer_Idle',
-            runSprite: 'Lancer_Run',
-            attackSprite: 'Lancer_Right_Attack',
-            frameSize: 192,
+            framesPerRow: 6,
+            idleRow: 0,
+            runRow: 1,
+            attackRow: 4,
             idleFrames: 6,
             runFrames: 6,
             attackFrames: 6,
-            passive: 'مدى هجوم أطول'
+            passive: 'هجوم بعيد المدى',
+            isRanged: true
         },
         pawn: {
             name: 'العامل',
@@ -497,6 +485,14 @@
             speed: 240,
             attackSpeed: 1.2,
             attackRange: 50,
+            frameSize: 192,
+            framesPerRow: 6,
+            idleRow: 0,
+            runRow: 1,
+            attackRow: 4,
+            idleFrames: 6,
+            runFrames: 6,
+            attackFrames: 6,
             idleSprite: 'Pawn_Idle',
             runSprite: 'Pawn_Run',
             attackSprite: 'Pawn_Idle',
@@ -724,23 +720,19 @@
         async loadAllAssets() {
             const promises = [];
             
-            // Load character sprites
+            // Load character sprites - Updated path structure
+            // Characters are stored as: Troops/Warrior/Blue/Warrior_Blue.png (single composite sprite sheet)
             for (const [key, char] of Object.entries(CHARACTERS)) {
-                const basePath = char.monkPath 
-                    ? `${CONFIG.CHARACTERS_PATH}${char.color} Units/Monk/`
-                    : `${CONFIG.CHARACTERS_PATH}${char.color} Units/${char.title}/`;
-                
-                promises.push(this.loadImage(`${key}_idle`, `${basePath}${char.idleSprite}.png`));
-                promises.push(this.loadImage(`${key}_run`, `${basePath}${char.runSprite}.png`));
-                if (char.attackSprite) {
-                    promises.push(this.loadImage(`${key}_attack`, `${basePath}${char.attackSprite}.png`));
-                }
+                // All animations are in one sprite sheet
+                const spritePath = `${CONFIG.CHARACTERS_PATH}${char.title}/${char.color}/${char.title}_${char.color}.png`;
+                promises.push(this.loadImage(`${key}_sprite`, spritePath));
             }
             
             // Load enemy sprites
+            // Enemy sprites are stored as: EnemyName/EnemyName_Idle.png, EnemyName_Run.png, etc.
             for (const [key, enemy] of Object.entries(ENEMIES)) {
                 const basePath = `${CONFIG.ENEMIES_PATH}${enemy.folder}/`;
-                const prefix = enemy.folder.replace(' ', '');
+                const prefix = enemy.folder.replace(/ /g, '');
                 
                 promises.push(this.loadImage(`${key}_idle`, `${basePath}${prefix}_Idle.png`));
                 if (enemy.runFrames) {
@@ -749,11 +741,23 @@
                 if (enemy.walkFrames) {
                     promises.push(this.loadImage(`${key}_walk`, `${basePath}${prefix}_Walk.png`));
                 }
+                if (enemy.attackFrames) {
+                    promises.push(this.loadImage(`${key}_attack`, `${basePath}${prefix}_Attack.png`));
+                }
             }
             
-            // Load terrain
-            promises.push(this.loadImage('tilemap', `${CONFIG.TERRAIN_PATH}Tileset/Tilemap_color1.png`));
-            promises.push(this.loadImage('shadow', `${CONFIG.TERRAIN_PATH}Tileset/Shadow.png`));
+            // Load terrain - Updated paths
+            promises.push(this.loadImage('tilemap', `${CONFIG.TERRAIN_PATH}Ground/Tilemap_Flat.png`));
+            promises.push(this.loadImage('shadow', `${CONFIG.TERRAIN_PATH}Ground/Shadows.png`));
+            promises.push(this.loadImage('water', `${CONFIG.TERRAIN_PATH}Water/Water.png`));
+            
+            // Load UI elements
+            promises.push(this.loadImage('ui_buttons', `${CONFIG.UI_PATH}Buttons/Button_Blue.png`));
+            promises.push(this.loadImage('ui_banners', `${CONFIG.UI_PATH}Banners/Carved_Regular.png`));
+            
+            // Load weapon/pickup sprites from existing assets
+            promises.push(this.loadImage('xp_gem', 'assets/pickups/xp_gem.png'));
+            promises.push(this.loadImage('gold_coin', 'assets/pickups/gold_coin.png'));
             
             await Promise.all(promises);
             console.log(`Loaded ${this.loadedCount} assets`);
