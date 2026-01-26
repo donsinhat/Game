@@ -4067,6 +4067,8 @@ class Game {
         if (this.endlessMode) {
             this.city = 'badaya'; // Use badaya map for endless
             document.getElementById('endlessIndicator').style.display = 'flex';
+            // Prevent normal mode boss from ever spawning in endless mode
+            this.bossSpawned = true; // Block normal boss spawning
         } else {
             document.getElementById('endlessIndicator').style.display = 'none';
         }
@@ -4530,14 +4532,30 @@ class Game {
         
         // Boss spawning
         if (this.endlessMode) {
-            // Endless mode: Boss spawns at 5min (phase1), 10min (phase2), 15min (phase3)
-            const bossSchedule = [
-                { time: 300, phase: 1, hp: 1500, atk: 12, name: 'ابو حلزه الصغير' },   // 5 min - challenging
-                { time: 600, phase: 2, hp: 4000, atk: 20, name: 'ابو حلزه' },          // 10 min - hard
-                { time: 900, phase: 3, hp: 10000, atk: 35, name: 'ابو حلزه العظيم' }   // 15 min - very hard
+            // Endless mode: Boss spawns at 5min, 10min, 15min, then every 5 minutes with scaling
+            const baseBossSchedule = [
+                { time: 300, phase: 1, hp: 1500, atk: 12, name: 'ابو حلزه الصغير' },   // 5 min
+                { time: 600, phase: 2, hp: 4000, atk: 20, name: 'ابو حلزه' },          // 10 min
+                { time: 900, phase: 3, hp: 10000, atk: 35, name: 'ابو حلزه العظيم' }   // 15 min
             ];
             
-            const nextBoss = bossSchedule[this.endlessBossPhase];
+            let nextBoss;
+            if (this.endlessBossPhase < 3) {
+                nextBoss = baseBossSchedule[this.endlessBossPhase];
+            } else {
+                // After phase 3: bosses every 5 minutes with increasing stats
+                const extraPhase = this.endlessBossPhase - 2; // 1, 2, 3...
+                const extraTime = 900 + (extraPhase * 300); // 20min, 25min, 30min...
+                const hpMult = Math.pow(1.5, extraPhase); // HP increases 50% each time
+                const atkMult = Math.pow(1.3, extraPhase); // ATK increases 30% each time
+                nextBoss = {
+                    time: extraTime,
+                    phase: 3,
+                    hp: Math.floor(10000 * hpMult),
+                    atk: Math.floor(35 * atkMult),
+                    name: `ابو حلزه الأسطوري ${extraPhase}`
+                };
+            }
             
             if (nextBoss && !this.endlessBossActive && !this.boss) {
                 // Show warning 30 seconds before
@@ -4559,12 +4577,12 @@ class Game {
                     this.boss.maxHp = nextBoss.hp;
                     this.boss.atk = nextBoss.atk;
                     this.boss.phase = nextBoss.phase;
-                    this.boss.endlessPhase = nextBoss.phase;
+                    this.boss.endlessPhase = this.endlessBossPhase + 1;
                     this.boss.name = nextBoss.name;
                     this.audio.startBossMusic();
                 }
             }
-        } else {
+        } else if (!this.endlessMode) {
             // Normal mode: Single boss at BOSS_TIME
             if (this.time >= CONFIG.BOSS_TIME - 30 && !this.bossWarnShown) {
                 this.bossWarnShown = true;
@@ -4807,11 +4825,12 @@ class Game {
                 }
             }
             if (this.boss.hp <= 0) {
-                if (this.endlessMode) {
+                if (this.endlessMode || this.endlessBossActive) {
                     // Endless mode: Drop rewards and prepare for next boss
+                    // Double check with endlessBossActive flag for safety
                     this.onEndlessBossKilled();
-                } else {
-                    // Normal mode: Game over (victory)
+                } else if (!this.endlessMode) {
+                    // Normal mode ONLY: Game over (victory)
                     this.over(true);
                 }
             }
