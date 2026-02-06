@@ -1,0 +1,1195 @@
+# 🎮 Game Design Document (GDD)
+# Arabian Nights Survivors
+
+---
+
+## 📋 OVERVIEW
+
+```
+Title:          [TBD - Arabian Nights Survivors theme]
+Genre:          Bullet Heaven / Auto-Battler / Roguelite
+Engine:         Unity 6 (2D Top-Down, URP)
+Platform:       PC (Steam), later Mobile
+Session Length: 30 minutes per run (3 Tiers × 10 minutes)
+
+Core Fantasy:
+"Survive waves of mythical desert creatures while building an 
+overpowered character through random upgrades, merchant deals, 
+witch curses, and risky encounters with legendary beings"
+
+Unique Hooks:
+- Saudi/Arabian folklore NPCs (Abu Sulaiman, Taritera, Abu Fanos)
+- Heavy RNG that creates "God Runs"
+- Arabian Fantasy theme (unexplored in genre)
+- Tier progression system
+- Risk/reward NPC interactions
+```
+
+---
+
+## 🔄 CORE GAME LOOP
+
+```
+SINGLE RUN (30 minutes total):
+
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   TIER 1 (0:00 - 10:00)                                     │
+│   ├── Basic enemies spawn                                   │
+│   ├── 5 Random NPCs on map                                  │
+│   ├── Difficulty: 1x                                        │
+│   ├── Mini Boss at 8:00                                     │
+│   └── Kill Mini Boss → Advance to Tier 2                    │
+│                                                             │
+│   ═══════════ TIER TRANSITION (5 sec break) ═══════════     │
+│                                                             │
+│   TIER 2 (10:00 - 20:00)                                    │
+│   ├── Medium enemies added                                  │
+│   ├── 5 NEW Random NPCs spawn                               │
+│   ├── Difficulty: 2x                                        │
+│   ├── Mini Boss at 18:00                                    │
+│   └── Kill Mini Boss → Advance to Tier 3                    │
+│                                                             │
+│   ═══════════ TIER TRANSITION (5 sec break) ═══════════     │
+│                                                             │
+│   TIER 3 (20:00 - 30:00)                                    │
+│   ├── All enemy types                                       │
+│   ├── 5 NEW Random NPCs spawn                               │
+│   ├── Difficulty: 3.5x                                      │
+│   ├── FINAL BOSS at 28:00                                   │
+│   └── Kill Final Boss → WIN                                 │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+MOMENT-TO-MOMENT GAMEPLAY:
+1. Move with WASD/Arrows (8 directions)
+2. Weapons attack automatically
+3. Kill enemies → Drop XP gems
+4. Collect XP → Level Up → Choose 1 of 3 upgrades
+5. Find NPCs on map → Trade/Get buffs
+6. Random Events happen
+7. Difficulty increases over time
+8. Survive and beat bosses
+
+CONTROLS:
+- Movement: WASD or Arrow Keys
+- That's it. Weapons are automatic.
+```
+
+---
+
+## 👥 NPC SYSTEM
+
+```
+OVERVIEW:
+- Each Tier spawns 5 NPCs randomly on the map
+- NPC type is random: Abu Sulaiman OR Taritera
+- Location is random each time
+- NPCs are stationary (player must go to them)
+- NPCs disappear at end of Tier if not visited
+- 5% chance per Tier for Abu Fanos (rare boss) to spawn
+```
+
+### 🚛 NPC 1: ABU SULAIMAN (The Merchant)
+
+```
+APPEARANCE:
+- Old Saudi man standing next to his truck
+- GMC/Ford vintage truck (Fender style)
+- Wearing thobe + shemagh
+
+TRUCK COLOR = ITEM QUALITY:
+┌─────────────────────────────────────────────────────────────┐
+│   Color           Rarity          Probability               │
+│   ─────────────────────────────────────────────────────     │
+│   ⬜ White/Gray    Common          50%                       │
+│   🟢 Green         Uncommon        25%                       │
+│   🔵 Blue          Rare            15%                       │
+│   🟣 Purple        Epic            8%                        │
+│   🟡 Gold          Legendary       2%                        │
+└─────────────────────────────────────────────────────────────┘
+
+Player can see truck color from distance = strategic decision
+
+SHOP UI:
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   🧔 Abu Sulaiman: "هلا والله! وش تبي اليوم؟"               │
+│      (Hello! What do you want today?)                       │
+│                                                             │
+│   ┌─────────┐ ┌─────────┐ ┌─────────┐                      │
+│   │ ⚔️ Weapon│ │ 📖 Tome │ │ 🧪 Potion│                      │
+│   │  150💰   │ │  100💰  │ │   50💰  │                      │
+│   └─────────┘ └─────────┘ └─────────┘                      │
+│                                                             │
+│   [ 🏷️ "كم نهايته؟" ]        [ ❌ "مع السلامة" ]           │
+│      (What's final price?)      (Goodbye)                   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+RANDOM EVENTS:
+
+1. "FREE ITEM!" (5% chance per purchase)
+   - Triggers after selecting item
+   - Abu Sulaiman: "والله ما تدفع ريال!" (You won't pay a single riyal!)
+   - Item becomes FREE
+   - Special sound + visual effect
+
+2. "HAGGLE" (Always available button)
+   - Press "كم نهايته؟" to request discount
+   - Abu Sulaiman thinks... (animation)
+   - Random discount: 10% - 50%
+     ├── 10-20%: "طيب خذ، عشان خاطرك" (Fine, for your sake)
+     ├── 30-40%: "ياخي تفاصل! طيب ماشي" (You're haggling! Ok fine)
+     └── 50%: "خلاص خذه ببلاش تقريباً!" (Take it almost free!) [10% rare]
+   - Can only haggle once per visit
+
+3. "PRICE IS FIRM" (15% when haggling)
+   - Abu Sulaiman refuses discount
+   - "السعر حلو، وش تبي أكثر؟" (Price is good, what more do you want?)
+   - Must pay full price or leave
+
+RANDOM DIALOGUE:
+- "البضاعة اليوم ممتازة!" (Goods are excellent today!)
+- "من وين جاي؟ الطريق خطير" (Where you coming from? Road is dangerous)
+- "عندي عرض خاص لك بس..." (I have a special offer for you...)
+- "شفت تريترا؟ الله يستر منها" (Seen Taritera? God protect us from her)
+```
+
+### 🧙‍♀️ NPC 2: TARITERA (The Witch)
+
+```
+APPEARANCE:
+- Old witch, black robes, glowing eyes
+- Sitting by small fire or bubbling cauldron
+- Crow or black cat nearby
+- Creepy atmosphere (particles, sounds)
+
+CONCEPT:
+From Saudi Arabian folklore - a legendary witch
+Offers BUFF in exchange for CURSE (risk/reward)
+
+INTERACTION UI:
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   🧙‍♀️ Taritera: "تعال يا ولدي... عندي لك شي..."             │
+│      (Come child... I have something for you...)            │
+│                                                             │
+│   ════════════════════════════════════════════════════════  │
+│                        THE OFFER                            │
+│   ════════════════════════════════════════════════════════  │
+│                                                             │
+│   ✨ BLESSING:              💀 CURSE:                       │
+│   +40% Damage               -20% Movement Speed             │
+│                                                             │
+│        [ ✅ Accept ]           [ ❌ Refuse ]                │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+
+OFFER TYPES:
+┌─────────────────────────────────────────────────────────────┐
+│   Type        Blessing              Curse                   │
+│   ─────────────────────────────────────────────────────     │
+│   Power       +40% Damage           -20% Speed              │
+│   Haste       +30% Speed            -15% Max HP             │
+│   Vitality    +50% Max HP           -25% Damage             │
+│   Fortune     +40% Luck             -20% XP Gain            │
+│   Greed       +80% Gold             Enemies +25% HP         │
+│   Frenzy      +60% Attack Speed     -30% Pickup Range       │
+│   Shadow      +50% Crit Chance      Vision reduced 30%      │
+│   Blood       Attacks cause bleed   You bleed too (1 HP/s)  │
+└─────────────────────────────────────────────────────────────┘
+
+RANDOM EVENTS:
+
+1. "FREE BLESSING" (10% chance)
+   - Taritera: "أنت طيب... خذ بركة بدون لعنة"
+     (You are kind... take blessing without curse)
+   - Get blessing for FREE, no curse!
+
+2. "DOUBLE CURSE" (10% chance)
+   - Offer shows: Very strong blessing + TWO curses
+   - Example: +80% Damage, but -20% Speed AND -15% HP
+   - High risk / high reward option
+
+3. "TARITERA'S SECRET" (5% chance)
+   - Taritera: "عندي سر... تبي تعرفه؟"
+     (I have a secret... want to know?)
+   - Reveals Abu Fanos location if he spawned!
+   - Or hints about next Tier
+
+RANDOM DIALOGUE:
+- "الليل طويل... واللي جاي أطول" (Night is long... what's coming is longer)
+- "شفت شي غريب بالصحراء؟ *ضحكة*" (Seen something strange in desert? *laugh*)
+- "أبو فانوس يدور عليك..." (Abu Fanos is looking for you...)
+- "اللي يرفض عرضي... يندم" (Those who refuse my offer... regret it)
+
+NOTE: Player can refuse without penalty
+(but she sometimes says something creepy when you refuse)
+```
+
+### 👻 RARE SPAWN: ABU FANOS (The Deceiver)
+
+```
+LORE:
+Ancient Djinn from Saudi folklore who appears to travelers
+in the desert, carrying a lantern, leading them astray.
+If you follow him, you're doomed.
+But if you can defeat him... the treasure is yours.
+
+SPAWN MECHANICS:
+- Spawn Chance: 5% per Tier (very rare!)
+- Location: Far from main areas, corner of map
+- Appearance: Figure standing still, holding glowing lantern
+- NOT shown on minimap (must discover visually)
+- Does NOT move until approached
+
+VISUAL APPEARANCE:
+Before approach:
+├── Standing completely still
+├── Lantern glows (gold/green)
+├── Mysterious silhouette
+└── Ambient creepy sounds
+
+When player approaches (trigger distance):
+├── Slowly turns toward player
+├── Smiles (creepy grin)
+├── Lantern turns RED
+├── Voice: "أخيراً... جيت لي" (Finally... you came to me)
+└── Transforms into true form (giant Djinn)
+
+BOSS FIGHT STATS:
+┌─────────────────────────────────────────────────────────────┐
+│   Name: Abu Fanos, The Deceiver                             │
+│   HP: 5000 (harder than Mini Boss, easier than Final Boss)  │
+│   Difficulty: ⭐⭐⭐⭐ (Real challenge)                        │
+└─────────────────────────────────────────────────────────────┘
+
+ATTACKS:
+├── 👻 Phantom Dash: Disappears, reappears behind player
+├── 🔥 Lantern Flame: Throws fire from lantern
+├── 👥 Illusions: Creates 3 fake copies
+│   └── Copies die in one hit
+├── 🌀 Soul Pull: Pulls player toward him
+└── 💀 Deception: Disappears, multiple lanterns appear
+    └── Only one is real, others explode if approached
+
+BEHAVIOR:
+├── Very mobile (slippery, hard to hit)
+├── Tries to deceive/trick player
+├── Regular enemies STOP spawning during fight
+└── If player runs too far away, he resets (lost opportunity!)
+
+REWARDS ON DEFEAT:
+├── Massive visual explosion effect
+├── Djinn scream sound
+├── Drops: 📦 Lantern Chest (Legendary)
+│   ├── Contains: Max Level Legendary Weapon OR Tome
+│   └── + 200 Gold
+└── Achievement: "Deceiver Defeated"
+
+IMPORTANT NOTES:
+├── 🎵 Music: Changes to special creepy boss theme
+├── 📍 Location: He stays in place (doesn't chase)
+├── ⏱️ Timer: Keeps running (strategic choice: fight or skip?)
+├── 💡 Hint: Taritera sometimes hints at his location
+└── 🎯 100% Optional, but reward is worth it
+```
+
+---
+
+## ⚔️ WEAPON SYSTEM
+
+```
+MAX WEAPONS: 6 per run
+MAX LEVEL: 5 per weapon
+ATTACK: Fully automatic (no player input)
+
+════════════════════════════════════════════════════════════
+                      WEAPON TYPES
+════════════════════════════════════════════════════════════
+
+1. PROJECTILE
+   - Fires at nearest enemy
+   - Examples: Spear, Flame Orb, Boulder
+   - Stats: damage, cooldown, projectile_speed, count
+
+2. ORBIT
+   - Rotates around player
+   - Examples: Rope, Fire Ring, Blade Orbit
+   - Stats: damage, rotation_speed, radius, count
+
+3. AURA
+   - Damages enemies in radius around player
+   - Examples: Aura, Frost Field, Poison Cloud
+   - Stats: damage, tick_rate, radius
+
+4. MELEE
+   - Attacks in arc in front of player
+   - Examples: Scimitar, Axe, Hammer
+   - Stats: damage, cooldown, arc_angle, range
+
+5. RADIAL
+   - Fires in all directions
+   - Examples: Arrows, Knives, Stars
+   - Stats: damage, cooldown, projectile_count
+
+6. RANDOM/AOE
+   - Hits random location on screen
+   - Examples: Lightning, Meteor, Sandstorm
+   - Stats: damage, cooldown, area, strike_count
+
+7. CHAIN
+   - Bounces between enemies
+   - Examples: Chain Lightning, Bouncing Blade
+   - Stats: damage, cooldown, bounce_count, range
+
+════════════════════════════════════════════════════════════
+                     WEAPON LIST (12)
+════════════════════════════════════════════════════════════
+
+WEAPON         TYPE        BASE DMG   COOLDOWN   NOTES
+─────────────────────────────────────────────────────────────
+Flame Orb      Projectile  10         0.8s       Burns
+Spear          Projectile  15         1.0s       Pierce
+Boulder        Projectile  25         1.5s       Knockback
+Scimitar       Melee       20         0.7s       Wide arc
+Dual Daggers   Melee       8          0.3s       Fast
+The Rope       Orbit       5          -          Constant
+Fire Ring      Orbit       8          -          Burns
+Aura           Aura        3/tick     0.5s       Slow
+Arrows         Radial      8          1.2s       8-way
+Lightning      Random      30         2.0s       Chain
+Meteor         Random      40         2.5s       AOE
+Sandstorm      Random      15         3.0s       Slow AOE
+
+════════════════════════════════════════════════════════════
+                    WEAPON LEVELING
+════════════════════════════════════════════════════════════
+
+Level 1: Base weapon
+Level 2: +50% Damage OR +30% Speed
+Level 3: +1 Projectile/Count OR +30% Area
+Level 4: Special Effect (burn, slow, pierce, etc.)
+Level 5: MAX - Major upgrade + unique effect
+
+Example - Flame Orb Progression:
+├── Lv1: 1 orb, 10 damage
+├── Lv2: 1 orb, 15 damage
+├── Lv3: 2 orbs, 15 damage
+├── Lv4: 2 orbs, 15 damage, enemies burn (3 DPS, 2s)
+└── Lv5: 3 orbs, 20 damage, burn + explode on hit
+
+Example - Scimitar Progression:
+├── Lv1: Single arc attack in front
+├── Lv2: +30% attack speed
+├── Lv3: Wider arc angle
+├── Lv4: Chance for critical hit
+└── Lv5: Full 360° spin attack
+```
+
+---
+
+## 📖 TOME SYSTEM (Passive Items)
+
+```
+MAX TOMES: 6 per run
+MAX LEVEL: 5 per tome
+EFFECT: Permanent stat boost (stacks with levels)
+
+TOME LIST:
+┌─────────────────────────────────────────────────────────────┐
+│   TOME               STAT            PER LEVEL              │
+│   ─────────────────────────────────────────────────────     │
+│   Tome of Power      Damage          +8%                    │
+│   Tome of Haste      Attack Speed    +6%                    │
+│   Tome of Wind       Move Speed      +5%                    │
+│   Tome of Wisdom     XP Gain         +10%                   │
+│   Tome of Vitality   Max HP          +10%                   │
+│   Tome of Iron       Damage Reduce   +5%                    │
+│   Tome of Magnet     Pickup Range    +15%                   │
+│   Tome of Fortune    Luck            +8%                    │
+│   Tome of Greed      Gold Gain       +12%                   │
+│   Tome of Cursing    Enemy Spawn     +10%, XP +15%          │
+└─────────────────────────────────────────────────────────────┘
+
+Example: Tome of Power Lv 3 = +24% damage to all weapons
+```
+
+---
+
+## 👤 CHARACTER SYSTEM
+
+```
+Each character has:
+- Starting Weapon (unique)
+- Passive Bonuses (2-3)
+- Base Stats (HP, Speed, etc.)
+
+════════════════════════════════════════════════════════════
+                    CHARACTER LIST (6)
+════════════════════════════════════════════════════════════
+
+1. THE MERCHANT
+   ├── Starting Weapon: The Rope (Orbit)
+   ├── Passive: +25% Gold, -15% Shop Prices
+   ├── HP: 100 | Speed: 100%
+   └── Difficulty: ⭐⭐ (Medium)
+
+2. THE SORCERESS
+   ├── Starting Weapon: Flame Orb (Projectile)
+   ├── Passive: -20% Cooldowns, +20% Range
+   ├── HP: 85 | Speed: 100%
+   └── Difficulty: ⭐⭐⭐ (Medium-Hard)
+
+3. THE NOMAD
+   ├── Starting Weapon: Spear (Projectile)
+   ├── Passive: +15% Crit Chance, +10% Speed
+   ├── HP: 90 | Speed: 110%
+   └── Difficulty: ⭐⭐⭐⭐ (Hard)
+
+4. THE GUARDIAN
+   ├── Starting Weapon: Boulder (Projectile)
+   ├── Passive: -25% Damage Taken, +20% HP
+   ├── HP: 120 | Speed: 90%
+   └── Difficulty: ⭐ (Easy - Starter)
+
+5. THE COLLECTOR
+   ├── Starting Weapon: Aura (Aura)
+   ├── Passive: +100% Pickup Range, +15% XP
+   ├── HP: 100 | Speed: 100%
+   └── Difficulty: ⭐⭐ (Medium)
+
+6. THE CURSED (Unlockable - Hard Mode)
+   ├── Starting Weapon: Scimitar (Melee)
+   ├── Passive: Enemies +30% HP, but +50% Gold, +25% Luck
+   ├── HP: 80 | Speed: 95%
+   └── Difficulty: ⭐⭐⭐⭐⭐ (Extreme)
+```
+
+---
+
+## 👹 ENEMY SYSTEM
+
+```
+════════════════════════════════════════════════════════════
+                    REGULAR ENEMIES (10)
+════════════════════════════════════════════════════════════
+
+ENEMY          HP    DMG   SPEED   XP   SPAWN TIME
+─────────────────────────────────────────────────────────────
+Desert Wolf    20    10    Fast    1    0:00 (Start)
+Sand Scorpion  15    8     V.Fast  1    0:00 (Start)
+Dune Crawler   40    12    Slow    2    1:00
+Viper          25    15*   Medium  2    2:00 (*ranged)
+Desert Hawk    18    12    V.Fast  2    3:00
+Sand Lion      80    20    Slow    4    4:00
+Djinn Wisp     30    18    Fast    3    5:00 (teleports)
+Ghoul          120   25    V.Slow  5    6:00
+Skeleton       50    15    Medium  3    7:00
+Ifrit          60    22    Medium  4    8:00 (shoots fire)
+
+════════════════════════════════════════════════════════════
+                     ELITE SYSTEM
+════════════════════════════════════════════════════════════
+
+Any enemy has 5% chance to spawn as ELITE
+Elite = Normal enemy + Random Modifier + Colored Glow
+
+ELITE MODIFIERS:
+├── Fast: 2x speed (Red glow)
+├── Tank: 3x HP (Orange glow)
+├── Splitter: Splits into 2 on death (Yellow glow)
+├── Healer: Heals nearby enemies (Green glow)
+├── Shooter: Fires projectiles (Blue glow)
+├── Teleporter: Blinks around (Purple glow)
+└── Ghost: 50% dodge chance (White glow)
+
+Elite Rewards:
+├── XP: x3 normal
+├── Gold: Always drops
+└── Item: 20% chance
+
+GOLDEN ELITE (1% of elites):
+├── Golden glow, extra tough
+└── Guaranteed weapon/tome drop!
+```
+
+---
+
+## 👑 BOSS SYSTEM
+
+```
+════════════════════════════════════════════════════════════
+            MINI BOSSES (One per Tier)
+════════════════════════════════════════════════════════════
+
+TIER 1 MINI BOSS (8:00): Giant Scorpion
+├── HP: 2000
+├── Attacks: Claw swipe, Poison spit, Burrow
+├── Spawns WITH regular enemies
+└── Rewards: 3x Level Up choices, 100 Gold, 1 Chest
+
+TIER 2 MINI BOSS (18:00): Sand Golem
+├── HP: 4000
+├── Attacks: Ground slam, Boulder throw, Sand wave
+├── Spawns WITH regular enemies
+└── Rewards: 3x Level Up choices, 150 Gold, 1 Rare Chest
+
+════════════════════════════════════════════════════════════
+               FINAL BOSS (28:00)
+════════════════════════════════════════════════════════════
+
+Name: The Sand Colossus
+HP: 10000
+Behavior: 3 PHASES
+
+PHASE 1 (100% - 66% HP): "The Hunter"
+├── Slow movement
+├── Ground slam (AOE around boss)
+├── Summons 3 wolves every 10 seconds
+└── Telegraphed attacks (easy to dodge)
+
+PHASE 2 (66% - 33% HP): "The Raging"
+├── Faster movement
+├── Leap attack (jumps to player location, AOE)
+├── Sand wave (line attack)
+├── Summons scorpions instead of wolves
+└── Attacks faster
+
+PHASE 3 (33% - 0% HP): "The Fury"
+├── ENRAGED - Very fast
+├── Constant AOE pulses
+├── No summons (1v1)
+├── Rapid attacks
+└── Gets faster as HP drops
+
+Regular enemies STOP spawning during final boss
+
+Victory: Win screen + meta rewards
+Defeat: Run ends, partial rewards
+```
+
+---
+
+## 🎲 RNG SYSTEMS (Core Addiction)
+
+```
+════════════════════════════════════════════════════════════
+              SYSTEM 1: RANDOM EVENTS
+════════════════════════════════════════════════════════════
+
+Trigger: Every 60-90 seconds, 40% chance
+
+POSITIVE EVENTS (60% of events):
+├── "Treasure Chest!" - Chest spawns nearby
+├── "Blessing Rain!" - XP falls from sky (30s)
+├── "Golden Hour!" - Gold drops doubled (30s)
+├── "Weapon Shrine!" - Free weapon choice
+└── "Healing Oasis!" - Full HP restore
+
+NEGATIVE EVENTS (25% of events):
+├── "Sandstorm!" - Limited vision (20s)
+├── "Enemy Surge!" - 2x enemy spawn (15s)
+├── "Cursed Ground!" - Lose 1 HP/sec (15s)
+└── "Elite Horde!" - 5 elites spawn
+
+RARE EVENTS (15% of events):
+├── "LEGENDARY CHEST!" - Guaranteed legendary item
+├── "Time Warp!" - Enemies 50% slower (30s)
+└── "Double XP!" - XP doubled (60s)
+
+════════════════════════════════════════════════════════════
+              SYSTEM 2: CHEST SPAWNS
+════════════════════════════════════════════════════════════
+
+Spawn: Random location every 45 seconds
+Player must walk to chest (doesn't come to you)
+
+CHEST TYPES:
+📦 Common Chest (70%):
+├── Contains: Gold OR XP OR Common item
+├── No glow
+└── No guardians
+
+📦 Rare Chest (25%):
+├── Contains: Weapon OR Tome (random level)
+├── Blue glow
+└── Guarded by 3-5 enemies
+
+📦 LEGENDARY Chest (5%):
+├── Contains: Max level weapon OR Legendary item
+├── Golden glow + particles
+├── Guarded by 1 Elite enemy
+└── Special sound when spawns
+
+════════════════════════════════════════════════════════════
+              SYSTEM 3: LUCK STAT
+════════════════════════════════════════════════════════════
+
+Luck affects:
+├── Rare/Epic/Legendary drop chances
+├── Merchant type probabilities
+├── Chest type probabilities
+├── Level Up choice quality
+├── Critical hit chance
+└── Positive event probability
+
+Base Luck: 0%
+Max Luck: ~100% (very rare)
+
+High Luck = Higher chance for GOD RUN
+
+════════════════════════════════════════════════════════════
+              SYSTEM 4: SYNERGIES
+════════════════════════════════════════════════════════════
+
+Hidden combos that players discover:
+
+Fire Combo: Flame Orb + Meteor
+└── Effect: Fire damage +25%, burn duration +50%
+
+Storm Combo: Lightning + Sandstorm
+└── Effect: Lightning chains to slowed enemies
+
+Berserker Combo: Scimitar + 3x Tome of Power
+└── Effect: Melee attacks have 20% lifesteal
+
+Orbit Master: Rope + Fire Ring
+└── Effect: Second orbit ring at different radius
+
+Discovery: "SYNERGY DISCOVERED!" message + unlock in collection
+```
+
+---
+
+## 📈 DIFFICULTY SCALING
+
+```
+TIER 1:
+TIME     ENEMIES              MULT    SPAWN/SEC
+─────────────────────────────────────────────────────────────
+0:00     Wolf, Scorpion       1.0x    1.0
+2:00     + Crawler            1.1x    1.5
+4:00     + Viper              1.2x    2.0
+6:00     + Hawk               1.4x    2.5
+8:00     === MINI BOSS ===
+
+TIER 2:
+TIME     ENEMIES              MULT    SPAWN/SEC
+─────────────────────────────────────────────────────────────
+10:00    All Tier 1 + Lion    2.0x    3.0
+13:00    + Djinn Wisp         2.2x    3.5
+16:00    + Ghoul              2.5x    4.0
+18:00    === MINI BOSS ===
+
+TIER 3:
+TIME     ENEMIES              MULT    SPAWN/SEC
+─────────────────────────────────────────────────────────────
+20:00    All + Skeleton       3.0x    5.0
+23:00    + Ifrit              3.3x    6.0
+26:00    ALL TYPES            3.5x    8.0
+28:00    === FINAL BOSS ===
+
+MAX ENEMIES ON SCREEN: 300 (performance limit)
+If cap reached: stop spawning until some die
+```
+
+---
+
+## 🎨 LEVEL UP SYSTEM
+
+```
+Trigger: XP bar fills → LEVEL UP
+Effect: Game pauses, 3 choices appear
+
+XP CURVE:
+Level 1→2:   10 XP
+Level 2→3:   15 XP
+Level 3→4:   22 XP
+Level N→N+1: Previous × 1.5 (roughly)
+
+Target: ~40 level ups in 30 minute run
+
+CHOICE TYPES:
+
+If weapons < 6:
+├── New Weapon (random from pool)
+├── Upgrade existing weapon
+└── New Tome OR Upgrade tome
+
+If weapons = 6:
+├── Upgrade weapon
+├── Upgrade weapon
+└── New/Upgrade Tome
+
+If weapons = 6 AND tomes = 6:
+└── Only upgrades shown (until all maxed)
+
+If everything maxed:
+└── Gold reward instead
+
+LUCK affects quality of choices shown
+High luck = better weapons/tomes appear
+
+REROLL: Player can spend 50 gold to reroll choices
+```
+
+---
+
+## 💰 ECONOMY SYSTEM
+
+```
+GOLD (In-Run Currency):
+├── Drops from enemies (1-3 gold each)
+├── Drops from chests
+├── Bonus from events
+└── Affected by Luck and Gold% bonuses
+
+Gold Uses:
+├── Buy from Abu Sulaiman (merchant)
+├── Reroll level up choices (50 gold)
+└── Converts to Gems at end of run
+
+GEMS (Meta Currency):
+├── Earned at end of run (Gold ÷ 10)
+├── Bonus for beating boss
+├── Bonus for achievements
+└── Used for permanent upgrades
+
+ABU SULAIMAN PRICES:
+├── Common item: 30-50 gold
+├── Uncommon item: 60-80 gold
+├── Rare item: 100-150 gold
+├── Epic item: 180-250 gold
+└── Legendary item: 300-500 gold
+
+Remember: Haggling can reduce prices 10-50%!
+```
+
+---
+
+## 🏆 META PROGRESSION
+
+```
+PERMANENT UPGRADES (Gems):
+
+Tier 1 (50 gems each):
+├── +5% Base Damage
+├── +10% Base HP
+├── +5% Base Speed
+└── +5% Base Luck
+
+Tier 2 (100 gems each, requires Tier 1):
+├── +5% Base Damage
+├── +10% Base HP
+├── +5% Base Speed
+└── +5% Base Luck
+
+Tier 3 (200 gems each, requires Tier 2):
+├── Start with +1 Weapon choice
+├── Start with +1 Tome choice
+└── First merchant guaranteed
+
+CHARACTER UNLOCKS:
+├── Guardian: Free (starter)
+├── Merchant: Free (starter)
+├── Sorceress: Beat Tier 1 once
+├── Collector: Collect 10000 total XP
+├── Nomad: Beat run with no damage from bosses
+└── Cursed: Beat run with 3+ curses from Taritera
+```
+
+---
+
+## ✨ GAME FEEL (CRITICAL)
+
+```
+════════════════════════════════════════════════════════════
+  THIS IS THE MOST IMPORTANT SECTION
+  Bad feel = bad game, no matter what features exist
+════════════════════════════════════════════════════════════
+
+ON ENEMY HIT:
+├── Screen Shake: 0.05s duration, 0.1 intensity
+├── Hitstop: 20ms (game freezes for a frame)
+├── Knockback: Enemy pushed back slightly
+├── Damage Number: Pops up, floats up, fades out
+├── Hit Particles: Sparks/blood based on weapon type
+├── Flash: Enemy flashes white for 1 frame
+└── Sound: Satisfying impact sound
+
+ON ENEMY KILL:
+├── Screen Shake: 0.08s duration, 0.15 intensity
+├── Death Animation: Dissolve/explode
+├── XP Gem Spawn: Gems pop out with velocity
+├── Death Particles: More particles than hit
+└── Sound: Death sound + XP drop sound
+
+ON XP COLLECT:
+├── Gem flies to player (magnet effect)
+├── Small pop sound
+├── Tiny screen pulse (optional)
+└── XP bar animates up
+
+ON LEVEL UP:
+├── Screen Flash: White flash 0.1s
+├── Big Sound: Ascending "level up" jingle
+├── Time Slow: Game slows to 10% during choice
+├── Player Glow: Bright glow around player
+└── Particles: Burst around player
+
+ON NPC APPROACH:
+├── Subtle slowdown (time scale 0.8)
+├── UI slides in smoothly
+├── Character-specific sound/music
+└── Ambient sounds change
+
+ON BOSS SPAWN:
+├── Warning: "BOSS APPROACHING" text
+├── Screen Shake: Big shake
+├── Sound: Epic horn/drum
+├── Music: Changes to boss theme
+└── Camera: Slight zoom out
+
+ON PLAYER DAMAGE:
+├── Screen Shake: Big shake
+├── Screen Flash: Red flash
+├── Hitstop: 50ms
+├── Sound: Pain/damage sound
+├── Vignette: Red vignette pulses
+└── HP Bar: Animates, shakes
+
+CONSTANT JUICE:
+├── Player tilts slightly in move direction
+├── Weapons have anticipation before attacking
+├── Enemies squash/stretch when hit
+├── UI elements bounce/pop when changing
+├── Background has subtle parallax
+└── Particles for footsteps, weapon trails, etc.
+
+IMPLEMENTATION:
+└── Use Feel (MoreMountains) or DOTween + custom system
+```
+
+---
+
+## 🎵 AUDIO DESIGN
+
+```
+MUSIC:
+├── Main Menu: Calm, mysterious, Arabian instruments (oud, ney)
+├── Gameplay: Energetic, building intensity with Arabic beats
+├── Boss: Epic, drums, intense
+├── Abu Sulaiman: Light khaleeji music when near
+├── Taritera: Creepy ambient with Arabic undertones
+├── Abu Fanos: Horror/suspense Arabic theme
+├── Victory: Triumphant, celebratory
+└── Death: Somber, short
+
+SFX CATEGORIES:
+├── Weapon sounds (unique per weapon)
+├── Enemy hit sounds (satisfying impacts)
+├── Enemy death sounds
+├── XP collect (soft, repetitive, satisfying)
+├── Level up (big, rewarding)
+├── UI sounds (clicks, hovers)
+├── NPC voice lines (Arabic)
+├── Abu Fanos voice (echoing, creepy)
+└── Ambient (wind, sand, distant sounds)
+
+AUDIO PRIORITY:
+└── Don't play 500 hit sounds at once - use pooling
+    and limit simultaneous sounds
+```
+
+---
+
+## 🖥️ TECHNICAL SPECS
+
+```
+ENGINE: Unity 6 or Unity 2022 LTS
+RENDER: 2D with URP (Universal Render Pipeline)
+CAMERA: Orthographic, Cinemachine for follow + shake
+
+REQUIRED PACKAGES:
+├── Cinemachine (camera)
+├── Input System (new)
+├── TextMeshPro (UI)
+├── 2D Sprite
+├── URP + 2D Renderer
+└── DOTween (tweening - free)
+
+RECOMMENDED ASSETS:
+├── Feel by MoreMountains (game juice - paid)
+└── Character/Enemy sprite packs
+
+PERFORMANCE TARGETS:
+├── 60 FPS with 300 enemies
+├── 30 FPS minimum with 500 enemies
+└── Use object pooling for EVERYTHING
+
+ARCHITECTURE:
+├── Singleton GameManager
+├── Object pooling for enemies, projectiles, VFX
+├── ScriptableObjects for weapon/enemy/tome/NPC data
+├── Event-based communication (C# events)
+└── State machine for game flow
+
+SAVE SYSTEM:
+├── PlayerPrefs for simple data
+└── JSON for meta progression
+```
+
+---
+
+## 📁 PROJECT STRUCTURE
+
+```
+Assets/
+├── _Project/
+│   ├── Scenes/
+│   │   ├── MainMenu.unity
+│   │   ├── Game.unity
+│   │   └── Loading.unity
+│   │
+│   ├── Scripts/
+│   │   ├── Core/
+│   │   │   ├── GameManager.cs
+│   │   │   ├── TierManager.cs
+│   │   │   ├── TimeManager.cs
+│   │   │   ├── AudioManager.cs
+│   │   │   └── ObjectPool.cs
+│   │   │
+│   │   ├── Player/
+│   │   │   ├── PlayerController.cs
+│   │   │   ├── PlayerStats.cs
+│   │   │   └── PlayerHealth.cs
+│   │   │
+│   │   ├── Weapons/
+│   │   │   ├── WeaponBase.cs
+│   │   │   ├── ProjectileWeapon.cs
+│   │   │   ├── OrbitWeapon.cs
+│   │   │   ├── MeleeWeapon.cs
+│   │   │   ├── AuraWeapon.cs
+│   │   │   └── WeaponManager.cs
+│   │   │
+│   │   ├── Enemies/
+│   │   │   ├── EnemyBase.cs
+│   │   │   ├── EnemySpawner.cs
+│   │   │   ├── EnemyPool.cs
+│   │   │   └── EliteModifier.cs
+│   │   │
+│   │   ├── Bosses/
+│   │   │   ├── BossBase.cs
+│   │   │   ├── MiniBoss.cs
+│   │   │   ├── FinalBoss.cs
+│   │   │   └── AbuFanosBoss.cs
+│   │   │
+│   │   ├── NPCs/
+│   │   │   ├── NPCBase.cs
+│   │   │   ├── NPCSpawner.cs
+│   │   │   ├── AbuSulaiman.cs
+│   │   │   ├── Taritera.cs
+│   │   │   └── AbuFanos.cs
+│   │   │
+│   │   ├── Systems/
+│   │   │   ├── LevelUpSystem.cs
+│   │   │   ├── XPSystem.cs
+│   │   │   ├── RandomEventSystem.cs
+│   │   │   ├── ChestSystem.cs
+│   │   │   ├── SynergySystem.cs
+│   │   │   └── DifficultyScaler.cs
+│   │   │
+│   │   ├── UI/
+│   │   │   ├── HUD.cs
+│   │   │   ├── LevelUpUI.cs
+│   │   │   ├── MerchantUI.cs
+│   │   │   ├── TariteraUI.cs
+│   │   │   ├── PauseMenu.cs
+│   │   │   └── GameOverUI.cs
+│   │   │
+│   │   ├── Effects/
+│   │   │   ├── ScreenShake.cs
+│   │   │   ├── HitStop.cs
+│   │   │   ├── DamageNumber.cs
+│   │   │   └── ParticleManager.cs
+│   │   │
+│   │   └── Data/
+│   │       ├── CharacterData.cs (ScriptableObject)
+│   │       ├── WeaponData.cs (ScriptableObject)
+│   │       ├── EnemyData.cs (ScriptableObject)
+│   │       ├── TomeData.cs (ScriptableObject)
+│   │       ├── NPCData.cs (ScriptableObject)
+│   │       └── TariteraOfferData.cs (ScriptableObject)
+│   │
+│   ├── ScriptableObjects/
+│   │   ├── Characters/
+│   │   ├── Weapons/
+│   │   ├── Enemies/
+│   │   ├── Tomes/
+│   │   └── NPCs/
+│   │
+│   ├── Prefabs/
+│   │   ├── Player/
+│   │   ├── Enemies/
+│   │   ├── Weapons/
+│   │   ├── Projectiles/
+│   │   ├── NPCs/
+│   │   ├── Effects/
+│   │   └── UI/
+│   │
+│   ├── Art/
+│   │   ├── Sprites/
+│   │   ├── Animations/
+│   │   ├── UI/
+│   │   └── VFX/
+│   │
+│   └── Audio/
+│       ├── Music/
+│       └── SFX/
+│
+└── Plugins/
+    └── DOTween/
+```
+
+---
+
+## ✅ DEVELOPMENT PRIORITY
+
+```
+PHASE 1 - Core (Week 1-2):
+├── [ ] Project setup, folder structure
+├── [ ] Player movement (8-direction)
+├── [ ] Basic enemy spawning
+├── [ ] Basic enemy AI (follow player)
+├── [ ] Health system (player + enemy)
+├── [ ] One weapon working (projectile)
+└── [ ] Enemy death + XP drop
+
+PHASE 2 - Feel (Week 3):
+├── [ ] Screen shake
+├── [ ] Hitstop
+├── [ ] Damage numbers
+├── [ ] Hit particles
+├── [ ] Death effects
+└── [ ] XP magnet + collect feel
+
+PHASE 3 - Systems (Week 4-5):
+├── [ ] Level up system (choose 1 of 3)
+├── [ ] All weapon types implemented
+├── [ ] Weapon leveling
+├── [ ] Tome system
+├── [ ] Difficulty scaling
+├── [ ] Timer + Tier system
+└── [ ] Mini boss implementation
+
+PHASE 4 - NPCs (Week 6-7):
+├── [ ] NPC spawn system (5 per tier)
+├── [ ] Abu Sulaiman (merchant)
+│   ├── [ ] Truck color = quality
+│   ├── [ ] Shop UI
+│   ├── [ ] Haggle system
+│   └── [ ] Free item chance
+├── [ ] Taritera (witch)
+│   ├── [ ] Curse/Blessing offers
+│   ├── [ ] Free blessing chance
+│   └── [ ] Secret hints
+└── [ ] Abu Fanos (rare boss)
+    ├── [ ] Rare spawn system
+    ├── [ ] Boss fight
+    └── [ ] Legendary reward
+
+PHASE 5 - Content (Week 8-9):
+├── [ ] All 6 characters
+├── [ ] All 12 weapons
+├── [ ] All 10 tomes
+├── [ ] All 10 enemy types
+├── [ ] All 3 Mini bosses
+├── [ ] Final boss (3 phases)
+├── [ ] Random events
+└── [ ] Chest system
+
+PHASE 6 - Polish (Week 10+):
+├── [ ] UI/UX polish
+├── [ ] Meta progression
+├── [ ] Audio integration
+├── [ ] Arabic voice lines
+├── [ ] Balancing
+├── [ ] Bug fixing
+└── [ ] Localization (EN + AR)
+```
+
+---
+
+## 📋 SUMMARY CARD
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     GAME SUMMARY                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   🎮 Genre: Bullet Heaven Roguelite                         │
+│   ⏱️ Session: 30 minutes (3 Tiers × 10 min)                 │
+│   🎯 Goal: Survive, get OP, beat bosses                     │
+│                                                             │
+│   ⚔️ Weapons: 12 (6 max per run, 5 levels each)             │
+│   📖 Tomes: 10 (6 max per run, 5 levels each)               │
+│   👤 Characters: 6 (unique weapons + passives)              │
+│   👹 Enemies: 10 types + Elite modifiers                    │
+│   👑 Bosses: 3 Mini + 1 Final + 1 Rare (Abu Fanos)          │
+│                                                             │
+│   👥 NPCs PER TIER: 5 Random                                │
+│   ├── Abu Sulaiman (Merchant with colored truck)            │
+│   ├── Taritera (Witch with curse/blessing)                  │
+│   └── Abu Fanos (5% rare, optional boss fight)              │
+│                                                             │
+│   🎲 RNG Systems:                                           │
+│   ├── Random Events (every 60-90s)                          │
+│   ├── NPC Types & Locations                                 │
+│   ├── Truck Color = Item Quality                            │
+│   ├── Haggle Discount (10-50%)                              │
+│   ├── Free Item Chance (5%)                                 │
+│   ├── Taritera Offers                                       │
+│   ├── Abu Fanos Spawn (5%)                                  │
+│   ├── Chest Variance (3 types)                              │
+│   ├── Elite Enemies (7 modifiers)                           │
+│   └── Luck stat affects all RNG                             │
+│                                                             │
+│   🔑 Unique Hooks:                                          │
+│   ├── Saudi/Arabian folklore NPCs                           │
+│   ├── Truck color indicator system                          │
+│   ├── Haggling mechanic                                     │
+│   ├── Curse/Blessing risk/reward                            │
+│   └── Rare legendary djinn boss                             │
+│                                                             │
+│   🎨 Theme: Arabian Fantasy (Saudi folklore)                │
+│   ✨ Focus: GAME FEEL (juice is everything)                 │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🌍 LOCALIZATION NOTES
+
+```
+PRIMARY LANGUAGE: English
+SECONDARY LANGUAGE: Arabic (Saudi dialect for NPCs)
+
+NPC DIALOGUE SHOULD BE IN ARABIC:
+├── Abu Sulaiman: Saudi/Khaleeji dialect
+├── Taritera: Mix of formal Arabic + dialect
+└── Abu Fanos: Formal Arabic with echo effect
+
+UI: Fully localized (EN/AR)
+Gameplay text: Fully localized
+NPC voices: Arabic with subtitles
+```
+
+---
+
+# END OF GDD
+
+Version: 1.0
+Last Updated: [DATE]
