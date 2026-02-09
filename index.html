@@ -615,6 +615,26 @@
                 <span class="pause-stat-name">💀 القتلى</span>
                 <span class="pause-stat-value" id="pauseStatKills">0</span>
             </div>
+            <div class="pause-stat-row" id="pauseRowDodge" style="display:none">
+                <span class="pause-stat-name">🌀 تفادي</span>
+                <span class="pause-stat-value" id="pauseStatDodge">0%</span>
+            </div>
+            <div class="pause-stat-row" id="pauseRowRegen" style="display:none">
+                <span class="pause-stat-name">💚 تجديد</span>
+                <span class="pause-stat-value" id="pauseStatRegen">0/ث</span>
+            </div>
+            <div class="pause-stat-row" id="pauseRowCD" style="display:none">
+                <span class="pause-stat-name">⏱️ كولداون</span>
+                <span class="pause-stat-value" id="pauseStatCD">100%</span>
+            </div>
+            <div class="pause-stat-row" id="pauseRowArea" style="display:none">
+                <span class="pause-stat-name">📐 مساحة</span>
+                <span class="pause-stat-value" id="pauseStatArea">100%</span>
+            </div>
+            <div class="pause-stat-row" id="pauseRowCritDmg" style="display:none">
+                <span class="pause-stat-name">💥 ضرر حرجة</span>
+                <span class="pause-stat-value" id="pauseStatCritDmg">2.0x</span>
+            </div>
         </div>
         
         <!-- Controls Panel -->
@@ -976,6 +996,94 @@ const ITEMS = {
         balance: { points: 75, calc: 'random equip = potential game changer' } },
     khazouq: { name: 'خازوق', desc: 'أعداء أكثر 10%، أنت غبي ليش أخذته؟', rarity: 'LEGENDARY', effect: 'moreEnemies', val: 0.10, icon: '🍆',
         balance: { points: -20, calc: 'NEGATIVE item - trap/challenge' } }
+};
+
+// ==================== ITEM BALANCER (Dev Tool) ====================
+// Usage: Open console, call ItemBalancer.audit() to see balance report
+const ItemBalancer = {
+    impactFactors: {
+        // Low Impact (1.0x) - Meta/QoL
+        permXP: 1.0, gold: 1.0, permGoldPercent: 1.0, permGold: 1.0, freeReroll: 1.0,
+        // Medium Impact (1.5x) - Positioning/Sustain
+        permSpeed: 1.5, permRegen: 1.5, permLuck: 1.5, magnetPull: 1.5,
+        screenPickup: 1.5, slowAura: 1.5, damageAura: 1.5,
+        // High Impact (2.0x) - DPS
+        permDmg: 2.0, permArea: 2.0, permCooldown: 2.0, permAtkSpd: 2.0,
+        burnChance: 2.0, chainLightning: 2.0, poisonCloud: 2.0,
+        tempDmg: 2.0, tempAtkSpd: 2.0, tempSpeed: 2.0,
+        // Critical Impact (3.0x) - Survival/Multipliers
+        permHP: 3.0, permArmor: 3.0, permArmorCombo: 3.0, permDodge: 3.0,
+        permCrit: 3.0, critCombo: 3.0, shield: 3.0, heal: 3.0,
+        fullHeal: 3.0, fullHealHP: 3.0, freezeChance: 3.0, stunPulse: 2.5,
+        revive: 3.0, superRevive: 3.0,
+        // Special
+        shemaghCombo: 2.5, allStats: 3.0, doubleGold: 1.5,
+        timeStop: 2.5, megaExplosion: 2.5, randomEquip: 2.0, moreEnemies: -1.0
+    },
+    
+    tierBudgets: {
+        COMMON: { min: 10, max: 15 },
+        UNCOMMON: { min: 15, max: 25 },
+        RARE: { min: 25, max: 40 },
+        EPIC: { min: 40, max: 65 },
+        LEGENDARY: { min: 65, max: 100 }
+    },
+    
+    calculatePoints(item) {
+        return item.balance ? item.balance.points : 0;
+    },
+    
+    isBalanced(item) {
+        const budget = this.tierBudgets[item.rarity];
+        if (!budget) return false;
+        const pts = this.calculatePoints(item);
+        // Legendary items can exceed max (run-defining)
+        if (item.rarity === 'LEGENDARY') return pts >= budget.min;
+        return pts >= budget.min && pts <= budget.max * 1.2; // 20% tolerance
+    },
+    
+    audit() {
+        console.log('━━━━━━━━━━ ITEM BALANCE AUDIT ━━━━━━━━━━');
+        const tiers = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'];
+        
+        for (const tier of tiers) {
+            const budget = this.tierBudgets[tier];
+            console.log(`\n${tier} (Budget: ${budget.min}-${budget.max} points)`);
+            console.log('─'.repeat(50));
+            
+            const tierItems = Object.entries(ITEMS).filter(([, i]) => i.rarity === tier);
+            
+            for (const [id, item] of tierItems) {
+                const pts = this.calculatePoints(item);
+                const balanced = this.isBalanced(item);
+                const status = balanced ? '✅' : (pts < budget.min ? '⚠️ WEAK' : '⚠️ STRONG');
+                console.log(`  ${status} ${item.name} (${id}): ${pts} pts - ${item.desc}`);
+            }
+            
+            const avgPts = tierItems.reduce((s, [, i]) => s + this.calculatePoints(i), 0) / tierItems.length;
+            console.log(`  Average: ${avgPts.toFixed(1)} pts | Target: ${(budget.min + budget.max) / 2} pts`);
+        }
+        
+        // Check tier jumps
+        console.log('\n━━━━━━━━━━ TIER JUMP ANALYSIS ━━━━━━━━━━');
+        const tierAvgs = {};
+        for (const tier of tiers) {
+            const tierItems = Object.entries(ITEMS).filter(([, i]) => i.rarity === tier);
+            tierAvgs[tier] = tierItems.reduce((s, [, i]) => s + this.calculatePoints(i), 0) / tierItems.length;
+        }
+        for (let i = 1; i < tiers.length; i++) {
+            const ratio = tierAvgs[tiers[i]] / tierAvgs[tiers[i-1]];
+            const target = 1.6;
+            const ok = ratio >= 1.4 && ratio <= 2.0;
+            console.log(`  ${tiers[i-1]} → ${tiers[i]}: ${ratio.toFixed(2)}x (target: ${target}x) ${ok ? '✅' : '⚠️'}`);
+        }
+        
+        console.log('\n━━━━━━━━━━ TOTAL ITEMS PER TIER ━━━━━━━━━━');
+        for (const tier of tiers) {
+            const count = Object.values(ITEMS).filter(i => i.rarity === tier).length;
+            console.log(`  ${tier}: ${count} items`);
+        }
+    }
 };
 
 // ==================== ENEMIES ====================
@@ -2097,9 +2205,17 @@ class Player {
         if (this.hp <= 0) {
             if (this.reviveCount > 0) { 
                 this.reviveCount--; 
-                this.hp = this.maxHp * 0.5; 
-                this.invuln = 2.0; 
-                game.texts.push(new FloatText(this.x, this.y - 35, '🍚 إحياء!', '#ffd700', 22)); 
+                // Super Revive (دعوة الوالدة) = full HP + 3s invuln
+                if (this.hasSuperRevive) {
+                    this.hasSuperRevive = false;
+                    this.hp = this.maxHp;
+                    this.invuln = 3.0;
+                    game.texts.push(new FloatText(this.x, this.y - 35, '🤲 دعوة الوالدة!', '#ffd700', 24));
+                } else {
+                    this.hp = this.maxHp * 0.5; 
+                    this.invuln = 2.0;
+                    game.texts.push(new FloatText(this.x, this.y - 35, '🍚 إحياء!', '#ffd700', 22));
+                }
                 // Revive animation effects
                 game.shake = 0.3;
                 game.particles.emit(this.x, this.y, 30, { color: '#ffd700', minS: 100, maxS: 200, life: 1.0 });
@@ -4313,6 +4429,28 @@ class Game {
         document.getElementById('pauseStatGold').textContent = p.gold || 0;
         document.getElementById('pauseStatKills').textContent = p.kills || 0;
         
+        // Show passive item stats if active
+        if (p.dodge > 0) {
+            document.getElementById('pauseRowDodge').style.display = 'flex';
+            document.getElementById('pauseStatDodge').textContent = `${Math.round(p.dodge * 100)}%`;
+        }
+        if (p.regen > 0) {
+            document.getElementById('pauseRowRegen').style.display = 'flex';
+            document.getElementById('pauseStatRegen').textContent = `${p.regen.toFixed(1)}/ث`;
+        }
+        if (p.cdMult < 1) {
+            document.getElementById('pauseRowCD').style.display = 'flex';
+            document.getElementById('pauseStatCD').textContent = `${Math.round(p.cdMult * 100)}%`;
+        }
+        if (p.areaMult > 1) {
+            document.getElementById('pauseRowArea').style.display = 'flex';
+            document.getElementById('pauseStatArea').textContent = `${Math.round(p.areaMult * 100)}%`;
+        }
+        if (p.critDmgMult > 2) {
+            document.getElementById('pauseRowCritDmg').style.display = 'flex';
+            document.getElementById('pauseStatCritDmg').textContent = `${p.critDmgMult.toFixed(1)}x`;
+        }
+        
         // Draw character preview
         const canvas = document.getElementById('pauseCharCanvas');
         if (canvas) {
@@ -5769,6 +5907,7 @@ class Game {
         this.state = 'itemPickup';
         this.pendingItem = drop;
         const item = ITEMS[drop.id];
+        if (!item) { this.state = 'playing'; return; }
         const rar = RARITY[item.rarity];
         
         // Show sprite image if available, otherwise show emoji
@@ -6299,8 +6438,10 @@ class Game {
             opts.appendChild(card);
         });
         
-        // Add reroll button
-        const rerollCost = Math.floor(10 * Math.pow(1.5, this.rerollCount || 0));
+        // Add reroll button (Balance Framework: VIP card gives free reroll)
+        const hasFreeReroll = this.player.hasFreeReroll && !this.usedFreeReroll;
+        const rerollCost = hasFreeReroll ? 0 : Math.floor(10 * Math.pow(1.5, this.rerollCount || 0));
+        const canAffordReroll = hasFreeReroll || this.player.gold >= rerollCost;
         let rerollContainer = document.getElementById('rerollContainer');
         if (!rerollContainer) {
             rerollContainer = document.createElement('div');
@@ -6308,20 +6449,28 @@ class Game {
             rerollContainer.style.cssText = 'width:100%;text-align:center;margin-top:12px;';
             opts.parentNode.appendChild(rerollContainer);
         }
+        const rerollLabel = hasFreeReroll 
+            ? '💎 لف مجاني (VIP)' 
+            : `🎲 جرب حظك <span style="color:#fff;font-size:0.7rem">(💰${rerollCost})</span>`;
+        const rerollBorderColor = hasFreeReroll ? '#a335ee' : '#ffd700';
         rerollContainer.innerHTML = `
-            <button id="rerollBtn" style="background:linear-gradient(135deg,#3a3a3a,#1a1a1a);border:2px solid #ffd700;color:#ffd700;padding:8px 20px;border-radius:8px;cursor:pointer;font-family:'PixelAE',monospace;font-size:0.8rem;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;${this.player.gold >= rerollCost ? '' : 'opacity:0.5;cursor:not-allowed;'}">
-                🎲 جرب حظك <span style="color:#fff;font-size:0.7rem">(💰${rerollCost})</span>
+            <button id="rerollBtn" style="background:linear-gradient(135deg,#3a3a3a,#1a1a1a);border:2px solid ${rerollBorderColor};color:${rerollBorderColor};padding:8px 20px;border-radius:8px;cursor:pointer;font-family:'PixelAE',monospace;font-size:0.8rem;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;${canAffordReroll ? '' : 'opacity:0.5;cursor:not-allowed;'}">
+                ${rerollLabel}
             </button>
         `;
         const rerollBtn = document.getElementById('rerollBtn');
-        if (this.player.gold >= rerollCost) {
+        if (canAffordReroll) {
             rerollBtn.onclick = () => {
-                this.player.gold -= rerollCost;
-                this.rerollCount = (this.rerollCount || 0) + 1;
+                if (hasFreeReroll) {
+                    this.usedFreeReroll = true; // Free reroll used for this level up
+                } else {
+                    this.player.gold -= rerollCost;
+                    this.rerollCount = (this.rerollCount || 0) + 1;
+                }
                 this.updateHUD();
                 this.showLevelUp(); // Re-generate options
             };
-            rerollBtn.onmouseenter = () => { rerollBtn.style.transform = 'scale(1.05)'; rerollBtn.style.boxShadow = '0 0 15px #ffd70050'; };
+            rerollBtn.onmouseenter = () => { rerollBtn.style.transform = 'scale(1.05)'; rerollBtn.style.boxShadow = `0 0 15px ${rerollBorderColor}50`; };
             rerollBtn.onmouseleave = () => { rerollBtn.style.transform = 'scale(1)'; rerollBtn.style.boxShadow = 'none'; };
         }
         
@@ -6330,6 +6479,9 @@ class Game {
     
     selectUpgrade(c, rar, upgradeType) {
         try {
+            // Reset free reroll flag for next level up
+            this.usedFreeReroll = false;
+            
             // Apply the upgrade
             if (c.type === 'weapon') {
                 const type = upgradeType || ['damage', 'count', 'cooldown'][Math.floor(Math.random() * 3)];
