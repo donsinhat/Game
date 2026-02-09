@@ -615,6 +615,26 @@
                 <span class="pause-stat-name">💀 القتلى</span>
                 <span class="pause-stat-value" id="pauseStatKills">0</span>
             </div>
+            <div class="pause-stat-row" id="pauseRowDodge" style="display:none">
+                <span class="pause-stat-name">🌀 تفادي</span>
+                <span class="pause-stat-value" id="pauseStatDodge">0%</span>
+            </div>
+            <div class="pause-stat-row" id="pauseRowRegen" style="display:none">
+                <span class="pause-stat-name">💚 تجديد</span>
+                <span class="pause-stat-value" id="pauseStatRegen">0/ث</span>
+            </div>
+            <div class="pause-stat-row" id="pauseRowCD" style="display:none">
+                <span class="pause-stat-name">⏱️ كولداون</span>
+                <span class="pause-stat-value" id="pauseStatCD">100%</span>
+            </div>
+            <div class="pause-stat-row" id="pauseRowArea" style="display:none">
+                <span class="pause-stat-name">📐 مساحة</span>
+                <span class="pause-stat-value" id="pauseStatArea">100%</span>
+            </div>
+            <div class="pause-stat-row" id="pauseRowCritDmg" style="display:none">
+                <span class="pause-stat-name">💥 ضرر حرجة</span>
+                <span class="pause-stat-value" id="pauseStatCritDmg">2.0x</span>
+            </div>
         </div>
         
         <!-- Controls Panel -->
@@ -870,30 +890,200 @@ const BOOKS = {
     critical: { name: 'كتاب الضربة الحرجة', desc: '+6% ضربة حرجة', stat: 'crit', val: 0.06, icon: '💥' }
 };
 
+// ==================== ITEM BALANCE FRAMEWORK ====================
+// Point Value System per tier:
+//   Common: 10-15 pts | Uncommon: 15-25 pts | Rare: 25-40 pts | Epic: 40-65 pts | Legendary: 65-100+ pts
+// Impact Factors: Low(1.0x) Medium(1.5x) High(2.0x) Critical(3.0x)
+// Stackability: Unlimited(1.0) SoftCap(0.8) HardCap(0.6) NoStack(0.5)
+// Tier jump = ~60% power increase
+
 // ==================== ITEMS ====================
 const ITEMS = {
-    // Common (شائع) - iconPos: {row, col} in IconSet.png (24x24 grid)
-    mirinda: { name: 'حمضيات', desc: 'حار يلد .. ينعنش ويرجع لك 10 هيل', rarity: 'COMMON', effect: 'heal', val: 10, icon: '🍊', sprite: 'item_mirinda' },
-    dalla: { name: 'دله قهوه', desc: 'المهيله تزيد دفاعك 1 بشكل دايم', rarity: 'COMMON', effect: 'permArmor', val: 1, icon: '☕', sprite: 'item_dalla' },
-    sandal: { name: 'نعال شرقية', desc: 'تخليك تفك سبرنت', rarity: 'COMMON', effect: 'permSpeed', val: 0.025, icon: '👟', sprite: 'item_sandal' },
-    klega: { name: 'كليجه', desc: 'اولاو من حلاته تزيد صحتك', rarity: 'COMMON', effect: 'permHP', val: 2, icon: '🍪', sprite: 'item_klega' },
-    copper: { name: 'نحاس', desc: '+5 ذهب', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙', iconPos: {row: 11, col: 0} },
+    // ━━━━━━━━━━ Common (شائع) - Budget: 10-15 points ━━━━━━━━━━
+    fastCharger: { name: 'شاحن أصلي', desc: '+15% خبرة مكتسبة بشكل دائم', rarity: 'COMMON', effect: 'permXP', val: 0.15, icon: '🔌', sprite: 'item_mirinda',
+        balance: { points: 15, calc: '15 × 1.0(low) × 1.0(unlimited) = 15' } },
+    citrusSoda: { name: 'قوطي حمضيات', desc: '+1 تجديد صحة/ثانية بشكل دائم', rarity: 'COMMON', effect: 'permRegen', val: 1, icon: '🍊', sprite: 'item_mirinda',
+        balance: { points: 12, calc: '1hp/s × 60s × 1.5(med) ÷ 7.5 = 12' } },
+    sandal: { name: 'نعال شرقية', desc: '+8% سرعة حركة بشكل دائم', rarity: 'COMMON', effect: 'permSpeed', val: 0.08, icon: '👟', sprite: 'item_sandal',
+        balance: { points: 12, calc: '8 × 1.5(med) × 1.0 = 12' } },
+    nerdGlasses: { name: 'نظارة طبية', desc: '+5% ضربة حرجة بشكل دائم', rarity: 'COMMON', effect: 'permCrit', val: 0.05, icon: '🤓',
+        balance: { points: 12, calc: '5 × 3.0(crit) × 0.8(softcap) = 12' } },
+    sunblock: { name: 'كريم حروق', desc: '+8% سرعة هجوم بشكل دائم', rarity: 'COMMON', effect: 'permAtkSpd', val: 0.08, icon: '🧴',
+        balance: { points: 12.8, calc: '8 × 2.0(high) × 0.8(softcap) = 12.8' } },
+    coffee: { name: 'فنجال قهوة', desc: '+5% ضرر بشكل دائم', rarity: 'COMMON', effect: 'permDmg', val: 0.05, icon: '☕', sprite: 'item_dalla',
+        balance: { points: 10, calc: '5 × 2.0(high) × 1.0 = 10' } },
+    atmCard: { name: 'كرت صراف', desc: '+8% ذهب مكتسب بشكل دائم', rarity: 'COMMON', effect: 'permGoldPercent', val: 0.08, icon: '💳',
+        balance: { points: 8, calc: '8 × 1.0(low) × 1.0 = 8' } },
+    copper: { name: 'نحاس', desc: '+5 ذهب فوري', rarity: 'COMMON', effect: 'gold', val: 5, icon: '🪙',
+        balance: { points: 5, calc: 'consumable gold - filler item' } },
+
+    // ━━━━━━━━━━ Uncommon (غير شائع) - Budget: 15-25 points ━━━━━━━━━━
+    safetyVest: { name: 'سترة السلامة', desc: '+3 دفاع و -2% ضرر مستلم', rarity: 'UNCOMMON', effect: 'permArmorCombo', val: 3, val2: 0.02, icon: '🦺',
+        balance: { points: 18, calc: '3×3.0(crit)×0.6(hardcap) + 2×3.0×0.6 = 9 + 3.6 + utility(5) = ~18' } },
+    yogurtDrink: { name: 'لبن نوم', desc: 'هالة تبطئ الأعداء 10% حولك (100px)', rarity: 'UNCOMMON', effect: 'slowAura', val: 0.10, radius: 100, icon: '🥛',
+        balance: { points: 18, calc: '10 × 1.5(utility) × 1.2(always) = 18' } },
+    acRemote: { name: 'ريموت المكيف', desc: '10% فرصة تجميد الأعداء لثانية واحدة', rarity: 'UNCOMMON', effect: 'freezeChance', val: 0.10, dur: 1.0, icon: '❄️',
+        balance: { points: 20, calc: '10 × 2.0(hardCC) = 20' } },
+    carFreshener: { name: 'فواحة سيارة', desc: 'هالة ضرر 5 نقاط/ثانية حولك', rarity: 'UNCOMMON', effect: 'damageAura', val: 5, radius: 80, icon: '🌸',
+        balance: { points: 15, calc: '5dps × 3enemies = 15 DPS value' } },
+    loudspeaker: { name: 'ميكروفون مسجد', desc: 'صعقة جماعية كل 7 ثواني (0.5 ثانية)', rarity: 'UNCOMMON', effect: 'stunPulse', interval: 7, dur: 0.5, radius: 150, icon: '📢',
+        balance: { points: 18, calc: 'AOE stun every 7s balanced from 5s' } },
+    dalla: { name: 'دله قهوه', desc: '+2 دفاع بشكل دايم', rarity: 'UNCOMMON', effect: 'permArmor', val: 2, icon: '☕', sprite: 'item_dalla',
+        balance: { points: 15, calc: '2 × 3.0(crit) × 0.6(hardcap) + utility(5) = ~15' } },
+    klega: { name: 'كليجه', desc: '+5 صحة قصوى + شفاء 5', rarity: 'UNCOMMON', effect: 'permHP', val: 5, icon: '🍪', sprite: 'item_klega',
+        balance: { points: 15, calc: '5hp × 3.0(crit) = 15' } },
+
+    // ━━━━━━━━━━ Rare (نادر) - Budget: 25-40 points ━━━━━━━━━━
+    greasyWrap: { name: 'ساندوتش شاورما', desc: 'سحابة سم عند قتل العدو (7 ضرر/ث)', rarity: 'RARE', effect: 'poisonCloud', val: 7, dur: 3, radius: 50, icon: '🌯',
+        balance: { points: 30, calc: '7×3×2enemies×0.5proc = 21 + utility(9) = 30' } },
+    coalHead: { name: 'راس معسل', desc: '15% فرصة حرق (ضرر مستمر 3 ثواني)', rarity: 'RARE', effect: 'burnChance', val: 0.15, dur: 3, icon: '🔥',
+        balance: { points: 30, calc: '15% × burn_dmg × 3s = ~30' } },
+    familyPlatter: { name: 'كبسة دجاج', desc: '+50 صحة قصوى + شفاء كامل', rarity: 'RARE', effect: 'fullHealHP', val: 50, icon: '🍚', sprite: 'item_arika',
+        balance: { points: 38, calc: '50 × 0.5(%) × 2.4 × 10 ÷ 3 = ~38 (iconic!)' } },
+    rgbMouse: { name: 'ماوس RGB', desc: '+10% حظ بشكل دائم', rarity: 'RARE', effect: 'permLuck', val: 0.10, icon: '🖱️',
+        balance: { points: 30, calc: '10 × 1.5(med) × 2(multi-system) = 30' } },
+    disciplineStick: { name: 'خيزرانة', desc: '+0.5x ضرر حرج + 5% فرصة حرجة', rarity: 'RARE', effect: 'critCombo', critDmg: 0.5, critChance: 0.05, icon: '🏏',
+        balance: { points: 32, calc: '+0.5x crit × 20%rate + 5%crit×3.0 = 17+15 = 32' } },
+    bureaucracyFile: { name: 'ملف علاقي', desc: '+20% ذهب مكتسب بشكل دائم', rarity: 'RARE', effect: 'permGoldPercent', val: 0.20, icon: '📁',
+        balance: { points: 20, calc: '20 × 1.0(low) = 20 (economy dependent)' } },
+    magnet: { name: 'مغناطيس', desc: 'اسحب كل الاكس بي والفلوس', rarity: 'RARE', effect: 'magnetPull', val: 1, icon: '🧲', sprite: 'item_magnet',
+        balance: { points: 25, calc: 'utility pull - instant value' } },
+    redPotion: { name: 'جرعة حمراء', desc: 'يستعيد 30 صحة', rarity: 'RARE', effect: 'heal', val: 30, icon: '🧪',
+        balance: { points: 25, calc: '30hp × 3.0(crit) ÷ 4 = ~25 consumable' } },
+    silver: { name: 'فضة', desc: '+25 ذهب', rarity: 'RARE', effect: 'gold', val: 25, icon: '🥈',
+        balance: { points: 25, calc: 'consumable gold - rare filler' } },
+
+    // ━━━━━━━━━━ Epic (ملحمي) - Budget: 40-65 points ━━━━━━━━━━
+    teaFlask: { name: 'زمزمية شاهي', desc: '-5% كولداون بشكل دائم', rarity: 'EPIC', effect: 'permCooldown', val: 0.05, icon: '🫖',
+        balance: { points: 50, calc: '-5% CD = multiplicative DPS boost. Moved from Rare' } },
+    fingerprint: { name: 'جهاز البصمة', desc: '+10% فرصة تفادي (لا يعمل على البوس)', rarity: 'EPIC', effect: 'permDodge', val: 0.10, icon: '👆',
+        balance: { points: 45, calc: '10 × 3.0(crit) × 0.8(softcap) + utility(5) = ~45' } },
+    maskedShemagh: { name: 'شماغ ملثم', desc: '+15% ضرر + 5% فرصة تفادي', rarity: 'EPIC', effect: 'shemaghCombo', dmg: 0.15, dodge: 0.05, icon: '🧣',
+        balance: { points: 48, calc: '15×2.0 + 5×3.0×0.8 = 30+12 = 42 + style(6) = 48' } },
+    tunedExhaust: { name: 'شكمان معدل', desc: '+12% مساحة هجوم بشكل دائم', rarity: 'EPIC', effect: 'permArea', val: 0.12, icon: '💨',
+        balance: { points: 42, calc: '12 × 2.0(high) × 1.0 × multiplier = 42' } },
+    powerStrip: { name: 'توصيلة كهرب', desc: 'صاعقة تسلسلية كل 4 ثواني (3 أعداء)', rarity: 'EPIC', effect: 'chainLightning', interval: 4, targets: 3, dmgMult: 1.5, icon: '⚡',
+        balance: { points: 55, calc: 'chain 3 targets × dmg × frequency = 55' } },
+    vipCard: { name: 'بطاقة VIP', desc: 'إعادة لف مجاني عند كل ترقية', rarity: 'EPIC', effect: 'freeReroll', val: 1, icon: '💎',
+        balance: { points: 45, calc: 'meta value - free reroll per levelup' } },
+    bluePotion: { name: 'جرعة زرقاء', desc: '+30% سرعة هجوم لمدة 15 ثانية', rarity: 'EPIC', effect: 'tempAtkSpd', val: 0.3, dur: 15, icon: '🧴',
+        balance: { points: 40, calc: 'temp burst - moved from Rare' } },
+    amulet: { name: 'تميمة', desc: 'درع يمتص 30 ضرر', rarity: 'EPIC', effect: 'shield', val: 30, icon: '📿',
+        balance: { points: 42, calc: '30shield × 3.0(crit) × 0.5(nostack) ÷ 1 = ~42. Buffed from 20' } },
+
+    // ━━━━━━━━━━ Legendary (أسطوري) - Budget: 65-100+ points ━━━━━━━━━━
+    salaryLetter: { name: 'رسالة الراتب', desc: 'مضاعفة كل الذهب المكتسب لبقية الران', rarity: 'LEGENDARY', effect: 'doubleGold', val: 1.0, icon: '💰',
+        balance: { points: 80, calc: '2x gold for rest of run = massive economy' } },
+    momsPrayer: { name: 'دعوة الوالدة', desc: 'إحياء عند الموت + حصانة 3 ثواني', rarity: 'LEGENDARY', effect: 'superRevive', val: 1, invulnDur: 3, icon: '🤲',
+        balance: { points: 90, calc: 'revive + 3s invuln = run-saving' } },
+    unlimited5G: { name: '5G لا محدود', desc: 'مدى التقاط = كامل الشاشة', rarity: 'LEGENDARY', effect: 'screenPickup', val: 500, icon: '📶',
+        balance: { points: 70, calc: 'screen-wide pickup = massive QoL + XP' } },
+    bossCloak: { name: 'بشت المدير', desc: '+25% لجميع الإحصائيات بشكل دائم', rarity: 'LEGENDARY', effect: 'allStats', val: 0.25, icon: '👔',
+        balance: { points: 100, calc: '25% to ALL stats = multiplicative value' } },
+    earlyRetirement: { name: 'التقاعد المبكر', desc: 'إيقاف الزمن 5 ثواني (سرعتك 50%)', rarity: 'LEGENDARY', effect: 'timeStop', dur: 5, icon: '⏰',
+        balance: { points: 75, calc: 'time stop = ultimate defensive tool' } },
+    gmcKey: { name: 'مفتاح جمس', desc: 'انفجار 200 ضرر + نكبة لكل الأعداء حولك', rarity: 'LEGENDARY', effect: 'megaExplosion', val: 200, radius: 200, icon: '🔑',
+        balance: { points: 85, calc: '200dmg AOE + knockback = screen clear' } },
+    elixir: { name: 'إكسير', desc: 'شفاء كامل + 30 صحة قصوى', rarity: 'LEGENDARY', effect: 'fullHeal', val: 30, icon: '⚗️',
+        balance: { points: 70, calc: 'full heal + 30maxHP. Buffed from 20' } },
+    dragonHeart: { name: 'قلب التنين', desc: '+50% ضرر لمدة 25 ثانية', rarity: 'LEGENDARY', effect: 'tempDmg', val: 0.5, dur: 25, icon: '❤️‍🔥',
+        balance: { points: 65, calc: '50% dmg × 25s = massive burst window' } },
+    arika: { name: 'عريكه', desc: 'إذا مت، تعود للحياة مرة واحدة', rarity: 'LEGENDARY', effect: 'revive', val: 1, icon: '🍚', sprite: 'item_arika',
+        balance: { points: 70, calc: 'single revive = insurance' } },
+    crown: { name: 'تاج ذهبي', desc: '+50% ذهب بشكل دائم', rarity: 'LEGENDARY', effect: 'permGold', val: 0.5, icon: '👑',
+        balance: { points: 65, calc: '50% gold permanent = economy king' } },
+    star: { name: 'نجمة الصحراء', desc: 'تحصل على سلاح أو كتاب عشوائي', rarity: 'LEGENDARY', effect: 'randomEquip', val: 1, icon: '⭐',
+        balance: { points: 75, calc: 'random equip = potential game changer' } },
+    khazouq: { name: 'خازوق', desc: 'أعداء أكثر 10%، أنت غبي ليش أخذته؟', rarity: 'LEGENDARY', effect: 'moreEnemies', val: 0.10, icon: '🍆',
+        balance: { points: -20, calc: 'NEGATIVE item - trap/challenge' } }
+};
+
+// ==================== ITEM BALANCER (Dev Tool) ====================
+// Usage: Open console, call ItemBalancer.audit() to see balance report
+const ItemBalancer = {
+    impactFactors: {
+        // Low Impact (1.0x) - Meta/QoL
+        permXP: 1.0, gold: 1.0, permGoldPercent: 1.0, permGold: 1.0, freeReroll: 1.0,
+        // Medium Impact (1.5x) - Positioning/Sustain
+        permSpeed: 1.5, permRegen: 1.5, permLuck: 1.5, magnetPull: 1.5,
+        screenPickup: 1.5, slowAura: 1.5, damageAura: 1.5,
+        // High Impact (2.0x) - DPS
+        permDmg: 2.0, permArea: 2.0, permCooldown: 2.0, permAtkSpd: 2.0,
+        burnChance: 2.0, chainLightning: 2.0, poisonCloud: 2.0,
+        tempDmg: 2.0, tempAtkSpd: 2.0, tempSpeed: 2.0,
+        // Critical Impact (3.0x) - Survival/Multipliers
+        permHP: 3.0, permArmor: 3.0, permArmorCombo: 3.0, permDodge: 3.0,
+        permCrit: 3.0, critCombo: 3.0, shield: 3.0, heal: 3.0,
+        fullHeal: 3.0, fullHealHP: 3.0, freezeChance: 3.0, stunPulse: 2.5,
+        revive: 3.0, superRevive: 3.0,
+        // Special
+        shemaghCombo: 2.5, allStats: 3.0, doubleGold: 1.5,
+        timeStop: 2.5, megaExplosion: 2.5, randomEquip: 2.0, moreEnemies: -1.0
+    },
     
-    // Rare (نادر)
-    magnet: { name: 'مغناطيس', desc: 'اسحب كل الاكس بي والفلوس', rarity: 'RARE', effect: 'magnetPull', val: 1, icon: '🧲', sprite: 'item_magnet' },
-    redPotion: { name: 'جرعة حمراء', desc: 'يستعيد 30 صحة', rarity: 'RARE', effect: 'heal', val: 30, icon: '🧪', iconPos: {row: 0, col: 0} },
-    bluePotion: { name: 'جرعة زرقاء', desc: '+30% سرعة هجوم لمدة 15 ثانية', rarity: 'RARE', effect: 'tempAtkSpd', val: 0.3, dur: 15, icon: '🧴', iconPos: {row: 0, col: 1} },
-    amulet: { name: 'تميمة', desc: 'درع يمتص 20 ضرر', rarity: 'RARE', effect: 'shield', val: 20, icon: '📿', iconPos: {row: 12, col: 8} },
-    hourglass: { name: 'ساعة رملية', desc: 'يبطئ الأعداء 50% لمدة 5 ثواني', rarity: 'RARE', effect: 'slow', val: 0.5, dur: 5, icon: '⏳', iconPos: {row: 9, col: 7} },
-    silver: { name: 'فضة', desc: '+25 ذهب', rarity: 'RARE', effect: 'gold', val: 25, icon: '🥈', iconPos: {row: 11, col: 1} },
+    tierBudgets: {
+        COMMON: { min: 10, max: 15 },
+        UNCOMMON: { min: 15, max: 25 },
+        RARE: { min: 25, max: 40 },
+        EPIC: { min: 40, max: 65 },
+        LEGENDARY: { min: 65, max: 100 }
+    },
     
-    // Legendary (أسطوري)
-    elixir: { name: 'إكسير', desc: 'يستعيد كل الصحة ويزيد الصحة القصوى 20', rarity: 'LEGENDARY', effect: 'fullHeal', val: 20, icon: '⚗️', iconPos: {row: 0, col: 4} },
-    dragonHeart: { name: 'قلب التنين', desc: '+50% ضرر لمدة 25 ثانية', rarity: 'LEGENDARY', effect: 'tempDmg', val: 0.5, dur: 25, icon: '❤️‍🔥', iconPos: {row: 10, col: 0} },
-    arika: { name: 'عريكه', desc: 'إذا مت، تعود للحياة مرة واحدة', rarity: 'LEGENDARY', effect: 'revive', val: 1, icon: '🍚', sprite: 'item_arika' },
-    crown: { name: 'تاج ذهبي', desc: '+50% ذهب بشكل دائم', rarity: 'LEGENDARY', effect: 'permGold', val: 0.5, icon: '👑', iconPos: {row: 12, col: 0} },
-    star: { name: 'نجمة الصحراء', desc: 'تحصل على سلاح أو كتاب عشوائي', rarity: 'LEGENDARY', effect: 'randomEquip', val: 1, icon: '⭐', iconPos: {row: 10, col: 8} },
-    khazouq: { name: 'خازوق', desc: 'يزيد نسبة ظهور الأعداء 10%، أنت غبي ليش أخذته؟', rarity: 'LEGENDARY', effect: 'moreEnemies', val: 0.10, icon: '🍆', iconPos: {row: 2, col: 5} }
+    calculatePoints(item) {
+        return item.balance ? item.balance.points : 0;
+    },
+    
+    isBalanced(item) {
+        const budget = this.tierBudgets[item.rarity];
+        if (!budget) return false;
+        const pts = this.calculatePoints(item);
+        // Legendary items can exceed max (run-defining)
+        if (item.rarity === 'LEGENDARY') return pts >= budget.min;
+        return pts >= budget.min && pts <= budget.max * 1.2; // 20% tolerance
+    },
+    
+    audit() {
+        console.log('━━━━━━━━━━ ITEM BALANCE AUDIT ━━━━━━━━━━');
+        const tiers = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY'];
+        
+        for (const tier of tiers) {
+            const budget = this.tierBudgets[tier];
+            console.log(`\n${tier} (Budget: ${budget.min}-${budget.max} points)`);
+            console.log('─'.repeat(50));
+            
+            const tierItems = Object.entries(ITEMS).filter(([, i]) => i.rarity === tier);
+            
+            for (const [id, item] of tierItems) {
+                const pts = this.calculatePoints(item);
+                const balanced = this.isBalanced(item);
+                const status = balanced ? '✅' : (pts < budget.min ? '⚠️ WEAK' : '⚠️ STRONG');
+                console.log(`  ${status} ${item.name} (${id}): ${pts} pts - ${item.desc}`);
+            }
+            
+            const avgPts = tierItems.reduce((s, [, i]) => s + this.calculatePoints(i), 0) / tierItems.length;
+            console.log(`  Average: ${avgPts.toFixed(1)} pts | Target: ${(budget.min + budget.max) / 2} pts`);
+        }
+        
+        // Check tier jumps
+        console.log('\n━━━━━━━━━━ TIER JUMP ANALYSIS ━━━━━━━━━━');
+        const tierAvgs = {};
+        for (const tier of tiers) {
+            const tierItems = Object.entries(ITEMS).filter(([, i]) => i.rarity === tier);
+            tierAvgs[tier] = tierItems.reduce((s, [, i]) => s + this.calculatePoints(i), 0) / tierItems.length;
+        }
+        for (let i = 1; i < tiers.length; i++) {
+            const ratio = tierAvgs[tiers[i]] / tierAvgs[tiers[i-1]];
+            const target = 1.6;
+            const ok = ratio >= 1.4 && ratio <= 2.0;
+            console.log(`  ${tiers[i-1]} → ${tiers[i]}: ${ratio.toFixed(2)}x (target: ${target}x) ${ok ? '✅' : '⚠️'}`);
+        }
+        
+        console.log('\n━━━━━━━━━━ TOTAL ITEMS PER TIER ━━━━━━━━━━');
+        for (const tier of tiers) {
+            const count = Object.values(ITEMS).filter(i => i.rarity === tier).length;
+            console.log(`  ${tier}: ${count} items`);
+        }
+    }
 };
 
 // ==================== ENEMIES ====================
@@ -1652,6 +1842,33 @@ class Player {
         this.shield = 0; this.reviveCount = 0; this.tempBuffs = [];
         this.wTimers = {};
         this.width = 32; this.height = 45;
+        
+        // ━━━━━━━━━━ Passive Item Effects (Balance Framework) ━━━━━━━━━━
+        this.critDmgMult = 2.0;        // Base crit damage multiplier (default 2x)
+        this.areaMult = 1.0;            // Area multiplier for weapons
+        this.slowAuraPercent = 0;       // % slow applied to nearby enemies
+        this.slowAuraRadius = 0;        // Radius of slow aura
+        this.freezeChance = 0;          // Chance to freeze on weapon hit
+        this.freezeDuration = 0;        // Duration of freeze
+        this.burnChance = 0;            // Chance to burn on weapon hit
+        this.burnDuration = 0;          // Duration of burn DoT
+        this.damageAuraDPS = 0;         // Damage per second from damage aura
+        this.damageAuraRadius = 0;      // Radius of damage aura
+        this.stunPulseInterval = 0;     // Seconds between stun pulses (0 = disabled)
+        this.stunPulseDuration = 0;     // Duration of stun
+        this.stunPulseRadius = 0;       // Radius of stun pulse
+        this.stunPulseTimer = 0;        // Current timer countdown
+        this.poisonCloudOnKill = false; // Spawn poison cloud on kill
+        this.poisonCloudDmg = 0;        // Poison cloud damage/sec
+        this.poisonCloudDur = 0;        // Poison cloud duration
+        this.poisonCloudRadius = 0;     // Poison cloud radius
+        this.chainLightningInterval = 0; // Seconds between chain lightning (0 = disabled)
+        this.chainLightningTargets = 0;  // Number of targets
+        this.chainLightningDmgMult = 0;  // Damage multiplier
+        this.chainLightningTimer = 0;    // Current timer countdown
+        this.hasDoubleGold = false;      // Double all gold (salary letter)
+        this.hasFreeReroll = false;      // Free reroll on level up
+        this.hasScreenPickup = false;    // Screen-wide pickup range
     }
     
     getDmg(w) {
@@ -1672,7 +1889,7 @@ class Player {
     // Apply crit to damage - returns {dmg, isCrit}
     applyCrit(baseDmg) {
         const isCrit = this.crit > 0 && Math.random() < this.crit;
-        return { dmg: isCrit ? baseDmg * 2 : baseDmg, isCrit };
+        return { dmg: isCrit ? baseDmg * this.critDmgMult : baseDmg, isCrit };
     }
     
     getProjectileCount(w) {
@@ -1694,7 +1911,7 @@ class Player {
         return Math.max(0.08, WEAPONS[w.id].cd * m * (1 - (w.level - 1) * 0.015) * (1 - cdBonus)); 
     }
     
-    getRange(w) { return WEAPONS[w.id].range * this.range * (1 + (w.level - 1) * 0.025); }
+    getRange(w) { return WEAPONS[w.id].range * this.range * this.areaMult * (1 + (w.level - 1) * 0.025); }
     
     findNearest(game, maxD = 450) {
         let near = null, minD = maxD;
@@ -1988,9 +2205,17 @@ class Player {
         if (this.hp <= 0) {
             if (this.reviveCount > 0) { 
                 this.reviveCount--; 
-                this.hp = this.maxHp * 0.5; 
-                this.invuln = 2.0; 
-                game.texts.push(new FloatText(this.x, this.y - 35, '🍚 إحياء!', '#ffd700', 22)); 
+                // Super Revive (دعوة الوالدة) = full HP + 3s invuln
+                if (this.hasSuperRevive) {
+                    this.hasSuperRevive = false;
+                    this.hp = this.maxHp;
+                    this.invuln = 3.0;
+                    game.texts.push(new FloatText(this.x, this.y - 35, '🤲 دعوة الوالدة!', '#ffd700', 24));
+                } else {
+                    this.hp = this.maxHp * 0.5; 
+                    this.invuln = 2.0;
+                    game.texts.push(new FloatText(this.x, this.y - 35, '🍚 إحياء!', '#ffd700', 22));
+                }
                 // Revive animation effects
                 game.shake = 0.3;
                 game.particles.emit(this.x, this.y, 30, { color: '#ffd700', minS: 100, maxS: 200, life: 1.0 });
@@ -2474,11 +2699,49 @@ class Enemy {
         this.zig = e.zig; this.ranged = e.ranged; this.tp = e.tp;
         this.animTime = Math.random() * 2; // Random start for animation variety
         this.glowPhase = 0; // For elite glow animation
+        
+        // Balance Framework - Status effects
+        this.burnTimer = 0;         // Remaining burn time
+        this.burnDps = 0;           // Burn damage per second
+        this.freezeTimer = 0;       // Remaining freeze time (speed = 0)
+        this.stunTimer = 0;         // Remaining stun time (no movement/attack)
+        this.poisoned = false;      // Is currently in poison cloud
     }
     
     update(dt, player, enemies, game) {
+        // Process status effects
+        if (this.burnTimer > 0) {
+            this.burnTimer -= dt;
+            this.hp -= this.burnDps * dt;
+            // Visual burn tick every 0.5s
+            if (Math.random() < dt * 2) {
+                game.particles.emit(this.x, this.y, 2, { color: '#ff4400', minS: 20, maxS: 50, size: 2, life: 0.3 });
+            }
+            if (this.hp <= 0) return; // Dead from burn
+        }
+        if (this.freezeTimer > 0) {
+            this.freezeTimer -= dt;
+            this.vx = 0; this.vy = 0;
+            if (this.hitFlash > 0) this.hitFlash -= dt;
+            this.animTime += dt;
+            return; // Frozen - skip all movement
+        }
+        if (this.stunTimer > 0) {
+            this.stunTimer -= dt;
+            this.vx = 0; this.vy = 0;
+            if (this.hitFlash > 0) this.hitFlash -= dt;
+            this.animTime += dt;
+            return; // Stunned - skip all movement
+        }
+        
         const dx = player.x - this.x, dy = player.y - this.y, dist = Math.hypot(dx, dy);
         if (this.slowT > 0) { this.slowT -= dt; if (this.slowT <= 0) this.slow = 1; }
+        
+        // Slow aura from player passive items
+        if (player.slowAuraPercent > 0 && dist < player.slowAuraRadius) {
+            this.slow = Math.max(0.2, 1 - player.slowAuraPercent); // Min 20% speed
+        }
+        
         if (dist > 0) {
             let mx = dx / dist, my = dy / dist;
             if (this.zig) { this.zigT += dt; if (this.zigT > 0.35) { this.zigT = 0; this.zigD *= -1; } mx = mx * 0.7 + (-my * this.zigD) * 0.3; my = my * 0.7 + (mx * this.zigD) * 0.3; }
@@ -4166,6 +4429,28 @@ class Game {
         document.getElementById('pauseStatGold').textContent = p.gold || 0;
         document.getElementById('pauseStatKills').textContent = p.kills || 0;
         
+        // Show passive item stats if active
+        if (p.dodge > 0) {
+            document.getElementById('pauseRowDodge').style.display = 'flex';
+            document.getElementById('pauseStatDodge').textContent = `${Math.round(p.dodge * 100)}%`;
+        }
+        if (p.regen > 0) {
+            document.getElementById('pauseRowRegen').style.display = 'flex';
+            document.getElementById('pauseStatRegen').textContent = `${p.regen.toFixed(1)}/ث`;
+        }
+        if (p.cdMult < 1) {
+            document.getElementById('pauseRowCD').style.display = 'flex';
+            document.getElementById('pauseStatCD').textContent = `${Math.round(p.cdMult * 100)}%`;
+        }
+        if (p.areaMult > 1) {
+            document.getElementById('pauseRowArea').style.display = 'flex';
+            document.getElementById('pauseStatArea').textContent = `${Math.round(p.areaMult * 100)}%`;
+        }
+        if (p.critDmgMult > 2) {
+            document.getElementById('pauseRowCritDmg').style.display = 'flex';
+            document.getElementById('pauseStatCritDmg').textContent = `${p.critDmgMult.toFixed(1)}x`;
+        }
+        
         // Draw character preview
         const canvas = document.getElementById('pauseCharCanvas');
         if (canvas) {
@@ -4488,28 +4773,29 @@ class Game {
     }
     
     spawnChestReward(x, y) {
-        // Always drop a random item - rarity based on luck
-        const itemIds = Object.keys(ITEMS);
+        // Chests have BETTER rarity than enemy drops (guaranteed Uncommon+)
         const luck = this.player.luck || 1;
-        
-        // Calculate rarity chances based on luck
-        // Higher luck = better chance for rare items
         const roll = Math.random() * 100;
         let targetRarity;
         
-        if (roll < 5 * luck * luck) { // Legendary: 5% * luck^2
+        // Balance Framework: Chest rewards are higher tier
+        if (roll < 8 * luck * luck) {          // ~8% Legendary
             targetRarity = 'LEGENDARY';
-        } else if (roll < 20 * luck) { // Rare: 20% * luck
+        } else if (roll < 25 * luck * luck) {   // ~17% Epic
+            targetRarity = 'EPIC';
+        } else if (roll < 55 * luck) {          // ~30% Rare
             targetRarity = 'RARE';
-        } else {
-            targetRarity = 'COMMON';
+        } else {                                 // ~45% Uncommon (minimum from chests)
+            targetRarity = 'UNCOMMON';
         }
         
-        // Find items of target rarity, fallback to any if none found
-        let possibleItems = itemIds.filter(id => ITEMS[id].rarity === targetRarity);
+        // Find items of target rarity, fallback to one tier down
+        let possibleItems = Object.keys(ITEMS).filter(id => ITEMS[id].rarity === targetRarity);
         if (possibleItems.length === 0) {
-            possibleItems = itemIds;
+            const fallback = { 'LEGENDARY': 'EPIC', 'EPIC': 'RARE', 'RARE': 'UNCOMMON', 'UNCOMMON': 'COMMON' };
+            possibleItems = Object.keys(ITEMS).filter(id => ITEMS[id].rarity === (fallback[targetRarity] || 'COMMON'));
         }
+        if (possibleItems.length === 0) possibleItems = Object.keys(ITEMS);
         
         const randomItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
         this.items.push(new ItemDrop(x, y, randomItem));
@@ -4755,6 +5041,71 @@ class Game {
                 }
             }
         }
+        
+        // ━━━━━━━━━━ Passive Item Effects (Balance Framework) ━━━━━━━━━━
+        const p = this.player;
+        
+        // 1. Damage Aura - passive DPS to nearby enemies
+        if (p.damageAuraDPS > 0) {
+            for (const e of this.enemies) {
+                if (e.hp <= 0) continue;
+                const dist = Math.hypot(e.x - p.x, e.y - p.y);
+                if (dist < p.damageAuraRadius) {
+                    const auraDmg = p.damageAuraDPS * dt;
+                    if (e.takeDmg(auraDmg, this)) this.killEnemy(e);
+                }
+            }
+        }
+        
+        // 2. Stun Pulse - periodic AOE stun
+        if (p.stunPulseInterval > 0) {
+            p.stunPulseTimer -= dt;
+            if (p.stunPulseTimer <= 0) {
+                p.stunPulseTimer = p.stunPulseInterval;
+                let stunCount = 0;
+                for (const e of this.enemies) {
+                    if (e.hp <= 0) continue;
+                    const dist = Math.hypot(e.x - p.x, e.y - p.y);
+                    if (dist < p.stunPulseRadius) {
+                        e.stunTimer = p.stunPulseDuration;
+                        stunCount++;
+                    }
+                }
+                if (stunCount > 0) {
+                    this.texts.push(new FloatText(p.x, p.y - 30, `📢 ${stunCount} صعقة!`, '#ffff00'));
+                    this.particles.emit(p.x, p.y, 10, { color: '#ffff00', minS: 60, maxS: 120, size: 3, life: 0.4 });
+                    this.spriteEffects.push(new SpriteEffect(p.x, p.y, 'fx_circle', 24, 24, 5, 0.3, p.stunPulseRadius / 40));
+                }
+            }
+        }
+        
+        // 3. Chain Lightning - periodic chain damage
+        if (p.chainLightningInterval > 0) {
+            p.chainLightningTimer -= dt;
+            if (p.chainLightningTimer <= 0) {
+                p.chainLightningTimer = p.chainLightningInterval;
+                // Find nearest enemy to start chain
+                const nearest = this.enemies.filter(e => e.hp > 0 && Math.hypot(e.x - p.x, e.y - p.y) < 250);
+                if (nearest.length > 0) {
+                    nearest.sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y));
+                    let current = nearest[0];
+                    const hit = new Set();
+                    const baseDmg = CONFIG.WEAPON_BASE_DMG * p.dmgMult * p.chainLightningDmgMult;
+                    for (let i = 0; i < p.chainLightningTargets && current; i++) {
+                        const chainDmg = baseDmg * (1 - i * 0.2); // 20% less per bounce
+                        if (current.takeDmg(chainDmg, this)) this.killEnemy(current);
+                        this.fx.push({ type: 'lightning', x: current.x, y: current.y, life: 0.2 });
+                        this.spriteEffects.push(new SpriteEffect(current.x, current.y, 'fx_spark', 24, 24, 5, 0.2, 1.2));
+                        hit.add(current);
+                        // Find next target
+                        const next = this.enemies.filter(e => !hit.has(e) && e.hp > 0 && Math.hypot(e.x - current.x, e.y - current.y) < 120);
+                        current = next.length > 0 ? next[Math.floor(Math.random() * next.length)] : null;
+                    }
+                }
+            }
+        }
+        
+        // 4. Filter dead enemies (from burn, aura, chain lightning)
         this.enemies = this.enemies.filter(e => e.hp > 0);
         
         // Weapon damage to pots (orbit, aura, melee)
@@ -4916,6 +5267,22 @@ class Game {
                     const hit = this.player.applyCrit(p.dmg);
                     if (e.takeDmg(hit.dmg, this, hit.isCrit)) this.killEnemy(e);
                     
+                    // On-hit effects from passive items (Balance Framework)
+                    if (e.hp > 0) {
+                        // Freeze chance
+                        if (this.player.freezeChance > 0 && Math.random() < this.player.freezeChance) {
+                            e.freezeTimer = this.player.freezeDuration;
+                            e.slow = 0.1;
+                            this.particles.emit(e.x, e.y, 5, { color: '#00eeff', minS: 30, maxS: 60, size: 2, life: 0.4 });
+                        }
+                        // Burn chance
+                        if (this.player.burnChance > 0 && Math.random() < this.player.burnChance) {
+                            e.burnTimer = this.player.burnDuration;
+                            e.burnDps = hit.dmg * 0.1; // 10% of hit dmg per second
+                            this.particles.emit(e.x, e.y, 3, { color: '#ff4400', minS: 20, maxS: 50, size: 2, life: 0.3 });
+                        }
+                    }
+                    
                     // Apply poison from player passive
                     if (this.player.poison > 0 && Math.random() < this.player.poison) {
                         if (!e.dots) e.dots = [];
@@ -4997,6 +5364,30 @@ class Game {
                 }
                 if (f.life <= 0) this.fx.splice(i, 1);
             }
+            else if (f.type === 'poisonCloud') {
+                // Poison Cloud from item passive (Balance Framework)
+                f.life -= dt;
+                f.tickTimer -= dt;
+                if (f.tickTimer <= 0) {
+                    f.tickTimer = 0.5; // Tick every 0.5s
+                    for (const e of this.enemies) {
+                        if (Math.hypot(f.x - e.x, f.y - e.y) < f.radius + e.width / 2) {
+                            if (e.takeDmg(f.dmg * 0.5, this)) this.killEnemy(e); // Half dmg per tick (2 ticks/s)
+                        }
+                    }
+                }
+                // Visual particles
+                if (Math.random() < dt * 6) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = Math.random() * f.radius * 0.8;
+                    this.particles.emit(
+                        f.x + Math.cos(angle) * dist,
+                        f.y + Math.sin(angle) * dist,
+                        1, { color: '#44ff00', minS: 10, maxS: 30, size: 3, life: 0.5 }
+                    );
+                }
+                if (f.life <= 0) this.fx.splice(i, 1);
+            }
             else if (f.type === 'tornado') {
                 f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt;
                 for (const e of this.enemies) { 
@@ -5045,7 +5436,7 @@ class Game {
                     // XP pickup effect - no sound for XP/coins
                     this.particles.emit(p.x, p.y, 3, { color: '#44ff44', minS: 30, maxS: 60, size: 2, life: 0.3 });
                 } else { 
-                    const goldMultiplier = this.hasGoldBuff() ? 2 : 1;
+                    const goldMultiplier = (this.hasGoldBuff() ? 2 : 1) * (this.player.hasDoubleGold ? 2 : 1);
                     this.player.gold += Math.round(p.val * this.player.goldMult * goldMultiplier); 
                     // Gold pickup effect - no sound for XP/coins
                     this.particles.gold(p.x, p.y);
@@ -5362,6 +5753,19 @@ class Game {
         this.spriteEffects.push(new SpriteEffect(enemy.x, enemy.y, 'fx_explosion', 32, 32, 7, 0.4, 1.5));
         this.particles.spark(enemy.x, enemy.y, '#ff6600');
         
+        // Poison Cloud on Kill (Balance Framework - Rare item)
+        if (this.player.poisonCloudOnKill) {
+            this.fx.push({
+                type: 'poisonCloud',
+                x: enemy.x, y: enemy.y,
+                dmg: this.player.poisonCloudDmg,
+                radius: this.player.poisonCloudRadius,
+                life: this.player.poisonCloudDur,
+                maxLife: this.player.poisonCloudDur,
+                tickTimer: 0
+            });
+        }
+        
         // Calculate XP - bonus in endless mode based on time/level for balance
         let xpReward = enemy.xp;
         if (this.endlessMode) {
@@ -5412,13 +5816,33 @@ class Game {
         const clampedX = Math.max(-halfWorld, Math.min(halfWorld, x));
         const clampedY = Math.max(-halfWorld, Math.min(halfWorld, y));
         
-        const r = Math.random() * 100 / this.player.luck;
-        let rarity = r < 5 ? 'LEGENDARY' : r < 16 ? 'RARE' : 'COMMON';
-        const pool = Object.entries(ITEMS).filter(([, i]) => i.rarity === rarity);
+        // Balance Framework: 5-tier rarity system
+        // luck^2 scaling for better tiers
+        const luck = this.player.luck || 1;
+        const r = Math.random() * 100;
+        let rarity;
+        if (r < 1 * luck * luck) {         // ~1% Legendary (luck scaled)
+            rarity = 'LEGENDARY';
+        } else if (r < 4 * luck * luck) {   // ~3% Epic
+            rarity = 'EPIC';
+        } else if (r < 12 * luck) {         // ~8% Rare
+            rarity = 'RARE';
+        } else if (r < 35 * luck) {         // ~23% Uncommon
+            rarity = 'UNCOMMON';
+        } else {                             // ~65% Common
+            rarity = 'COMMON';
+        }
+        
+        let pool = Object.entries(ITEMS).filter(([, i]) => i.rarity === rarity);
+        // Fallback: if no items in chosen rarity, try one tier down
+        if (pool.length === 0) {
+            const fallback = { 'LEGENDARY': 'EPIC', 'EPIC': 'RARE', 'RARE': 'UNCOMMON', 'UNCOMMON': 'COMMON' };
+            pool = Object.entries(ITEMS).filter(([, i]) => i.rarity === (fallback[rarity] || 'COMMON'));
+        }
         if (pool.length > 0) { 
             const [id] = pool[Math.floor(Math.random() * pool.length)]; 
             this.items.push(new ItemDrop(clampedX, clampedY, id)); 
-            this.audio.itemDrop(); // Play item drop sound
+            this.audio.itemDrop();
         }
     }
     
@@ -5483,6 +5907,7 @@ class Game {
         this.state = 'itemPickup';
         this.pendingItem = drop;
         const item = ITEMS[drop.id];
+        if (!item) { this.state = 'playing'; return; }
         const rar = RARITY[item.rarity];
         
         // Show sprite image if available, otherwise show emoji
@@ -5526,96 +5951,326 @@ class Game {
     
     collectItem(drop) {
         const item = ITEMS[drop.id];
+        if (!item) return;
+        const px = this.player.x, py = this.player.y;
+        
         switch (item.effect) {
+            // ━━━━━━━━━━ Consumable Effects ━━━━━━━━━━
             case 'heal': 
                 this.player.hp = Math.min(this.player.maxHp, this.player.hp + item.val); 
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} HP`, '#0f0')); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_heal', 24, 24, 6, 0.5, 2));
-                this.particles.heal(this.player.x, this.player.y);
+                this.texts.push(new FloatText(px, py - 18, `+${item.val} HP`, '#0f0')); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_heal', 24, 24, 6, 0.5, 2));
+                this.particles.heal(px, py);
                 break;
             case 'fullHeal': 
                 this.player.maxHp += item.val; 
                 this.player.hp = this.player.maxHp; 
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'شفاء كامل!', '#0f0', 16)); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_heal', 24, 24, 6, 0.6, 2.5));
-                this.particles.heal(this.player.x, this.player.y);
-                this.particles.heal(this.player.x, this.player.y);
+                this.texts.push(new FloatText(px, py - 18, `+${item.val} صحة! شفاء كامل!`, '#0f0', 16)); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_heal', 24, 24, 6, 0.6, 2.5));
+                this.particles.heal(px, py);
+                this.particles.heal(px, py);
                 break;
-            case 'gold': 
-                this.player.gold += Math.round(item.val * this.player.goldMult); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.3, 1.5));
-                this.particles.gold(this.player.x, this.player.y);
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} ذهب`, '#ffd700'));
+            case 'fullHealHP':
+                this.player.maxHp += item.val; 
+                this.player.hp = this.player.maxHp; 
+                this.texts.push(new FloatText(px, py - 18, `+${item.val} صحة! شفاء كامل!`, '#0f0', 16)); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_heal', 24, 24, 6, 0.6, 2.5));
+                this.particles.heal(px, py);
+                this.particles.heal(px, py);
                 break;
+            case 'gold': {
+                const goldAmt = Math.round(item.val * this.player.goldMult * (this.player.hasDoubleGold ? 2 : 1));
+                this.player.gold += goldAmt; 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.3, 1.5));
+                this.particles.gold(px, py);
+                this.texts.push(new FloatText(px, py - 18, `+${goldAmt} ذهب`, '#ffd700'));
+                break;
+            }
             case 'tempSpeed': 
                 this.player.tempBuffs.push({ type: 'speed', val: item.val, dur: item.dur }); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.4, 1.8));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.4, 1.8));
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% سرعة!`, '#8f8'));
                 break;
             case 'tempDmg': 
                 this.player.tempBuffs.push({ type: 'dmg', val: item.val, dur: item.dur }); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_fire_small', 24, 24, 6, 0.4, 1.8));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_fire_small', 24, 24, 6, 0.4, 1.8));
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% ضرر!`, '#f84'));
                 break;
             case 'tempAtkSpd': 
                 this.player.tempBuffs.push({ type: 'atkSpd', val: item.val, dur: item.dur }); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.4, 1.8));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.4, 1.8));
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% سرعة هجوم!`, '#88f'));
                 break;
             case 'shield': 
                 this.player.shield += item.val; 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_circle', 24, 24, 5, 0.5, 2));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_circle', 24, 24, 5, 0.5, 2));
+                this.texts.push(new FloatText(px, py - 18, `+${item.val} درع`, '#88f'));
                 break;
             case 'slow': 
                 this.globalSlow = item.dur; 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_ice', 24, 24, 5, 0.5, 2));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_ice', 24, 24, 5, 0.5, 2));
+                this.texts.push(new FloatText(px, py - 18, 'إبطاء!', '#00ffff'));
                 break;
             case 'revive': 
                 this.player.reviveCount++;
                 this.updateReviveUI(); 
-                this.texts.push(new FloatText(this.player.x, this.player.y - 25, '🍚 +1 عريكه!', '#ffd700', 20)); 
-                this.texts.push(new FloatText(this.player.x, this.player.y - 45, `إجمالي: ${this.player.reviveCount}`, '#ffffff', 14)); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.8, 3));
-                this.particles.emit(this.player.x, this.player.y, 20, { color: '#ffd700', minS: 80, maxS: 150, life: 0.8 });
+                this.texts.push(new FloatText(px, py - 25, '🍚 +1 عريكه!', '#ffd700', 20)); 
+                this.texts.push(new FloatText(px, py - 45, `إجمالي: ${this.player.reviveCount}`, '#ffffff', 14)); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.8, 3));
+                this.particles.emit(px, py, 20, { color: '#ffd700', minS: 80, maxS: 150, life: 0.8 });
                 break;
-            case 'permGold': 
-                this.player.goldMult += item.val; 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.4, 2));
+            case 'randomEquip': 
+                this.giveRandomEquip(); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.5, 2.5));
+                this.texts.push(new FloatText(px, py - 18, '⭐ معدات عشوائية!', '#ffd700', 16));
                 break;
-            case 'permArmor': 
-                this.player.armor += item.val; 
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} دفاع`, '#88f')); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_circle', 24, 24, 5, 0.4, 2));
+            case 'moreEnemies': 
+                this.player.extraEnemySpawn += item.val; 
+                this.texts.push(new FloatText(px, py - 18, '💀 أعداء أكثر!', '#f44')); 
+                break;
+            case 'magnetPull': {
+                let pulled = 0;
+                for (const p of this.pickups) {
+                    p.x = px + (Math.random() - 0.5) * 30;
+                    p.y = py + (Math.random() - 0.5) * 30;
+                    pulled++;
+                }
+                this.texts.push(new FloatText(px, py - 18, `🧲 سحب ${pulled}!`, '#00ffff', 16)); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.6, 3));
+                this.particles.emit(px, py, 15, { color: '#00ffff', minS: 50, maxS: 150, life: 0.5 });
+                break;
+            }
+            
+            // ━━━━━━━━━━ Permanent Stat Boosts (Common Tier) ━━━━━━━━━━
+            case 'permXP':
+                this.player.xpMult += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% خبرة`, '#44ff44'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permRegen':
+                this.player.regen += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${item.val} تجديد/ث`, '#00ff88'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_heal', 24, 24, 6, 0.4, 2));
                 break;
             case 'permSpeed': 
                 this.player.speed += this.player.speed * item.val; 
-                this.player.speed = Math.min(this.player.speed, CONFIG.MAX_PLAYER_SPEED); // Cap speed
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${Math.round(item.val * 100)}% سرعة`, '#8f8')); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_spark', 24, 24, 5, 0.4, 2));
+                this.player.speed = Math.min(this.player.speed, CONFIG.MAX_PLAYER_SPEED);
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val * 100)}% سرعة`, '#8f8')); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permCrit':
+                this.player.crit += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% حرجة`, '#ff4488'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permAtkSpd':
+                this.player.atkSpd += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% سرعة هجوم`, '#8888ff'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permDmg':
+                this.player.dmgMult += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% ضرر`, '#ff8844'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_fire_small', 24, 24, 6, 0.4, 2));
+                break;
+            case 'permGoldPercent':
+                this.player.goldMult += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% ذهب`, '#ffd700'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permGold': 
+                this.player.goldMult += item.val; 
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% ذهب!`, '#ffd700'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.4, 2));
+                break;
+            case 'permArmor': 
+                this.player.armor += item.val; 
+                this.texts.push(new FloatText(px, py - 18, `+${item.val} دفاع`, '#88f')); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_circle', 24, 24, 5, 0.4, 2));
                 break;
             case 'permHP': 
                 this.player.maxHp += item.val; 
                 this.player.hp = Math.min(this.player.hp + item.val, this.player.maxHp);
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `+${item.val} صحة`, '#f88')); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_heal', 24, 24, 6, 0.4, 2));
+                this.texts.push(new FloatText(px, py - 18, `+${item.val} صحة`, '#f88')); 
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_heal', 24, 24, 6, 0.4, 2));
                 break;
-            case 'randomEquip': 
-                this.giveRandomEquip(); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.5, 2.5));
+            
+            // ━━━━━━━━━━ Uncommon Passive Effects ━━━━━━━━━━
+            case 'permArmorCombo':
+                this.player.armor += item.val;
+                this.player.dmgReduce += item.val2;
+                this.texts.push(new FloatText(px, py - 18, `+${item.val} دفاع + -${Math.round(item.val2*100)}% ضرر`, '#88f'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_circle', 24, 24, 5, 0.5, 2));
                 break;
-            case 'moreEnemies': 
-                this.player.extraEnemySpawn += item.val; 
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, 'أعداء أكثر!', '#f44')); 
+            case 'slowAura':
+                this.player.slowAuraPercent += item.val;
+                this.player.slowAuraRadius = Math.max(this.player.slowAuraRadius, item.radius);
+                this.texts.push(new FloatText(px, py - 18, `هالة إبطاء ${Math.round(item.val*100)}%`, '#00ccff'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_ice', 24, 24, 5, 0.5, 2));
                 break;
-            case 'magnetPull':
-                // Pull all existing pickups to player instantly
-                let pulled = 0;
-                for (const p of this.pickups) {
-                    p.x = this.player.x + (Math.random() - 0.5) * 30;
-                    p.y = this.player.y + (Math.random() - 0.5) * 30;
-                    pulled++;
+            case 'freezeChance':
+                this.player.freezeChance += item.val;
+                this.player.freezeDuration = Math.max(this.player.freezeDuration, item.dur);
+                this.texts.push(new FloatText(px, py - 18, `${Math.round(item.val*100)}% تجميد!`, '#00eeff'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_ice', 24, 24, 5, 0.5, 2));
+                break;
+            case 'damageAura':
+                this.player.damageAuraDPS += item.val;
+                this.player.damageAuraRadius = Math.max(this.player.damageAuraRadius, item.radius);
+                this.texts.push(new FloatText(px, py - 18, `هالة ضرر ${item.val}/ث`, '#ff8800'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_fire_small', 24, 24, 6, 0.5, 2));
+                break;
+            case 'stunPulse':
+                this.player.stunPulseInterval = item.interval;
+                this.player.stunPulseDuration = item.dur;
+                this.player.stunPulseRadius = item.radius;
+                if (this.player.stunPulseTimer <= 0) this.player.stunPulseTimer = item.interval;
+                this.texts.push(new FloatText(px, py - 18, `📢 صعقة كل ${item.interval}ث!`, '#ffff00'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.6, 2.5));
+                break;
+            
+            // ━━━━━━━━━━ Rare On-Hit & Passive Effects ━━━━━━━━━━
+            case 'poisonCloud':
+                this.player.poisonCloudOnKill = true;
+                this.player.poisonCloudDmg = item.val;
+                this.player.poisonCloudDur = item.dur;
+                this.player.poisonCloudRadius = item.radius;
+                this.texts.push(new FloatText(px, py - 18, `☠️ سحابة سم عند القتل!`, '#44ff00'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.6, 2.5));
+                break;
+            case 'burnChance':
+                this.player.burnChance += item.val;
+                this.player.burnDuration = Math.max(this.player.burnDuration, item.dur);
+                this.texts.push(new FloatText(px, py - 18, `🔥 ${Math.round(item.val*100)}% حرق!`, '#ff4400'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_fire_small', 24, 24, 6, 0.5, 2));
+                break;
+            case 'permLuck':
+                this.player.luck += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% حظ`, '#ff88ff'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.4, 2));
+                break;
+            case 'critCombo':
+                this.player.critDmgMult += item.critDmg;
+                this.player.crit += item.critChance;
+                this.texts.push(new FloatText(px, py - 18, `+${item.critDmg}x حرجة + ${Math.round(item.critChance*100)}%!`, '#ff4488'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.5, 2));
+                break;
+            
+            // ━━━━━━━━━━ Epic Effects ━━━━━━━━━━
+            case 'permCooldown':
+                this.player.cdMult *= (1 - item.val); // Multiplicative reduction
+                this.texts.push(new FloatText(px, py - 18, `-${Math.round(item.val*100)}% كولداون!`, '#ff44ff'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.5, 2));
+                break;
+            case 'permDodge':
+                this.player.dodge += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% تفادي!`, '#00ffff'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_circle', 24, 24, 5, 0.5, 2));
+                break;
+            case 'shemaghCombo':
+                this.player.dmgMult += item.dmg;
+                this.player.dodge += item.dodge;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.dmg*100)}% ضرر + ${Math.round(item.dodge*100)}% تفادي!`, '#ff8844'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.6, 2.5));
+                break;
+            case 'permArea':
+                this.player.areaMult += item.val;
+                this.texts.push(new FloatText(px, py - 18, `+${Math.round(item.val*100)}% مساحة!`, '#ff88ff'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_circle', 24, 24, 5, 0.5, 2));
+                break;
+            case 'chainLightning':
+                this.player.chainLightningInterval = item.interval;
+                this.player.chainLightningTargets = item.targets;
+                this.player.chainLightningDmgMult = item.dmgMult;
+                if (this.player.chainLightningTimer <= 0) this.player.chainLightningTimer = item.interval;
+                this.texts.push(new FloatText(px, py - 18, `⚡ صاعقة تسلسلية!`, '#ffff44'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.6, 2.5));
+                break;
+            case 'freeReroll':
+                this.player.hasFreeReroll = true;
+                this.texts.push(new FloatText(px, py - 18, `💎 إعادة لف مجاني!`, '#a335ee'));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 0.6, 2.5));
+                break;
+            
+            // ━━━━━━━━━━ Legendary Effects ━━━━━━━━━━
+            case 'doubleGold':
+                this.player.hasDoubleGold = true;
+                this.player.goldMult *= 2;
+                this.texts.push(new FloatText(px, py - 18, '💰 مضاعفة الذهب!', '#ffd700', 22));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_spark', 24, 24, 5, 0.8, 3));
+                this.particles.emit(px, py, 30, { color: '#ffd700', minS: 100, maxS: 200, life: 1.0 });
+                break;
+            case 'superRevive':
+                this.player.reviveCount++;
+                this.updateReviveUI();
+                this.texts.push(new FloatText(px, py - 25, '🤲 دعوة الوالدة!', '#ffd700', 22));
+                this.texts.push(new FloatText(px, py - 45, 'إحياء + حصانة 3 ثواني!', '#ffffff', 14));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 1.0, 3));
+                this.particles.emit(px, py, 30, { color: '#ffd700', minS: 100, maxS: 200, life: 1.0 });
+                // Mark this revive as super (will grant invuln on use)
+                this.player.hasSuperRevive = true;
+                break;
+            case 'screenPickup':
+                this.player.hasScreenPickup = true;
+                this.player.pickupRange = item.val;
+                this.texts.push(new FloatText(px, py - 18, '📶 مدى التقاط = الشاشة!', '#ff8000', 20));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_circle', 24, 24, 5, 0.8, 3));
+                this.particles.emit(px, py, 25, { color: '#ff8000', minS: 80, maxS: 200, life: 0.8 });
+                break;
+            case 'allStats': {
+                const v = item.val;
+                this.player.dmgMult += v;
+                this.player.atkSpd += v;
+                this.player.speed += this.player.speed * v;
+                this.player.speed = Math.min(this.player.speed, CONFIG.MAX_PLAYER_SPEED);
+                this.player.crit += v * 0.5; // Half for crit
+                this.player.armor += v * 4;
+                this.player.regen += v * 2;
+                this.player.xpMult += v;
+                this.player.luck += v;
+                this.texts.push(new FloatText(px, py - 18, `👔 +${Math.round(v*100)}% كل الإحصائيات!`, '#ff8000', 22));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_magic', 24, 24, 5, 1.0, 3));
+                this.particles.emit(px, py, 40, { color: '#ff8000', minS: 100, maxS: 250, life: 1.2 });
+                break;
+            }
+            case 'timeStop':
+                this.globalSlow = item.dur;
+                this.player.speed *= 0.5; // Player slowed during time stop
+                this.player.tempBuffs.push({ type: 'speed', val: -0.5, dur: item.dur });
+                // Freeze all enemies completely
+                for (const e of this.enemies) { e.slow = 0.05; }
+                if (this.boss) this.boss.slow = 0.05;
+                this.texts.push(new FloatText(px, py - 18, '⏰ التقاعد المبكر!', '#ff8000', 22));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_ice', 24, 24, 5, 1.0, 3));
+                this.particles.emit(px, py, 30, { color: '#00ccff', minS: 80, maxS: 200, life: 1.0 });
+                break;
+            case 'megaExplosion': {
+                // Damage all enemies in radius
+                let hitCount = 0;
+                for (const e of this.enemies) {
+                    const dist = Math.hypot(e.x - px, e.y - py);
+                    if (dist < item.radius) {
+                        if (e.takeDmg(item.val, this)) this.killEnemy(e);
+                        // Knockback
+                        const angle = Math.atan2(e.y - py, e.x - px);
+                        e.x += Math.cos(angle) * 100;
+                        e.y += Math.sin(angle) * 100;
+                        hitCount++;
+                    }
                 }
-                this.texts.push(new FloatText(this.player.x, this.player.y - 18, `سحب ${pulled}!`, '#00ffff', 16)); 
-                this.spriteEffects.push(new SpriteEffect(this.player.x, this.player.y, 'fx_magic', 24, 24, 5, 0.6, 3));
-                this.particles.emit(this.player.x, this.player.y, 15, { color: '#00ffff', minS: 50, maxS: 150, life: 0.5 });
+                if (this.boss) {
+                    const bDist = Math.hypot(this.boss.x - px, this.boss.y - py);
+                    if (bDist < item.radius) {
+                        this.boss.takeDmg(item.val * 0.5, this); // Half dmg to boss
+                        hitCount++;
+                    }
+                }
+                this.texts.push(new FloatText(px, py - 18, `🔑💥 ${hitCount} أعداء!`, '#ff8000', 22));
+                this.spriteEffects.push(new SpriteEffect(px, py, 'fx_fire_small', 24, 24, 6, 1.0, 4));
+                this.particles.emit(px, py, 50, { color: '#ff4400', minS: 150, maxS: 300, life: 1.0 });
+                this.shake = 0.5;
                 break;
+            }
         }
     }
     
@@ -5783,8 +6438,10 @@ class Game {
             opts.appendChild(card);
         });
         
-        // Add reroll button
-        const rerollCost = Math.floor(10 * Math.pow(1.5, this.rerollCount || 0));
+        // Add reroll button (Balance Framework: VIP card gives free reroll)
+        const hasFreeReroll = this.player.hasFreeReroll && !this.usedFreeReroll;
+        const rerollCost = hasFreeReroll ? 0 : Math.floor(10 * Math.pow(1.5, this.rerollCount || 0));
+        const canAffordReroll = hasFreeReroll || this.player.gold >= rerollCost;
         let rerollContainer = document.getElementById('rerollContainer');
         if (!rerollContainer) {
             rerollContainer = document.createElement('div');
@@ -5792,20 +6449,28 @@ class Game {
             rerollContainer.style.cssText = 'width:100%;text-align:center;margin-top:12px;';
             opts.parentNode.appendChild(rerollContainer);
         }
+        const rerollLabel = hasFreeReroll 
+            ? '💎 لف مجاني (VIP)' 
+            : `🎲 جرب حظك <span style="color:#fff;font-size:0.7rem">(💰${rerollCost})</span>`;
+        const rerollBorderColor = hasFreeReroll ? '#a335ee' : '#ffd700';
         rerollContainer.innerHTML = `
-            <button id="rerollBtn" style="background:linear-gradient(135deg,#3a3a3a,#1a1a1a);border:2px solid #ffd700;color:#ffd700;padding:8px 20px;border-radius:8px;cursor:pointer;font-family:'PixelAE',monospace;font-size:0.8rem;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;${this.player.gold >= rerollCost ? '' : 'opacity:0.5;cursor:not-allowed;'}">
-                🎲 جرب حظك <span style="color:#fff;font-size:0.7rem">(💰${rerollCost})</span>
+            <button id="rerollBtn" style="background:linear-gradient(135deg,#3a3a3a,#1a1a1a);border:2px solid ${rerollBorderColor};color:${rerollBorderColor};padding:8px 20px;border-radius:8px;cursor:pointer;font-family:'PixelAE',monospace;font-size:0.8rem;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;${canAffordReroll ? '' : 'opacity:0.5;cursor:not-allowed;'}">
+                ${rerollLabel}
             </button>
         `;
         const rerollBtn = document.getElementById('rerollBtn');
-        if (this.player.gold >= rerollCost) {
+        if (canAffordReroll) {
             rerollBtn.onclick = () => {
-                this.player.gold -= rerollCost;
-                this.rerollCount = (this.rerollCount || 0) + 1;
+                if (hasFreeReroll) {
+                    this.usedFreeReroll = true; // Free reroll used for this level up
+                } else {
+                    this.player.gold -= rerollCost;
+                    this.rerollCount = (this.rerollCount || 0) + 1;
+                }
                 this.updateHUD();
                 this.showLevelUp(); // Re-generate options
             };
-            rerollBtn.onmouseenter = () => { rerollBtn.style.transform = 'scale(1.05)'; rerollBtn.style.boxShadow = '0 0 15px #ffd70050'; };
+            rerollBtn.onmouseenter = () => { rerollBtn.style.transform = 'scale(1.05)'; rerollBtn.style.boxShadow = `0 0 15px ${rerollBorderColor}50`; };
             rerollBtn.onmouseleave = () => { rerollBtn.style.transform = 'scale(1)'; rerollBtn.style.boxShadow = 'none'; };
         }
         
@@ -5814,6 +6479,9 @@ class Game {
     
     selectUpgrade(c, rar, upgradeType) {
         try {
+            // Reset free reroll flag for next level up
+            this.usedFreeReroll = false;
+            
             // Apply the upgrade
             if (c.type === 'weapon') {
                 const type = upgradeType || ['damage', 'count', 'cooldown'][Math.floor(Math.random() * 3)];

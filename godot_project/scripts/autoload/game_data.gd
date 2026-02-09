@@ -107,13 +107,18 @@ func get_random_item(rarity: String) -> Dictionary:
 	return {}
 
 func get_random_rarity(luck: float = 1.0) -> String:
-	var roll = randf() * 100.0 / luck
+	var roll = randf() * 100.0
+	var luck_sq = luck * luck
 	
-	if roll < 1:  # 1%
+	if roll < 1 * luck_sq:       # ~1% Legendary
 		return "LEGENDARY"
-	elif roll < 10:  # 9%
+	elif roll < 4 * luck_sq:     # ~3% Epic
+		return "EPIC"
+	elif roll < 12 * luck:       # ~8% Rare
 		return "RARE"
-	else:  # 90%
+	elif roll < 35 * luck:       # ~23% Uncommon
+		return "UNCOMMON"
+	else:                         # ~65% Common
 		return "COMMON"
 
 # ==================== البوس ====================

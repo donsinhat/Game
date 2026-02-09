@@ -1,127 +1,58 @@
 {
   "ITEMS": {
     "COMMON": {
-      "bread": {
-        "name": "خبز",
-        "desc": "يستعيد 10 صحة",
-        "effect": "heal",
-        "val": 10,
-        "icon": "🍞"
-      },
-      "feather": {
-        "name": "ريشة",
-        "desc": "+15% سرعة حركة لمدة 10 ثواني",
-        "effect": "tempSpeed",
-        "val": 0.15,
-        "dur": 10,
-        "icon": "🪶"
-      },
-      "pebble": {
-        "name": "حصاة",
-        "desc": "+10% ضرر لمدة 12 ثانية",
-        "effect": "tempDmg",
-        "val": 0.1,
-        "dur": 12,
-        "icon": "🪨"
-      },
-      "herb": {
-        "name": "عشبة",
-        "desc": "يستعيد 5 صحة",
-        "effect": "heal",
-        "val": 5,
-        "icon": "🌿"
-      },
-      "copper": {
-        "name": "نحاس",
-        "desc": "+5 ذهب",
-        "effect": "gold",
-        "val": 5,
-        "icon": "🪙"
-      }
+      "fastCharger": { "name": "شاحن أصلي", "desc": "+15% خبرة مكتسبة", "effect": "permXP", "val": 0.15, "icon": "🔌", "points": 15 },
+      "citrusSoda": { "name": "قوطي حمضيات", "desc": "+1 تجديد صحة/ثانية", "effect": "permRegen", "val": 1, "icon": "🍊", "points": 12 },
+      "sandal": { "name": "نعال شرقية", "desc": "+8% سرعة حركة", "effect": "permSpeed", "val": 0.08, "icon": "👟", "points": 12 },
+      "nerdGlasses": { "name": "نظارة طبية", "desc": "+5% ضربة حرجة", "effect": "permCrit", "val": 0.05, "icon": "🤓", "points": 12 },
+      "sunblock": { "name": "كريم حروق", "desc": "+8% سرعة هجوم", "effect": "permAtkSpd", "val": 0.08, "icon": "🧴", "points": 13 },
+      "coffee": { "name": "فنجال قهوة", "desc": "+5% ضرر", "effect": "permDmg", "val": 0.05, "icon": "☕", "points": 10 },
+      "atmCard": { "name": "كرت صراف", "desc": "+8% ذهب", "effect": "permGoldPercent", "val": 0.08, "icon": "💳", "points": 8 },
+      "copper": { "name": "نحاس", "desc": "+5 ذهب", "effect": "gold", "val": 5, "icon": "🪙", "points": 5 }
+    },
+    "UNCOMMON": {
+      "safetyVest": { "name": "سترة السلامة", "desc": "+3 دفاع و -2% ضرر", "effect": "permArmorCombo", "val": 3, "val2": 0.02, "icon": "🦺", "points": 18 },
+      "yogurtDrink": { "name": "لبن نوم", "desc": "هالة إبطاء 10% (100px)", "effect": "slowAura", "val": 0.10, "radius": 100, "icon": "🥛", "points": 18 },
+      "acRemote": { "name": "ريموت المكيف", "desc": "10% فرصة تجميد", "effect": "freezeChance", "val": 0.10, "dur": 1.0, "icon": "❄️", "points": 20 },
+      "carFreshener": { "name": "فواحة سيارة", "desc": "هالة ضرر 5/ث", "effect": "damageAura", "val": 5, "radius": 80, "icon": "🌸", "points": 15 },
+      "loudspeaker": { "name": "ميكروفون مسجد", "desc": "صعقة كل 7ث", "effect": "stunPulse", "interval": 7, "dur": 0.5, "radius": 150, "icon": "📢", "points": 18 },
+      "dalla": { "name": "دله قهوه", "desc": "+2 دفاع", "effect": "permArmor", "val": 2, "icon": "☕", "points": 15 },
+      "klega": { "name": "كليجه", "desc": "+5 صحة قصوى", "effect": "permHP", "val": 5, "icon": "🍪", "points": 15 }
     },
     "RARE": {
-      "redPotion": {
-        "name": "جرعة حمراء",
-        "desc": "يستعيد 30 صحة",
-        "effect": "heal",
-        "val": 30,
-        "icon": "🧪"
-      },
-      "bluePotion": {
-        "name": "جرعة زرقاء",
-        "desc": "+30% سرعة هجوم لمدة 15 ثانية",
-        "effect": "tempAtkSpd",
-        "val": 0.3,
-        "dur": 15,
-        "icon": "🧴"
-      },
-      "amulet": {
-        "name": "تميمة",
-        "desc": "درع يمتص 20 ضرر",
-        "effect": "shield",
-        "val": 20,
-        "icon": "📿"
-      },
-      "hourglass": {
-        "name": "ساعة رملية",
-        "desc": "يبطئ الأعداء 50% لمدة 5 ثواني",
-        "effect": "slow",
-        "val": 0.5,
-        "dur": 5,
-        "icon": "⏳"
-      },
-      "silver": {
-        "name": "فضة",
-        "desc": "+25 ذهب",
-        "effect": "gold",
-        "val": 25,
-        "icon": "🥈"
-      }
+      "greasyWrap": { "name": "ساندوتش شاورما", "desc": "سحابة سم عند القتل", "effect": "poisonCloud", "val": 7, "dur": 3, "radius": 50, "icon": "🌯", "points": 30 },
+      "coalHead": { "name": "راس معسل", "desc": "15% فرصة حرق", "effect": "burnChance", "val": 0.15, "dur": 3, "icon": "🔥", "points": 30 },
+      "familyPlatter": { "name": "كبسة دجاج", "desc": "+50 صحة + شفاء كامل", "effect": "fullHealHP", "val": 50, "icon": "🍚", "points": 38 },
+      "rgbMouse": { "name": "ماوس RGB", "desc": "+10% حظ", "effect": "permLuck", "val": 0.10, "icon": "🖱️", "points": 30 },
+      "disciplineStick": { "name": "خيزرانة", "desc": "+0.5x حرجة + 5% فرصة", "effect": "critCombo", "critDmg": 0.5, "critChance": 0.05, "icon": "🏏", "points": 32 },
+      "bureaucracyFile": { "name": "ملف علاقي", "desc": "+20% ذهب", "effect": "permGoldPercent", "val": 0.20, "icon": "📁", "points": 20 },
+      "magnet": { "name": "مغناطيس", "desc": "سحب كل الالتقاطات", "effect": "magnetPull", "val": 1, "icon": "🧲", "points": 25 },
+      "redPotion": { "name": "جرعة حمراء", "desc": "+30 صحة", "effect": "heal", "val": 30, "icon": "🧪", "points": 25 },
+      "silver": { "name": "فضة", "desc": "+25 ذهب", "effect": "gold", "val": 25, "icon": "🥈", "points": 25 }
+    },
+    "EPIC": {
+      "teaFlask": { "name": "زمزمية شاهي", "desc": "-5% كولداون", "effect": "permCooldown", "val": 0.05, "icon": "🫖", "points": 50 },
+      "fingerprint": { "name": "جهاز البصمة", "desc": "+10% تفادي", "effect": "permDodge", "val": 0.10, "icon": "👆", "points": 45 },
+      "maskedShemagh": { "name": "شماغ ملثم", "desc": "+15% ضرر + 5% تفادي", "effect": "shemaghCombo", "dmg": 0.15, "dodge": 0.05, "icon": "🧣", "points": 48 },
+      "tunedExhaust": { "name": "شكمان معدل", "desc": "+12% مساحة", "effect": "permArea", "val": 0.12, "icon": "💨", "points": 42 },
+      "powerStrip": { "name": "توصيلة كهرب", "desc": "صاعقة تسلسلية كل 4ث", "effect": "chainLightning", "interval": 4, "targets": 3, "icon": "⚡", "points": 55 },
+      "vipCard": { "name": "بطاقة VIP", "desc": "إعادة لف مجاني", "effect": "freeReroll", "val": 1, "icon": "💎", "points": 45 },
+      "bluePotion": { "name": "جرعة زرقاء", "desc": "+30% سرعة هجوم 15ث", "effect": "tempAtkSpd", "val": 0.3, "dur": 15, "icon": "🧴", "points": 40 },
+      "amulet": { "name": "تميمة", "desc": "درع 30 ضرر", "effect": "shield", "val": 30, "icon": "📿", "points": 42 }
     },
     "LEGENDARY": {
-      "elixir": {
-        "name": "إكسير",
-        "desc": "يستعيد كل الصحة ويزيد الصحة القصوى 20",
-        "effect": "fullHeal",
-        "val": 20,
-        "icon": "⚗️"
-      },
-      "dragonHeart": {
-        "name": "قلب التنين",
-        "desc": "+50% ضرر لمدة 25 ثانية",
-        "effect": "tempDmg",
-        "val": 0.5,
-        "dur": 25,
-        "icon": "❤️‍🔥"
-      },
-      "phoenixEye": {
-        "name": "عين العنقاء",
-        "desc": "إذا مت، تعود للحياة مرة واحدة",
-        "effect": "revive",
-        "val": 1,
-        "icon": "👁️"
-      },
-      "crown": {
-        "name": "تاج ذهبي",
-        "desc": "+50% ذهب بشكل دائم",
-        "effect": "permGold",
-        "val": 0.5,
-        "icon": "👑"
-      },
-      "star": {
-        "name": "نجمة الصحراء",
-        "desc": "تحصل على سلاح أو كتاب عشوائي",
-        "effect": "randomEquip",
-        "val": 1,
-        "icon": "⭐"
-      },
-      "khazouq": {
-        "name": "خازوق",
-        "desc": "يزيد نسبة ظهور الأعداء 10%، أنت غبي ليش أخذته؟",
-        "effect": "moreEnemies",
-        "val": 0.10,
-        "icon": "🍆"
-      }
+      "salaryLetter": { "name": "رسالة الراتب", "desc": "مضاعفة الذهب", "effect": "doubleGold", "val": 1.0, "icon": "💰", "points": 80 },
+      "momsPrayer": { "name": "دعوة الوالدة", "desc": "إحياء + حصانة 3ث", "effect": "superRevive", "val": 1, "invulnDur": 3, "icon": "🤲", "points": 90 },
+      "unlimited5G": { "name": "5G لا محدود", "desc": "التقاط = الشاشة", "effect": "screenPickup", "val": 500, "icon": "📶", "points": 70 },
+      "bossCloak": { "name": "بشت المدير", "desc": "+25% كل الإحصائيات", "effect": "allStats", "val": 0.25, "icon": "👔", "points": 100 },
+      "earlyRetirement": { "name": "التقاعد المبكر", "desc": "إيقاف الزمن 5ث", "effect": "timeStop", "dur": 5, "icon": "⏰", "points": 75 },
+      "gmcKey": { "name": "مفتاح جمس", "desc": "انفجار 200 ضرر", "effect": "megaExplosion", "val": 200, "radius": 200, "icon": "🔑", "points": 85 },
+      "elixir": { "name": "إكسير", "desc": "شفاء كامل + 30 صحة", "effect": "fullHeal", "val": 30, "icon": "⚗️", "points": 70 },
+      "dragonHeart": { "name": "قلب التنين", "desc": "+50% ضرر 25ث", "effect": "tempDmg", "val": 0.5, "dur": 25, "icon": "❤️‍🔥", "points": 65 },
+      "arika": { "name": "عريكه", "desc": "إحياء عند الموت", "effect": "revive", "val": 1, "icon": "🍚", "points": 70 },
+      "crown": { "name": "تاج ذهبي", "desc": "+50% ذهب دائم", "effect": "permGold", "val": 0.5, "icon": "👑", "points": 65 },
+      "star": { "name": "نجمة الصحراء", "desc": "سلاح أو كتاب عشوائي", "effect": "randomEquip", "val": 1, "icon": "⭐", "points": 75 },
+      "khazouq": { "name": "خازوق", "desc": "أعداء أكثر 10%!", "effect": "moreEnemies", "val": 0.10, "icon": "🍆", "points": -20 }
     }
   },
 
@@ -518,15 +449,77 @@
   "EFFECT_TYPES": {
     "heal": "شفاء فوري",
     "fullHeal": "شفاء كامل + زيادة صحة",
+    "fullHealHP": "زيادة صحة قصوى + شفاء كامل",
+    "gold": "ذهب فوري",
     "tempSpeed": "زيادة سرعة مؤقتة",
     "tempDmg": "زيادة ضرر مؤقتة",
     "tempAtkSpd": "زيادة سرعة هجوم مؤقتة",
     "shield": "درع يمتص الضرر",
     "slow": "إبطاء الأعداء",
     "revive": "إحياء عند الموت",
-    "permGold": "زيادة ذهب دائمة",
+    "superRevive": "إحياء + حصانة",
     "randomEquip": "سلاح أو كتاب عشوائي",
-    "gold": "ذهب فوري",
-    "moreEnemies": "زيادة أعداء (سلبي)"
+    "moreEnemies": "زيادة أعداء (سلبي)",
+    "magnetPull": "سحب كل الالتقاطات",
+    "permXP": "زيادة خبرة دائمة",
+    "permRegen": "تجديد صحة دائم",
+    "permSpeed": "زيادة سرعة دائمة",
+    "permCrit": "زيادة ضربة حرجة دائمة",
+    "permAtkSpd": "زيادة سرعة هجوم دائمة",
+    "permDmg": "زيادة ضرر دائمة",
+    "permGold": "زيادة ذهب دائمة",
+    "permGoldPercent": "زيادة ذهب بنسبة مئوية",
+    "permArmor": "زيادة دفاع دائمة",
+    "permArmorCombo": "دفاع + تقليل ضرر",
+    "permHP": "زيادة صحة قصوى",
+    "permCooldown": "تقليل كولداون",
+    "permDodge": "زيادة تفادي",
+    "permArea": "زيادة مساحة هجوم",
+    "permLuck": "زيادة حظ",
+    "slowAura": "هالة إبطاء الأعداء",
+    "freezeChance": "فرصة تجميد",
+    "damageAura": "هالة ضرر",
+    "stunPulse": "صعقة جماعية دورية",
+    "poisonCloud": "سحابة سم عند القتل",
+    "burnChance": "فرصة حرق",
+    "critCombo": "ضربة حرجة + فرصة",
+    "shemaghCombo": "ضرر + تفادي",
+    "chainLightning": "صاعقة تسلسلية",
+    "freeReroll": "إعادة لف مجاني",
+    "doubleGold": "مضاعفة الذهب",
+    "screenPickup": "التقاط بمدى الشاشة",
+    "allStats": "زيادة جميع الإحصائيات",
+    "timeStop": "إيقاف الزمن",
+    "megaExplosion": "انفجار ضخم"
+  },
+
+  "BALANCE_FRAMEWORK": {
+    "tier_budgets": {
+      "COMMON": { "min": 10, "max": 15, "description": "أساسيات البناء" },
+      "UNCOMMON": { "min": 15, "max": 25, "description": "تحسينات ملحوظة" },
+      "RARE": { "min": 25, "max": 40, "description": "تغيير مسار اللعب" },
+      "EPIC": { "min": 40, "max": 65, "description": "قوة كبيرة" },
+      "LEGENDARY": { "min": 65, "max": 100, "description": "تعريف الران" }
+    },
+    "impact_factors": {
+      "low": { "value": 1.0, "stats": ["XP", "Gold", "Cosmetic"] },
+      "medium": { "value": 1.5, "stats": ["Speed", "Regen", "PickupRange"] },
+      "high": { "value": 2.0, "stats": ["Damage", "Area", "Cooldown", "AttackSpeed"] },
+      "critical": { "value": 3.0, "stats": ["MaxHP", "Defense", "Dodge", "CritChance"] }
+    },
+    "stack_penalties": {
+      "unlimited": 1.0,
+      "soft_cap": 0.8,
+      "hard_cap": 0.6,
+      "no_stack": 0.5
+    },
+    "tier_jump_multiplier": 1.6,
+    "playtesting_targets": {
+      "common_pick_rate": "40-60%",
+      "uncommon_pick_rate": "30-50%",
+      "rare_pick_rate": "20-40%",
+      "epic_pick_rate": "10-25%",
+      "legendary_pick_rate": "5-15%"
+    }
   }
 }
