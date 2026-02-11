@@ -332,6 +332,90 @@
         /* Damage numbers animation */
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
         
+        /* Achievement notification */
+        @keyframes achievementSlide {
+            0% { transform: translateX(100%); opacity: 0; }
+            10% { transform: translateX(0); opacity: 1; }
+            90% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        .achievement-popup {
+            position: fixed; top: 80px; right: 10px;
+            background: linear-gradient(135deg, #1a1a2e, #0a0a15);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            padding: 10px 15px;
+            display: flex; align-items: center; gap: 10px;
+            z-index: 500;
+            animation: achievementSlide 3s ease-in-out forwards;
+            max-width: 280px;
+        }
+        .achievement-popup .ach-icon { font-size: 1.5rem; }
+        .achievement-popup .ach-info { display: flex; flex-direction: column; }
+        .achievement-popup .ach-title { color: #ffd700; font-size: 0.8rem; font-weight: bold; }
+        .achievement-popup .ach-desc { color: #aaa; font-size: 0.65rem; }
+        
+        /* Meta Progress Panel in Menu */
+        .meta-stats {
+            display: flex; gap: 10px; flex-wrap: wrap;
+            justify-content: center; margin-bottom: 5px;
+            max-width: 350px;
+        }
+        .meta-stat {
+            background: rgba(30, 30, 40, 0.8);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.6rem;
+            color: #aaa;
+            display: flex; align-items: center; gap: 3px;
+        }
+        .meta-stat-value { color: #ffd700; font-weight: bold; }
+        
+        /* Permanent Upgrade Shop */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            max-height: 55vh;
+            overflow-y: auto;
+            padding: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .shop-item {
+            background: rgba(30, 30, 40, 0.95);
+            border: 2px solid rgba(100, 100, 100, 0.3);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .shop-item:hover:not(.shop-maxed) { border-color: #ffd700; transform: scale(1.02); }
+        .shop-item.shop-maxed { opacity: 0.5; cursor: default; border-color: #4f4; }
+        .shop-item-icon { font-size: 1.5rem; margin-bottom: 3px; }
+        .shop-item-name { font-size: 0.7rem; font-weight: bold; color: #fff; margin-bottom: 2px; }
+        .shop-item-level { font-size: 0.6rem; color: #888; margin-bottom: 3px; }
+        .shop-item-effect { font-size: 0.55rem; color: #4f4; margin-bottom: 4px; }
+        .shop-item-cost { font-size: 0.65rem; color: #ffd700; font-weight: bold; }
+        .shop-item-cost.cant-afford { color: #f44; }
+        
+        /* Daily Challenge */
+        .daily-challenge {
+            background: linear-gradient(135deg, rgba(255,136,0,0.1), rgba(255,215,0,0.05));
+            border: 2px solid rgba(255, 136, 0, 0.4);
+            border-radius: 10px;
+            padding: 8px 12px;
+            text-align: center;
+            max-width: 260px;
+            flex-shrink: 0;
+        }
+        .daily-title { font-size: 0.7rem; color: #ff8800; font-weight: bold; margin-bottom: 3px; }
+        .daily-desc { font-size: 0.6rem; color: #ccc; margin-bottom: 4px; }
+        .daily-reward { font-size: 0.6rem; color: #ffd700; }
+        .daily-progress { height: 6px; background: #222; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+        .daily-progress-fill { height: 100%; background: linear-gradient(90deg, #ff8800, #ffd700); border-radius: 3px; transition: width 0.3s; }
+        
         @media (max-width: 600px) {
             #mainMenu { 
                 padding: 10px;
@@ -446,9 +530,27 @@
                 <div class="city-locked">🔒 اقتل ابو حلزه أولاً</div>
             </div>
         </div>
+        <!-- Daily Challenge -->
+        <div class="daily-challenge" id="dailyChallenge">
+            <div class="daily-title">📅 تحدي اليوم</div>
+            <div class="daily-desc" id="dailyDesc">جاري التحميل...</div>
+            <div class="daily-reward" id="dailyReward"></div>
+            <div class="daily-progress"><div class="daily-progress-fill" id="dailyProgress" style="width:0%"></div></div>
+        </div>
+        <!-- Meta Stats -->
+        <div class="meta-stats" id="metaStats">
+            <div class="meta-stat">🎮 <span class="meta-stat-value" id="metaRuns">0</span> جولة</div>
+            <div class="meta-stat">💀 <span class="meta-stat-value" id="metaKills">0</span> قتيل</div>
+            <div class="meta-stat">💰 <span class="meta-stat-value" id="metaGold">0</span> ذهب</div>
+            <div class="meta-stat">🔥 <span class="meta-stat-value" id="metaBestCombo">0</span>x كومبو</div>
+        </div>
         <div class="menu-buttons">
             <button class="btn btn-primary" id="startBtn">ابدأ اللعب</button>
-            <button class="btn" id="leaderboardBtn" style="background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:#ffd700;border:2px solid #ffd700;padding:8px 25px;font-size:0.9rem">🏆 قائمة الأبطال</button>
+            <button class="btn" id="shopBtn" style="background:linear-gradient(135deg,#2a4a2a,#1a2a1a);color:#4f4;border:2px solid #4f4;padding:8px 25px;font-size:0.9rem;width:100%;max-width:280px">🏪 المتجر <span id="shopGoldDisplay" style="color:#ffd700;margin-right:5px">💰 0</span></button>
+            <div style="display:flex;gap:6px;width:100%;max-width:280px">
+                <button class="btn" id="leaderboardBtn" style="background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:#ffd700;border:2px solid #ffd700;padding:8px 15px;font-size:0.8rem;flex:1">🏆 الأبطال</button>
+                <button class="btn" id="achievementBtn" style="background:linear-gradient(135deg,#4a4a4a,#2a2a2a);color:#ff8800;border:2px solid #ff8800;padding:8px 15px;font-size:0.8rem;flex:1">🏅 الإنجازات</button>
+            </div>
             <p class="high-score">أعلى نتيجة: <span id="highScore">0</span> قتيل</p>
         </div>
     </div>
@@ -526,6 +628,36 @@
                 <button id="shareScoreBtn" class="btn" style="background:#28a745;color:#fff;padding:10px 15px;flex:1;font-size:0.8rem">📤 شارك نتيجتك</button>
                 <button id="closeLeaderboardBtn" class="btn" style="background:#444;color:#fff;padding:10px 15px;flex:1">إغلاق</button>
             </div>
+        </div>
+    </div>
+    
+    <!-- Upgrade Shop Modal -->
+    <div id="shopModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:1000;justify-content:center;align-items:center">
+        <div style="background:linear-gradient(135deg,#1a2a1a,#0a150a);border:3px solid #4f4;border-radius:20px;padding:20px;max-width:420px;width:92%;max-height:85vh;overflow-y:auto">
+            <h2 style="color:#4f4;text-align:center;margin-bottom:3px">🏪 متجر الترقيات الدائمة</h2>
+            <p style="text-align:center;font-size:0.65rem;color:#888;margin-bottom:3px">ترقيات تبقى معك في كل الجولات!</p>
+            <p style="text-align:center;margin-bottom:10px"><span style="font-size:1rem">💰</span> <span id="shopGold" style="color:#ffd700;font-weight:bold;font-size:1.1rem">0</span></p>
+            <div class="shop-grid" id="shopGrid"></div>
+            <button id="closeShopBtn" class="btn" style="background:#333;color:#fff;padding:10px 15px;width:100%;margin-top:12px;border-radius:8px">إغلاق</button>
+        </div>
+    </div>
+    
+    <!-- Achievement Modal -->
+    <div id="achievementModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;justify-content:center;align-items:center">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0a0a15);border:3px solid #ff8800;border-radius:20px;padding:25px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto">
+            <h2 style="color:#ff8800;text-align:center;margin-bottom:5px">🏅 الإنجازات 🏅</h2>
+            <p id="achievementCount" style="text-align:center;font-size:0.7rem;color:#888;margin-bottom:15px">0 / 0</p>
+            <div id="achievementList" style="display:flex;flex-direction:column;gap:6px"></div>
+            <div style="margin-top:15px;padding:10px;background:rgba(255,215,0,0.05);border-radius:10px;border:1px solid rgba(255,215,0,0.2)">
+                <p style="color:#ffd700;font-size:0.75rem;text-align:center;margin-bottom:5px">📊 إحصائيات عامة</p>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:0.65rem;color:#aaa">
+                    <span>🎮 جولات: <span id="achTotalRuns" style="color:#fff">0</span></span>
+                    <span>💀 قتلى: <span id="achTotalKills" style="color:#fff">0</span></span>
+                    <span>💰 ذهب: <span id="achTotalGold" style="color:#fff">0</span></span>
+                    <span>⏱️ أفضل وقت: <span id="achBestTime" style="color:#fff">0:00</span></span>
+                </div>
+            </div>
+            <button id="closeAchievementBtn" class="btn" style="background:#444;color:#fff;padding:10px 15px;width:100%;margin-top:15px">إغلاق</button>
         </div>
     </div>
     
@@ -906,6 +1038,62 @@ const ENEMIES = {
 };
 
 const BOSS = { name: 'ابو حلزه', hp: 12000, atk: 40, spd: 60, color: '#8b0000' };
+
+// ==================== PERMANENT UPGRADE SHOP ====================
+const SHOP_UPGRADES = {
+    maxHp:     { name: 'صحة إضافية',   icon: '❤️', desc: '+5% صحة قصوى',       stat: 'maxHp',   val: 0.05, maxLevel: 20, baseCost: 30,  costMult: 1.4 },
+    damage:    { name: 'قوة الضربة',    icon: '⚔️', desc: '+3% ضرر',            stat: 'damage',  val: 0.03, maxLevel: 20, baseCost: 40,  costMult: 1.45 },
+    armor:     { name: 'درع طبيعي',     icon: '🛡️', desc: '+2% تقليل ضرر',      stat: 'armor',   val: 0.02, maxLevel: 15, baseCost: 50,  costMult: 1.5 },
+    speed:     { name: 'أحذية سريعة',   icon: '👟', desc: '+3% سرعة حركة',      stat: 'speed',   val: 0.03, maxLevel: 10, baseCost: 35,  costMult: 1.4 },
+    atkSpd:    { name: 'سرعة هجوم',     icon: '⚡', desc: '+3% سرعة هجوم',      stat: 'atkSpd',  val: 0.03, maxLevel: 15, baseCost: 45,  costMult: 1.45 },
+    crit:      { name: 'ضربة حرجة',     icon: '💥', desc: '+1% ضربة حرجة',      stat: 'crit',    val: 0.01, maxLevel: 15, baseCost: 55,  costMult: 1.5 },
+    luck:      { name: 'بخت',           icon: '🍀', desc: '+4% حظ',             stat: 'luck',    val: 0.04, maxLevel: 15, baseCost: 40,  costMult: 1.45 },
+    regen:     { name: 'تجديد طبيعي',   icon: '💚', desc: '+0.3 شفاء/ثانية',    stat: 'regen',   val: 0.3,  maxLevel: 10, baseCost: 60,  costMult: 1.5 },
+    goldBonus: { name: 'جاذب الذهب',    icon: '🪙', desc: '+5% ذهب مكتسب',      stat: 'gold',    val: 0.05, maxLevel: 15, baseCost: 25,  costMult: 1.35 },
+    xpBonus:   { name: 'حكمة قديمة',    icon: '📚', desc: '+4% خبرة مكتسبة',    stat: 'xp',      val: 0.04, maxLevel: 15, baseCost: 35,  costMult: 1.4 },
+    pickup:    { name: 'مغناطيس',       icon: '🧲', desc: '+8% مدى الجمع',      stat: 'pickup',  val: 0.08, maxLevel: 10, baseCost: 30,  costMult: 1.35 },
+    startGold: { name: 'ميراث',         icon: '💎', desc: '+10 ذهب بداية',       stat: 'startGold', val: 10, maxLevel: 10, baseCost: 50,  costMult: 1.5 }
+};
+
+function getShopCost(upgradeId, currentLevel) {
+    const u = SHOP_UPGRADES[upgradeId];
+    return Math.floor(u.baseCost * Math.pow(u.costMult, currentLevel));
+}
+
+// ==================== DAILY CHALLENGES ====================
+const DAILY_CHALLENGES = [
+    { id: 'kills_100',    desc: 'اقتل 100 عدو',               target: 100, stat: 'kills',   reward: 80,  icon: '💀' },
+    { id: 'kills_200',    desc: 'اقتل 200 عدو',               target: 200, stat: 'kills',   reward: 150, icon: '💀' },
+    { id: 'combo_30',     desc: 'حقق كومبو 30x',              target: 30,  stat: 'combo',   reward: 100, icon: '🔥' },
+    { id: 'combo_50',     desc: 'حقق كومبو 50x',              target: 50,  stat: 'combo',   reward: 150, icon: '🔥' },
+    { id: 'gold_100',     desc: 'اجمع 100 ذهب في جولة',        target: 100, stat: 'gold',    reward: 60,  icon: '💰' },
+    { id: 'gold_300',     desc: 'اجمع 300 ذهب في جولة',        target: 300, stat: 'gold',    reward: 120, icon: '💰' },
+    { id: 'survive_5',    desc: 'عش 5 دقائق',                  target: 300, stat: 'time',    reward: 80,  icon: '⏱️' },
+    { id: 'survive_8',    desc: 'عش 8 دقائق',                  target: 480, stat: 'time',    reward: 140, icon: '⏱️' },
+    { id: 'level_15',     desc: 'وصل مستوى 15',                target: 15,  stat: 'level',   reward: 90,  icon: '⭐' },
+    { id: 'level_25',     desc: 'وصل مستوى 25',                target: 25,  stat: 'level',   reward: 160, icon: '⭐' },
+    { id: 'play_bedouin', desc: 'العب بالأعرابي',              target: 1,   stat: 'char_bedouin', reward: 70, icon: '🏜️' },
+    { id: 'play_layla',   desc: 'العب بليلى',                  target: 1,   stat: 'char_layla',   reward: 70, icon: '🔮' },
+    { id: 'no_hit_1m',    desc: 'لا تتضرر لمدة دقيقة',         target: 60,  stat: 'nohit',   reward: 200, icon: '🏆' },
+    { id: 'elite_5',      desc: 'اقتل 5 أعداء نخبة',           target: 5,   stat: 'elites',  reward: 120, icon: '👑' }
+];
+
+function getDailyChallenge() {
+    // Use date as seed for consistent daily challenge
+    const today = new Date();
+    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const idx = seed % DAILY_CHALLENGES.length;
+    return { ...DAILY_CHALLENGES[idx], seed };
+}
+
+// ==================== MINI-BOSS DEFINITIONS ====================
+const MINI_BOSSES = [
+    { name: 'الحارس',     icon: '🗿', hpMult: 8,  atkMult: 2,   spdMult: 0.7, color: '#8B8B00', xpReward: 50,  goldReward: 30, ability: 'charge' },
+    { name: 'الظل',       icon: '👤', hpMult: 5,  atkMult: 1.5, spdMult: 1.5, color: '#4a0080', xpReward: 40,  goldReward: 25, ability: 'teleport' },
+    { name: 'العملاق',    icon: '🗡️', hpMult: 12, atkMult: 3,   spdMult: 0.4, color: '#8b4513', xpReward: 70,  goldReward: 40, ability: 'stomp' },
+    { name: 'الساحر',     icon: '🧙', hpMult: 6,  atkMult: 2,   spdMult: 0.9, color: '#0044aa', xpReward: 55,  goldReward: 35, ability: 'summon' },
+    { name: 'الثعبان',    icon: '🐍', hpMult: 7,  atkMult: 1.8, spdMult: 1.2, color: '#2d5a27', xpReward: 45,  goldReward: 28, ability: 'poison' },
+];
 
 // ==================== ASSET LOADER ====================
 class AssetLoader {
@@ -3657,6 +3845,36 @@ class Game {
         this.highScore = parseInt(localStorage.getItem('goldBloodHighScore') || '0');
         this.baghdadUnlocked = localStorage.getItem('baghdadUnlocked') === 'true';
         
+        // ===== KILL STREAK / COMBO SYSTEM =====
+        this.combo = 0;
+        this.comboTimer = 0;
+        this.comboDecay = 2.5; // Seconds before combo resets
+        this.maxCombo = 0;
+        this.comboThresholds = [10, 25, 50, 100, 200, 500];
+        this.lastComboMilestone = 0;
+        
+        // ===== META-PROGRESSION =====
+        this.metaProgress = JSON.parse(localStorage.getItem('goldblood_meta') || '{}');
+        if (!this.metaProgress.totalGold) this.metaProgress.totalGold = 0;
+        if (!this.metaProgress.totalKills) this.metaProgress.totalKills = 0;
+        if (!this.metaProgress.totalRuns) this.metaProgress.totalRuns = 0;
+        if (!this.metaProgress.upgrades) this.metaProgress.upgrades = {};
+        if (!this.metaProgress.achievements) this.metaProgress.achievements = {};
+        if (!this.metaProgress.bestCombo) this.metaProgress.bestCombo = 0;
+        if (!this.metaProgress.bestTime) this.metaProgress.bestTime = 0;
+        
+        // ===== WAVE ANNOUNCEMENT SYSTEM =====
+        this.waveAnnouncement = null;
+        this.waveAnnouncementTimer = 0;
+        
+        // ===== DPS TRACKING =====
+        this.dpsTracker = { damage: 0, timer: 0, dps: 0, history: [] };
+        
+        // ===== TUTORIAL HINTS =====
+        this.tutorialHints = { shown: JSON.parse(localStorage.getItem('goldblood_hints') || '{}') };
+        this.activeHint = null;
+        this.hintTimer = 0;
+        
         // Cached tile image
         this.sandTilePattern = null;
         
@@ -3787,6 +4005,305 @@ class Game {
         document.getElementById('closeLeaderboardBtn').onclick = () => { document.getElementById('leaderboardModal').style.display = 'none'; };
         document.getElementById('submitScoreBtn').onclick = () => this.submitScore();
         document.getElementById('shareScoreBtn').onclick = () => this.shareScore();
+        
+        // Achievement button
+        document.getElementById('achievementBtn').onclick = () => this.showAchievements();
+        document.getElementById('closeAchievementBtn').onclick = () => { document.getElementById('achievementModal').style.display = 'none'; };
+        
+        // Shop button
+        document.getElementById('shopBtn').onclick = () => this.showShop();
+        document.getElementById('closeShopBtn').onclick = () => { document.getElementById('shopModal').style.display = 'none'; };
+        
+        // Update meta stats display
+        this.updateMetaDisplay();
+        this.updateDailyChallenge();
+    }
+    
+    updateMetaDisplay() {
+        const meta = this.metaProgress;
+        document.getElementById('metaRuns').textContent = meta.totalRuns || 0;
+        document.getElementById('metaKills').textContent = meta.totalKills || 0;
+        document.getElementById('metaGold').textContent = meta.totalGold || 0;
+        document.getElementById('metaBestCombo').textContent = meta.bestCombo || 0;
+        document.getElementById('shopGoldDisplay').textContent = `💰 ${meta.totalGold || 0}`;
+    }
+    
+    showAchievements() {
+        const meta = this.metaProgress;
+        const achievements = meta.achievements || {};
+        
+        // All possible achievements
+        const allAchievements = [
+            { id: 'first_blood', name: 'أول دم', desc: 'اقتل عدو واحد', icon: '🩸' },
+            { id: 'slayer_100', name: 'قاتل المئة', desc: 'اقتل 100 عدو في جولة', icon: '💀' },
+            { id: 'slayer_500', name: 'الجزار', desc: 'اقتل 500 عدو في جولة', icon: '🪓' },
+            { id: 'slayer_1000', name: 'ملك الموت', desc: 'اقتل 1000 عدو في جولة', icon: '👑' },
+            { id: 'combo_25', name: 'كومبو!', desc: 'حقق كومبو 25x', icon: '🔥' },
+            { id: 'combo_100', name: 'كومبو جنوني', desc: 'حقق كومبو 100x', icon: '💥' },
+            { id: 'combo_500', name: 'بلا رحمة', desc: 'حقق كومبو 500x', icon: '☠️' },
+            { id: 'level_10', name: 'مبتدئ', desc: 'وصل مستوى 10', icon: '📊' },
+            { id: 'level_25', name: 'محترف', desc: 'وصل مستوى 25', icon: '⭐' },
+            { id: 'level_50', name: 'أسطورة', desc: 'وصل مستوى 50', icon: '🌟' },
+            { id: 'rich', name: 'ثري', desc: 'اجمع 500 ذهب في جولة', icon: '💰' },
+            { id: 'millionaire', name: 'مليونير', desc: 'اجمع 5000 ذهب إجمالي', icon: '🏦' },
+            { id: 'survive_5', name: 'الصمود', desc: 'عش 5 دقائق', icon: '⏰' },
+            { id: 'survive_10', name: 'المثابر', desc: 'عش 10 دقائق', icon: '🏅' },
+            { id: 'all_chars', name: 'مستكشف', desc: 'العب بكل الشخصيات', icon: '🎭' },
+            { id: 'full_weapons', name: 'ترسانة كاملة', desc: 'احمل كل خانات الأسلحة', icon: '⚔️' }
+        ];
+        
+        const earned = Object.keys(achievements).length;
+        document.getElementById('achievementCount').textContent = `${earned} / ${allAchievements.length}`;
+        
+        const listEl = document.getElementById('achievementList');
+        listEl.innerHTML = allAchievements.map(ach => {
+            const unlocked = !!achievements[ach.id];
+            return `<div style="display:flex;align-items:center;padding:8px 12px;background:${unlocked ? 'rgba(255,136,0,0.15)' : 'rgba(50,50,50,0.3)'};border-radius:8px;border:1px solid ${unlocked ? '#ff8800' : '#333'};gap:10px;${unlocked ? '' : 'opacity:0.5'}">
+                <span style="font-size:1.4rem;min-width:30px;text-align:center">${unlocked ? ach.icon : '🔒'}</span>
+                <div style="flex:1">
+                    <div style="color:${unlocked ? '#ff8800' : '#666'};font-weight:bold;font-size:0.8rem">${ach.name}</div>
+                    <div style="color:${unlocked ? '#aaa' : '#555'};font-size:0.65rem">${ach.desc}</div>
+                </div>
+                ${unlocked ? '<span style="color:#4f4;font-size:0.7rem">✅</span>' : ''}
+            </div>`;
+        }).join('');
+        
+        // Stats
+        document.getElementById('achTotalRuns').textContent = meta.totalRuns || 0;
+        document.getElementById('achTotalKills').textContent = meta.totalKills || 0;
+        document.getElementById('achTotalGold').textContent = meta.totalGold || 0;
+        const bestM = Math.floor((meta.bestTime || 0) / 60);
+        const bestS = Math.floor((meta.bestTime || 0) % 60);
+        document.getElementById('achBestTime').textContent = `${bestM}:${bestS.toString().padStart(2, '0')}`;
+        
+        document.getElementById('achievementModal').style.display = 'flex';
+    }
+    
+    // ===== PERMANENT UPGRADE SHOP =====
+    showShop() {
+        const meta = this.metaProgress;
+        const upgrades = meta.upgrades || {};
+        const gold = meta.totalGold || 0;
+        
+        document.getElementById('shopGold').textContent = gold;
+        
+        const grid = document.getElementById('shopGrid');
+        grid.innerHTML = '';
+        
+        for (const [id, u] of Object.entries(SHOP_UPGRADES)) {
+            const level = upgrades[id] || 0;
+            const isMaxed = level >= u.maxLevel;
+            const cost = isMaxed ? 0 : getShopCost(id, level);
+            const canAfford = gold >= cost;
+            
+            const item = document.createElement('div');
+            item.className = `shop-item ${isMaxed ? 'shop-maxed' : ''}`;
+            
+            item.innerHTML = `
+                <div class="shop-item-icon">${u.icon}</div>
+                <div class="shop-item-name">${u.name}</div>
+                <div class="shop-item-level">${isMaxed ? '✅ حد أقصى' : `مستوى ${level}/${u.maxLevel}`}</div>
+                <div class="shop-item-effect">${u.desc}</div>
+                ${isMaxed ? '' : `<div class="shop-item-cost ${canAfford ? '' : 'cant-afford'}">💰 ${cost}</div>`}
+            `;
+            
+            if (!isMaxed) {
+                item.onclick = () => {
+                    if (meta.totalGold >= cost) {
+                        meta.totalGold -= cost;
+                        if (!meta.upgrades) meta.upgrades = {};
+                        meta.upgrades[id] = (meta.upgrades[id] || 0) + 1;
+                        localStorage.setItem('goldblood_meta', JSON.stringify(meta));
+                        this.showShop(); // Refresh
+                        this.updateMetaDisplay();
+                    }
+                };
+            }
+            
+            grid.appendChild(item);
+        }
+        
+        document.getElementById('shopModal').style.display = 'flex';
+    }
+    
+    // Apply shop upgrades to player at game start
+    applyShopUpgrades() {
+        if (!this.player || !this.metaProgress.upgrades) return;
+        const u = this.metaProgress.upgrades;
+        
+        if (u.maxHp)     { const bonus = this.player.maxHp * (u.maxHp * SHOP_UPGRADES.maxHp.val); this.player.maxHp += bonus; this.player.hp += bonus; }
+        if (u.damage)    { this.player.dmgMult += u.damage * SHOP_UPGRADES.damage.val; }
+        if (u.armor)     { this.player.dmgReduce += u.armor * SHOP_UPGRADES.armor.val; }
+        if (u.speed)     { this.player.speed += this.player.speed * (u.speed * SHOP_UPGRADES.speed.val); this.player.speed = Math.min(this.player.speed, CONFIG.MAX_PLAYER_SPEED); }
+        if (u.atkSpd)    { this.player.atkSpd += u.atkSpd * SHOP_UPGRADES.atkSpd.val; }
+        if (u.crit)      { this.player.crit += u.crit * SHOP_UPGRADES.crit.val; }
+        if (u.luck)      { this.player.luck += u.luck * SHOP_UPGRADES.luck.val; }
+        if (u.regen)     { this.player.regen += u.regen * SHOP_UPGRADES.regen.val; }
+        if (u.goldBonus) { this.player.goldMult += u.goldBonus * SHOP_UPGRADES.goldBonus.val; }
+        if (u.xpBonus)   { this.player.xpMult += u.xpBonus * SHOP_UPGRADES.xpBonus.val; }
+        if (u.pickup)    { this.player.pickupRange += this.player.pickupRange * (u.pickup * SHOP_UPGRADES.pickup.val); }
+        if (u.startGold) { this.player.gold += u.startGold * SHOP_UPGRADES.startGold.val; }
+    }
+    
+    // ===== DAILY CHALLENGE SYSTEM =====
+    updateDailyChallenge() {
+        const challenge = getDailyChallenge();
+        const savedDaily = JSON.parse(localStorage.getItem('goldblood_daily') || '{}');
+        
+        // Reset if different day
+        if (savedDaily.seed !== challenge.seed) {
+            localStorage.setItem('goldblood_daily', JSON.stringify({ seed: challenge.seed, progress: 0, completed: false }));
+        }
+        
+        const daily = JSON.parse(localStorage.getItem('goldblood_daily') || '{}');
+        const progress = daily.progress || 0;
+        const completed = daily.completed || false;
+        
+        document.getElementById('dailyDesc').textContent = `${challenge.icon} ${challenge.desc}`;
+        document.getElementById('dailyReward').textContent = completed ? '✅ مكتمل!' : `🎁 مكافأة: ${challenge.reward} 💰`;
+        
+        const pct = Math.min(100, (progress / challenge.target) * 100);
+        document.getElementById('dailyProgress').style.width = pct + '%';
+        
+        if (completed) {
+            document.getElementById('dailyChallenge').style.borderColor = '#4f4';
+            document.getElementById('dailyProgress').style.background = 'linear-gradient(90deg, #4f4, #2a8a2a)';
+        }
+    }
+    
+    updateDailyProgress() {
+        if (!this.player) return;
+        const challenge = getDailyChallenge();
+        const daily = JSON.parse(localStorage.getItem('goldblood_daily') || '{}');
+        
+        if (daily.completed) return;
+        
+        let progress = 0;
+        switch (challenge.stat) {
+            case 'kills':  progress = this.player.kills; break;
+            case 'combo':  progress = this.maxCombo; break;
+            case 'gold':   progress = this.player.gold; break;
+            case 'time':   progress = this.time; break;
+            case 'level':  progress = this.player.level; break;
+            case 'elites': progress = this.eliteKills || 0; break;
+            case 'nohit':  progress = this.noHitTimer || 0; break;
+            case 'char_bedouin': progress = this.player.charId === 'bedouin' ? 1 : 0; break;
+            case 'char_layla':   progress = this.player.charId === 'layla' ? 1 : 0; break;
+        }
+        
+        daily.progress = Math.max(daily.progress || 0, progress);
+        
+        // Check completion
+        if (daily.progress >= challenge.target && !daily.completed) {
+            daily.completed = true;
+            this.metaProgress.totalGold += challenge.reward;
+            localStorage.setItem('goldblood_meta', JSON.stringify(this.metaProgress));
+            
+            // Show reward notification
+            if (this.texts && this.player) {
+                this.texts.push(new FloatText(this.player.x, this.player.y - 70, `📅 تحدي اليوم مكتمل! +${challenge.reward} 💰`, '#ff8800', 18));
+                this.particles.emit(this.player.x, this.player.y, 25, { color: '#ff8800', minS: 80, maxS: 180, size: 4, life: 1.0 });
+            }
+            this.shake = 0.3;
+        }
+        
+        localStorage.setItem('goldblood_daily', JSON.stringify(daily));
+    }
+    
+    // ===== MINI-BOSS EVENT SYSTEM =====
+    checkMiniBossSpawn() {
+        // Mini-boss every 2 minutes (starting at 1:30)
+        if (!this.lastMiniBossTime) this.lastMiniBossTime = 0;
+        if (!this.miniBossActive) this.miniBossActive = false;
+        
+        const miniBossInterval = 120; // 2 minutes
+        const firstSpawn = 90; // First at 1:30
+        
+        if (this.miniBossActive) return; // Don't spawn if one is already active
+        if (this.boss) return; // Don't spawn during main boss fight
+        
+        const timeSinceLastMiniBoss = this.time - this.lastMiniBossTime;
+        const shouldSpawn = (this.lastMiniBossTime === 0 && this.time >= firstSpawn) || 
+                           (this.lastMiniBossTime > 0 && timeSinceLastMiniBoss >= miniBossInterval);
+        
+        if (shouldSpawn) {
+            this.spawnMiniBoss();
+        }
+    }
+    
+    spawnMiniBoss() {
+        const mbDef = MINI_BOSSES[Math.floor(Math.random() * MINI_BOSSES.length)];
+        const scale = 1 + (this.time / 60) * CONFIG.SCALING_PER_MIN;
+        const buff = 1 + this.player.enemyBuff;
+        
+        // Spawn at screen edge
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.max(this.canvas.width, this.canvas.height) / 2 + 100;
+        const x = this.player.x + Math.cos(angle) * dist;
+        const y = this.player.y + Math.sin(angle) * dist;
+        
+        const miniBoss = new Enemy(x, y, 'skeleton', this.time, this.player.enemyBuff, true);
+        
+        // Override stats with mini-boss definition
+        miniBoss.maxHp = Math.round(CONFIG.ENEMY_BASE_HP * mbDef.hpMult * scale * buff);
+        miniBoss.hp = miniBoss.maxHp;
+        miniBoss.atk = CONFIG.ENEMY_BASE_ATK * mbDef.atkMult * scale * buff;
+        miniBoss.spd = CONFIG.ENEMY_BASE_SPEED * mbDef.spdMult;
+        miniBoss.color = mbDef.color;
+        miniBoss.xp = mbDef.xpReward;
+        miniBoss.width = 50;
+        miniBoss.height = 50;
+        miniBoss.isElite = true;
+        miniBoss.isMiniBoss = true;
+        miniBoss.miniBossData = mbDef;
+        
+        // Track mini-boss
+        this.currentMiniBoss = miniBoss;
+        this.miniBossActive = true;
+        this.lastMiniBossTime = this.time;
+        
+        this.enemies.push(miniBoss);
+        
+        // Warning effects
+        this.waveAnnouncement = `${mbDef.icon} ميني بوس: ${mbDef.name}!`;
+        this.waveAnnouncementTimer = 3.0;
+        this.shake = 0.4;
+        
+        if (this.texts && this.player) {
+            this.texts.push(new FloatText(this.player.x, this.player.y - 70, `⚠️ ${mbDef.name} ظهر!`, '#ff4400', 22));
+        }
+        this.particles.emit(x, y, 20, { color: mbDef.color, minS: 80, maxS: 180, size: 5, life: 1.0 });
+    }
+    
+    onMiniBossKilled(enemy) {
+        const mbData = enemy.miniBossData;
+        if (!mbData) return;
+        
+        this.miniBossActive = false;
+        this.currentMiniBoss = null;
+        
+        // Big reward
+        const goldReward = mbData.goldReward + Math.floor(this.time / 60) * 5;
+        this.player.gold += goldReward;
+        
+        // Effects
+        this.texts.push(new FloatText(enemy.x, enemy.y - 30, `${mbData.icon} ${mbData.name} هزم!`, '#ffd700', 20));
+        this.texts.push(new FloatText(enemy.x, enemy.y - 10, `+${goldReward} 💰`, '#ffd700', 16));
+        this.particles.emit(enemy.x, enemy.y, 30, { color: '#ffd700', minS: 100, maxS: 250, size: 5, life: 1.2 });
+        this.particles.emit(enemy.x, enemy.y, 15, { color: mbData.color, minS: 60, maxS: 150, size: 4, life: 0.8 });
+        this.shake = 0.5;
+        
+        // Spawn bonus XP
+        for (let i = 0; i < 5; i++) {
+            this.pickups.push(new Pickup(
+                enemy.x + (Math.random() - 0.5) * 60,
+                enemy.y + (Math.random() - 0.5) * 60,
+                'xp', Math.round(mbData.xpReward / 5)
+            ));
+        }
+        
+        // Track for daily challenge
+        this.eliteKills = (this.eliteKills || 0) + 1;
     }
     
     shareScore() {
@@ -4101,6 +4618,13 @@ class Game {
         this.groundBuffs = []; this.activeBuffs = {};
         this.time = 0; this.spawnT = 0; this.bossSpawned = false; this.bossWarnShown = false;
         
+        // Reset combo, DPS, wave announcements
+        this.combo = 0; this.comboTimer = 0; this.maxCombo = 0; this.lastComboMilestone = 0;
+        this.dpsTracker = { damage: 0, timer: 0, dps: 0, history: [] };
+        this.waveAnnouncement = null; this.waveAnnouncementTimer = 0;
+        this.activeHint = null; this.hintTimer = 0;
+        this.rerollCount = 0;
+        
         // Endless mode boss tracking
         this.endlessBossPhase = 0; // 0 = no boss yet, 1 = phase 1 killed, 2 = phase 2 killed, 3 = phase 3 killed
         this.endlessBossActive = false;
@@ -4115,6 +4639,18 @@ class Game {
         // Set character avatar in HUD - draw actual sprite
         this.drawHudAvatar();
         
+        // Apply permanent shop upgrades
+        this.applyShopUpgrades();
+        
+        // Reset mini-boss tracking
+        this.lastMiniBossTime = 0;
+        this.miniBossActive = false;
+        this.currentMiniBoss = null;
+        this.eliteKills = 0;
+        this.noHitTimer = 0;
+        this._lastPlayerHp = this.player.hp;
+        this._dailyUpdateTimer = 0;
+        
         this.setupSlots(); this.updateSlots();
     }
     
@@ -4126,6 +4662,8 @@ class Game {
         document.getElementById('pauseBtn').style.display = 'none';
         this.state = 'menu';
         if (this.baghdadUnlocked) { document.getElementById('cityBaghdad').classList.remove('locked'); document.getElementById('cityBaghdad').querySelector('.city-locked').style.display = 'none'; }
+        this.updateMetaDisplay();
+        this.updateDailyChallenge();
     }
     
     pause() {
@@ -4303,6 +4841,10 @@ class Game {
     }
     
     doQuitToMenu() {
+        // Save meta progression
+        this.saveMetaProgress();
+        localStorage.setItem('goldblood_meta', JSON.stringify(this.metaProgress));
+        
         // Update high score before quitting
         if (this.player && this.player.kills > this.highScore) { 
             this.highScore = this.player.kills; 
@@ -4622,6 +5164,80 @@ class Game {
         }
         
         if (this.globalSlow > 0) this.globalSlow -= dt;
+        
+        // ===== COMBO TIMER DECAY =====
+        if (this.comboTimer > 0) {
+            this.comboTimer -= dt;
+            if (this.comboTimer <= 0) {
+                if (this.combo >= 10) {
+                    this.texts.push(new FloatText(this.player.x, this.player.y - 50, `كومبو ${this.combo}x انتهى`, '#888', 12));
+                }
+                this.combo = 0;
+                this.lastComboMilestone = 0;
+            }
+        }
+        
+        // ===== DPS TRACKING =====
+        this.dpsTracker.timer += dt;
+        if (this.dpsTracker.timer >= 1.0) {
+            this.dpsTracker.dps = Math.round(this.dpsTracker.damage / this.dpsTracker.timer);
+            this.dpsTracker.history.push(this.dpsTracker.dps);
+            if (this.dpsTracker.history.length > 30) this.dpsTracker.history.shift();
+            this.dpsTracker.damage = 0;
+            this.dpsTracker.timer = 0;
+        }
+        
+        // ===== WAVE ANNOUNCEMENTS =====
+        if (this.waveAnnouncementTimer > 0) {
+            this.waveAnnouncementTimer -= dt;
+            if (this.waveAnnouncementTimer <= 0) this.waveAnnouncement = null;
+        }
+        
+        // Time milestone announcements
+        const timeMinutes = Math.floor(this.time / 60);
+        if (timeMinutes > 0 && this.time % 60 < dt && timeMinutes <= 10) {
+            const minuteMessages = {
+                1: '⏱️ دقيقة واحدة!',
+                2: '⏱️ دقيقتين!',
+                3: '⚠️ 3 دقائق - الأعداء يقوون!',
+                5: '🔥 5 دقائق - نص الطريق!',
+                7: '💀 7 دقائق - الخطر يزيد!',
+                9: '⚡ 9 دقائق - جهز نفسك!',
+                10: '👹 10 دقائق - ابو حلزه قادم!'
+            };
+            if (minuteMessages[timeMinutes] && !this.endlessMode) {
+                this.waveAnnouncement = minuteMessages[timeMinutes];
+                this.waveAnnouncementTimer = 2.5;
+            }
+        }
+        
+        // ===== TUTORIAL HINTS =====
+        if (this.activeHint) {
+            this.hintTimer -= dt;
+            if (this.hintTimer <= 0) this.activeHint = null;
+        }
+        this.checkTutorialHints();
+        
+        // ===== MINI-BOSS EVENTS =====
+        this.checkMiniBossSpawn();
+        
+        // ===== NO-HIT TIMER (for daily challenge) =====
+        if (!this.noHitTimer) this.noHitTimer = 0;
+        if (this.player.invuln <= 0 && this.player.hp === this._lastPlayerHp) {
+            this.noHitTimer += dt;
+        } else if (this.player.hp < (this._lastPlayerHp || this.player.hp)) {
+            this.noHitTimer = 0; // Reset on damage
+        }
+        this._lastPlayerHp = this.player.hp;
+        
+        // ===== UPDATE DAILY PROGRESS (every 2 seconds) =====
+        if (!this._dailyUpdateTimer) this._dailyUpdateTimer = 0;
+        this._dailyUpdateTimer += dt;
+        if (this._dailyUpdateTimer >= 2.0) {
+            this._dailyUpdateTimer = 0;
+            this.updateDailyProgress();
+        }
+        
         this.player.update(dt, this.input, this);
         
         this.cam.x = this.player.x - this.canvas.width / 2;
@@ -5362,15 +5978,58 @@ class Game {
         this.spriteEffects.push(new SpriteEffect(enemy.x, enemy.y, 'fx_explosion', 32, 32, 7, 0.4, 1.5));
         this.particles.spark(enemy.x, enemy.y, '#ff6600');
         
-        // Calculate XP - bonus in endless mode based on time/level for balance
-        let xpReward = enemy.xp;
-        if (this.endlessMode) {
-            const xpMult = 1 + (this.time / 300 * 0.3) + (this.player.level * 0.05); // +30% per 5min, +5% per level
-            xpReward = Math.round(enemy.xp * xpMult);
+        // ===== MINI-BOSS KILL CHECK =====
+        if (enemy.isMiniBoss && enemy.miniBossData) {
+            this.onMiniBossKilled(enemy);
         }
         
-        // Add floating kill text
-        this.texts.push(new FloatText(enemy.x, enemy.y - 10, '+' + xpReward + ' XP', '#44ff44', 12));
+        // ===== ELITE KILL TRACKING =====
+        if (enemy.isElite && !enemy.isMiniBoss) {
+            this.eliteKills = (this.eliteKills || 0) + 1;
+        }
+        
+        // ===== COMBO SYSTEM =====
+        this.combo++;
+        this.comboTimer = this.comboDecay;
+        if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+        
+        // Combo milestones - give bonus rewards
+        for (const threshold of this.comboThresholds) {
+            if (this.combo === threshold && this.combo > this.lastComboMilestone) {
+                this.lastComboMilestone = threshold;
+                const bonusGold = Math.floor(threshold * 0.5);
+                this.player.gold += bonusGold;
+                this.texts.push(new FloatText(this.player.x, this.player.y - 60, `🔥 كومبو ${threshold}x! +${bonusGold}💰`, '#ff8800', 22));
+                this.particles.emit(this.player.x, this.player.y, 25, { color: '#ff8800', minS: 100, maxS: 200, size: 4, life: 0.8 });
+                this.shake = 0.2 + threshold * 0.001;
+                // Heal bonus at high combos
+                if (threshold >= 50) {
+                    const healAmt = Math.min(10 + threshold * 0.1, this.player.maxHp * 0.15);
+                    this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmt);
+                    this.texts.push(new FloatText(this.player.x, this.player.y - 40, `+${Math.round(healAmt)} HP`, '#00ff44', 14));
+                    this.particles.heal(this.player.x, this.player.y);
+                }
+                break;
+            }
+        }
+        
+        // Combo XP multiplier: +1% per combo, max +50%
+        const comboXPBonus = 1 + Math.min(this.combo * 0.01, 0.5);
+        
+        // ===== DPS TRACKING =====
+        this.dpsTracker.damage += enemy.maxHp;
+        
+        // Calculate XP - bonus in endless mode based on time/level for balance
+        let xpReward = Math.round(enemy.xp * comboXPBonus);
+        if (this.endlessMode) {
+            const xpMult = 1 + (this.time / 300 * 0.3) + (this.player.level * 0.05);
+            xpReward = Math.round(enemy.xp * xpMult * comboXPBonus);
+        }
+        
+        // Add floating kill text with combo indicator
+        const comboColor = this.combo >= 50 ? '#ff4400' : this.combo >= 25 ? '#ff8800' : this.combo >= 10 ? '#ffaa00' : '#44ff44';
+        const comboSuffix = this.combo >= 5 ? ` (${this.combo}x)` : '';
+        this.texts.push(new FloatText(enemy.x, enemy.y - 10, '+' + xpReward + ' XP' + comboSuffix, comboColor, this.combo >= 25 ? 14 : 12));
         
         // Clamp pickup positions to map bounds
         const halfWorld = CONFIG.WORLD_SIZE / 2;
@@ -5887,6 +6546,125 @@ class Game {
         }
     }
     
+    // ===== TUTORIAL HINTS SYSTEM =====
+    checkTutorialHints() {
+        if (this.activeHint) return;
+        const hints = this.tutorialHints.shown;
+        
+        // First 5 seconds - movement hint
+        if (!hints.move && this.time > 1 && this.time < 8) {
+            this.showHint('move', '🕹️ حرك بـ WASD أو المس الشاشة واسحب');
+        }
+        // First level up
+        if (!hints.levelup && this.player.level === 2 && this.state === 'levelup') {
+            this.showHint('levelup', '⬆️ اختر ترقية! الأسلحة تقوي الهجوم والكتب تحسن الإحصائيات');
+        }
+        // Low health warning
+        if (!hints.lowhealth && this.player.hp < this.player.maxHp * 0.25 && this.player.hp > 0) {
+            this.showHint('lowhealth', '❤️ صحتك منخفضة! ابحث عن جرعات أو عريكة للإحياء');
+        }
+        // Chest hint
+        if (!hints.chest && this.time > 30) {
+            for (const chest of this.chests) {
+                if (!chest.opened && Math.hypot(chest.x - this.player.x, chest.y - this.player.y) < 150) {
+                    this.showHint('chest', '📦 صندوق! قف عليه وانتظر لشرائه بالذهب');
+                    break;
+                }
+            }
+        }
+        // Combo hint
+        if (!hints.combo && this.combo >= 10) {
+            this.showHint('combo', '🔥 كومبو! اقتل بسرعة للحصول على مكافآت إضافية');
+        }
+    }
+    
+    showHint(id, text) {
+        this.tutorialHints.shown[id] = true;
+        localStorage.setItem('goldblood_hints', JSON.stringify(this.tutorialHints.shown));
+        this.activeHint = { text, id };
+        this.hintTimer = 4.0;
+    }
+    
+    // ===== META PROGRESSION - Save progress between runs =====
+    saveMetaProgress() {
+        if (!this.player) return;
+        
+        // Final daily challenge update
+        this.updateDailyProgress();
+        
+        // Add run stats to totals
+        this.metaProgress.totalGold += this.player.gold;
+        this.metaProgress.totalKills += this.player.kills;
+        this.metaProgress.totalRuns++;
+        if (this.maxCombo > this.metaProgress.bestCombo) {
+            this.metaProgress.bestCombo = this.maxCombo;
+        }
+        if (this.time > this.metaProgress.bestTime) {
+            this.metaProgress.bestTime = this.time;
+        }
+        
+        // Check and award achievements
+        this.checkAchievements();
+        
+        localStorage.setItem('goldblood_meta', JSON.stringify(this.metaProgress));
+    }
+    
+    // ===== ACHIEVEMENT SYSTEM =====
+    checkAchievements() {
+        const a = this.metaProgress.achievements;
+        const p = this.player;
+        const newAchievements = [];
+        
+        // Kill-based achievements
+        if (!a.first_blood && p.kills >= 1) { a.first_blood = true; newAchievements.push({ name: 'أول دم', desc: 'اقتل عدو واحد', icon: '🩸' }); }
+        if (!a.slayer_100 && p.kills >= 100) { a.slayer_100 = true; newAchievements.push({ name: 'قاتل المئة', desc: 'اقتل 100 عدو في جولة واحدة', icon: '💀' }); }
+        if (!a.slayer_500 && p.kills >= 500) { a.slayer_500 = true; newAchievements.push({ name: 'الجزار', desc: 'اقتل 500 عدو في جولة واحدة', icon: '🪓' }); }
+        if (!a.slayer_1000 && p.kills >= 1000) { a.slayer_1000 = true; newAchievements.push({ name: 'ملك الموت', desc: 'اقتل 1000 عدو في جولة واحدة', icon: '👑' }); }
+        
+        // Combo achievements
+        if (!a.combo_25 && this.maxCombo >= 25) { a.combo_25 = true; newAchievements.push({ name: 'كومبو!', desc: 'حقق كومبو 25x', icon: '🔥' }); }
+        if (!a.combo_100 && this.maxCombo >= 100) { a.combo_100 = true; newAchievements.push({ name: 'كومبو جنوني', desc: 'حقق كومبو 100x', icon: '💥' }); }
+        if (!a.combo_500 && this.maxCombo >= 500) { a.combo_500 = true; newAchievements.push({ name: 'بلا رحمة', desc: 'حقق كومبو 500x', icon: '☠️' }); }
+        
+        // Level achievements
+        if (!a.level_10 && p.level >= 10) { a.level_10 = true; newAchievements.push({ name: 'مبتدئ', desc: 'وصل مستوى 10', icon: '📊' }); }
+        if (!a.level_25 && p.level >= 25) { a.level_25 = true; newAchievements.push({ name: 'محترف', desc: 'وصل مستوى 25', icon: '⭐' }); }
+        if (!a.level_50 && p.level >= 50) { a.level_50 = true; newAchievements.push({ name: 'أسطورة', desc: 'وصل مستوى 50', icon: '🌟' }); }
+        
+        // Gold achievements
+        if (!a.rich && p.gold >= 500) { a.rich = true; newAchievements.push({ name: 'ثري', desc: 'اجمع 500 ذهب في جولة', icon: '💰' }); }
+        if (!a.millionaire && this.metaProgress.totalGold >= 5000) { a.millionaire = true; newAchievements.push({ name: 'مليونير', desc: 'اجمع 5000 ذهب إجمالي', icon: '🏦' }); }
+        
+        // Survival achievements
+        if (!a.survive_5 && this.time >= 300) { a.survive_5 = true; newAchievements.push({ name: 'الصمود', desc: 'عش 5 دقائق', icon: '⏰' }); }
+        if (!a.survive_10 && this.time >= 600) { a.survive_10 = true; newAchievements.push({ name: 'المثابر', desc: 'عش 10 دقائق', icon: '🏅' }); }
+        
+        // Character variety
+        if (!a.all_chars) {
+            const usedChars = JSON.parse(localStorage.getItem('goldblood_usedChars') || '[]');
+            if (!usedChars.includes(p.charId)) usedChars.push(p.charId);
+            localStorage.setItem('goldblood_usedChars', JSON.stringify(usedChars));
+            if (usedChars.length >= Object.keys(CHARACTERS).length) {
+                a.all_chars = true;
+                newAchievements.push({ name: 'مستكشف', desc: 'العب بكل الشخصيات', icon: '🎭' });
+            }
+        }
+        
+        // Full weapons
+        if (!a.full_weapons && p.weapons.length >= CONFIG.MAX_WEAPONS) {
+            a.full_weapons = true;
+            newAchievements.push({ name: 'ترسانة كاملة', desc: 'احمل كل خانات الأسلحة', icon: '⚔️' });
+        }
+        
+        return newAchievements;
+    }
+    
+    // ===== GET META UPGRADE BONUS =====
+    getMetaBonus(stat) {
+        const upgrades = this.metaProgress.upgrades || {};
+        return (upgrades[stat] || 0);
+    }
+    
     over(victory) {
         this.state = 'gameover';
         this.audio.stopBGM();
@@ -5894,6 +6672,11 @@ class Game {
         document.getElementById('hud').style.display = 'none';
         document.getElementById('equipmentSlots').style.display = 'none';
         document.getElementById('pauseBtn').style.display = 'none';
+        
+        // ===== SAVE META PROGRESSION =====
+        this.saveMetaProgress();
+        const newAchievements = this.checkAchievements();
+        localStorage.setItem('goldblood_meta', JSON.stringify(this.metaProgress));
         
         const title = document.getElementById('gameOverTitle'), unlock = document.getElementById('unlockMessage');
         if (victory) { 
@@ -5919,12 +6702,29 @@ class Game {
             document.getElementById('highScore').textContent = this.highScore; 
         }
         
+        // Build achievements display
+        let achievementHTML = '';
+        if (newAchievements && newAchievements.length > 0) {
+            achievementHTML = '<div style="margin:10px 0;padding:10px;background:rgba(255,215,0,0.1);border:1px solid #ffd700;border-radius:10px">';
+            achievementHTML += '<p style="color:#ffd700;font-weight:bold;margin-bottom:5px">🏆 إنجازات جديدة!</p>';
+            for (const ach of newAchievements) {
+                achievementHTML += `<p style="color:#fff;font-size:0.85rem">${ach.icon} ${ach.name} - <span style="color:#aaa">${ach.desc}</span></p>`;
+            }
+            achievementHTML += '</div>';
+        }
+        
+        // Build run summary with more detail
+        const totalAchievements = Object.keys(this.metaProgress.achievements || {}).length;
         const m = Math.floor(this.time / 60), s = Math.floor(this.time % 60);
         document.getElementById('finalStats').innerHTML = `
             <p>⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}</p>
             <p>⭐ المستوى: ${this.player.level}</p>
             <p>💀 القتلى: ${this.player.kills}</p>
             <p>💰 الذهب: ${this.player.gold}</p>
+            <p>🔥 أعلى كومبو: ${this.maxCombo}x</p>
+            <p>⚡ DPS متوسط: ${this.dpsTracker.history.length > 0 ? Math.round(this.dpsTracker.history.reduce((a,b) => a+b, 0) / this.dpsTracker.history.length) : 0}</p>
+            <p style="color:#888;font-size:0.75rem;margin-top:5px">🏆 إنجازات: ${totalAchievements} | 🎮 جولات: ${this.metaProgress.totalRuns}</p>
+            ${achievementHTML}
         `;
         
         // Auto-save with last used name, show quick name change option
@@ -6480,6 +7280,36 @@ class Game {
             ctx.fillText(`👹 ${bossName} - المرحلة ${this.boss.phase}`, this.canvas.width / 2, by + 5);
         }
         
+        // Mini-boss health bar
+        if (this.miniBossActive && this.currentMiniBoss && this.currentMiniBoss.hp > 0) {
+            const mb = this.currentMiniBoss;
+            const mbData = mb.miniBossData || {};
+            const bw = Math.min(250, this.canvas.width * 0.6), bx = (this.canvas.width - bw) / 2;
+            const by = this.boss ? 125 : 85;
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.beginPath();
+            ctx.roundRect(bx - 5, by - 5, bw + 10, 30, 6);
+            ctx.fill();
+            
+            ctx.strokeStyle = mbData.color || '#ff8800';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(bx - 5, by - 5, bw + 10, 30, 6);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#222';
+            ctx.fillRect(bx, by + 10, bw, 12);
+            
+            ctx.fillStyle = mbData.color || '#ff8800';
+            ctx.fillRect(bx, by + 10, bw * Math.max(0, mb.hp / mb.maxHp), 12);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px PixelAE, Cairo';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${mbData.icon || '👹'} ${mbData.name || 'ميني بوس'}`, this.canvas.width / 2, by + 6);
+        }
+        
         // Draw price below each chest
         for (const chest of this.chests) {
             if (chest.opened) continue;
@@ -6541,6 +7371,118 @@ class Game {
                 
                 buffX += 50;
             }
+        }
+        
+        // ===== COMBO INDICATOR =====
+        if (this.combo >= 3) {
+            const comboX = this.canvas.width / 2;
+            const comboY = 65;
+            
+            // Combo background
+            const comboAlpha = Math.min(1, this.combo / 10);
+            const comboColor = this.combo >= 100 ? '#ff0000' : this.combo >= 50 ? '#ff4400' : this.combo >= 25 ? '#ff8800' : this.combo >= 10 ? '#ffaa00' : '#ffd700';
+            
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Pulsing scale effect
+            const pulse = 1 + Math.sin(Date.now() * 0.008) * 0.05 * Math.min(this.combo / 20, 1);
+            ctx.translate(comboX, comboY);
+            ctx.scale(pulse, pulse);
+            
+            // Background pill
+            const textWidth = 80 + (this.combo >= 100 ? 20 : 0);
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.6 * comboAlpha})`;
+            ctx.beginPath();
+            ctx.roundRect(-textWidth/2, -16, textWidth, 32, 8);
+            ctx.fill();
+            ctx.strokeStyle = comboColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-textWidth/2, -16, textWidth, 32, 8);
+            ctx.stroke();
+            
+            // Combo text
+            ctx.fillStyle = comboColor;
+            ctx.font = `bold 16px PixelAE, Cairo`;
+            ctx.fillText(`🔥 ${this.combo}x`, 0, -1);
+            
+            // Combo timer bar
+            const timerWidth = textWidth - 8;
+            const timerProgress = this.comboTimer / this.comboDecay;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(-timerWidth/2, 10, timerWidth, 4);
+            ctx.fillStyle = comboColor;
+            ctx.fillRect(-timerWidth/2, 10, timerWidth * timerProgress, 4);
+            
+            ctx.restore();
+        }
+        
+        // ===== DPS METER (small, bottom-right) =====
+        if (this.dpsTracker.dps > 0 && this.time > 5) {
+            const dpsX = this.canvas.width - 10;
+            const dpsY = this.canvas.height - 15;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.font = '10px PixelAE, Cairo';
+            ctx.fillText(`⚡DPS: ${this.dpsTracker.dps}`, dpsX, dpsY);
+            ctx.textAlign = 'left';
+        }
+        
+        // ===== WAVE ANNOUNCEMENT =====
+        if (this.waveAnnouncement) {
+            const annX = this.canvas.width / 2;
+            const annY = this.canvas.height * 0.2;
+            const annAlpha = Math.min(1, this.waveAnnouncementTimer);
+            
+            ctx.save();
+            ctx.globalAlpha = annAlpha;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.beginPath();
+            ctx.roundRect(annX - 160, annY - 20, 320, 40, 10);
+            ctx.fill();
+            
+            // Text
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 16px PixelAE, Cairo';
+            ctx.fillText(this.waveAnnouncement, annX, annY);
+            
+            ctx.restore();
+        }
+        
+        // ===== TUTORIAL HINT =====
+        if (this.activeHint) {
+            const hintX = this.canvas.width / 2;
+            const hintY = this.canvas.height - 90;
+            const hintAlpha = Math.min(1, this.hintTimer, 1);
+            
+            ctx.save();
+            ctx.globalAlpha = hintAlpha * 0.9;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Background
+            ctx.fillStyle = 'rgba(26, 26, 46, 0.9)';
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+            ctx.lineWidth = 1.5;
+            const hintW = Math.min(350, this.canvas.width - 40);
+            ctx.beginPath();
+            ctx.roundRect(hintX - hintW/2, hintY - 18, hintW, 36, 8);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Text
+            ctx.fillStyle = '#fff';
+            ctx.font = '11px PixelAE, Cairo';
+            ctx.fillText(this.activeHint.text, hintX, hintY);
+            
+            ctx.restore();
         }
     }
     
